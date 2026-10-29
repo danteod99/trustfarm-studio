@@ -143,3 +143,31 @@ as $$
 $$;
 revoke all on function ai_user_id_by_email(text) from public, anon, authenticated;
 grant execute on function ai_user_id_by_email(text) to service_role;
+
+-- ───────── Servidor local (GPU en casa) ─────────
+-- El servidor de casa NO recibe conexiones: él pregunta a Supabase si hay trabajos
+-- pendientes de sus modelos, toma uno (sin que dos servidores tomen el mismo) y lo procesa.
+alter table ai_generations add column if not exists worker text;
+
+create or replace function ai_claim_job(p_worker text, p_models text[])
+returns setof ai_generations
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  return query
+  update ai_generations g
+     set status = 'running', worker = p_worker, updated_at = now()
+   where g.id = (
+     select id from ai_generations
+      where status = 'queued' and model = any(p_models)
+      order by created_at
+      for update skip locked
+      limit 1
+   )
+  returning g.*;
+end;
+$$;
+revoke all on function ai_claim_job(text, text[]) from public, anon, authenticated;
+grant execute on function ai_claim_job(text, text[]) to service_role;
