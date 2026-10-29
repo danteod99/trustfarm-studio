@@ -17,7 +17,7 @@ Next.js 16 + Supabase (mismo proyecto que trustmind.online → login compartido)
 ## Cómo funciona
 - `ai_wallets` + `ai_ledger` (supabase/schema.sql): saldo IA **separado** de `smm_balances`; lo pagado con Stripe solo se gasta en generar.
 - `POST /api/generate` cobra (`ai_charge`) → lanza en el proveedor. Imágenes Gemini se resuelven en la misma request; Veo/fal quedan `running`.
-- El navegador consulta `GET /api/generations/:id` cada 8 s; Vercel Cron `/api/cron/refresh` (cada 5 min) cubre pestañas cerradas.
+- El navegador consulta `GET /api/generations/:id` cada 8 s; Vercel Cron `/api/cron/refresh` (1 vez al día, plan Hobby) cubre pestañas cerradas.
 - Si falla o pasa 30 min: `failGeneration` reembolsa una sola vez (`ref = refund:<id>`).
 - Stripe Checkout (pago único) → webhook `checkout.session.completed` → `ai_credit` idempotente (`ref = stripe:<session>`).
 - Admins (`ADMIN_EMAILS`) generan gratis y ven `/admin` (ventas, uso por modelo, regalar créditos).
