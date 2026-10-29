@@ -31,6 +31,8 @@ export interface ModelDef {
   credits: number | Partial<Record<Resolution, number>>;
   acceptsImage: boolean;
   badge?: string;
+  /** Lo genera el servidor local (GPU en casa) cuando está en línea; si no, fal.ai. */
+  localCapable?: boolean;
 }
 
 export const MODELS: ModelDef[] = [
@@ -68,6 +70,7 @@ export const MODELS: ModelDef[] = [
     credits: 1,
     acceptsImage: false,
     badge: "Económico",
+    localCapable: true,
   },
   {
     id: "veo-lite",
@@ -110,6 +113,7 @@ export const MODELS: ModelDef[] = [
     resolutions: ["480p", "720p"],
     credits: { "480p": 1.2, "720p": 2 },
     acceptsImage: true,
+    localCapable: true,
   },
 ];
 

@@ -35,6 +35,10 @@ const ACTIVE = ["queued", "running", "finalizing"];
 const JOB_TIMEOUT_MS = 30 * 60 * 1000;
 /** Un "finalizing" más viejo que esto quedó colgado (la función murió a medio guardar). */
 const FINALIZE_STALE_MS = 5 * 60 * 1000;
+/** Un trabajo local en cola con el servidor apagado se reembolsa pasado este tiempo. */
+const LOCAL_QUEUE_MAX_MS = 10 * 60 * 1000;
+/** El servidor local manda señal de vida cada 30 s. */
+const WORKER_HEARTBEAT_MS = 90 * 1000;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const IMAGE_MIMES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -109,6 +113,25 @@ export async function startGeneration(userId: string, free: boolean, input: Star
     await db.from("ai_generations").update({ charged: true }).eq("id", row.id);
   }
 
+  if (model.localCapable && (await workerOnline(model.id))) {
+    try {
+      // El servidor local toma el trabajo de la cola (ai_claim_job). Solo es reclamable
+      // cuando provider_ref.local = true, que se marca después de cobrar.
+      let inputPath: string | undefined;
+      if (image) {
+        inputPath = `inputs/${userId}/${row.id}.jpg`;
+        const { error } = await db.storage
+          .from(MEDIA_BUCKET)
+          .upload(inputPath, Buffer.from(image.data, "base64"), { contentType: image.mime, upsert: true });
+        if (error) throw new Error(`storage: ${error.message}`);
+      }
+      await update(row.id, { params: { ...opts, withImage: !!image, inputPath }, provider_ref: { local: true } });
+    } catch (e) {
+      await failGeneration(row.id, publicError(e));
+    }
+    return { ok: true, generation: await load(row.id) };
+  }
+
   try {
     if (model.provider === "gemini-image") {
       const out = await gemini.generateImage(model.providerModel, prompt, opts.aspect, image);
@@ -153,6 +176,14 @@ export async function refreshGeneration(gen: Generation): Promise<Generation> {
     return load(gen.id);
   }
 
+  if (gen.provider_ref?.local) {
+    // Lo procesa el servidor local; aquí solo se vigila que no quede abandonado en cola.
+    if (gen.status === "queued" && age > LOCAL_QUEUE_MAX_MS && !(await workerOnline(gen.model))) {
+      await failGeneration(gen.id, "El servidor de generación no está disponible. Te devolvimos los créditos.");
+      return load(gen.id);
+    }
+    return gen;
+  }
   if (gen.status === "queued") return gen;
   if (gen.status === "finalizing" && Date.now() - new Date(gen.updated_at).getTime() < FINALIZE_STALE_MS) return gen;
   if (!gen.provider_ref) return gen;
@@ -215,6 +246,17 @@ export async function failGeneration(id: string, error: string): Promise<void> {
       console.error(`[gen ${id}] reembolso falló:`, e);
     }
   }
+}
+
+/** ¿Hay un servidor local encendido que sepa generar este modelo? */
+export async function workerOnline(modelId: string): Promise<boolean> {
+  const since = new Date(Date.now() - WORKER_HEARTBEAT_MS).toISOString();
+  const { count } = await supabaseAdmin()
+    .from("ai_workers")
+    .select("id", { count: "exact", head: true })
+    .contains("models", [modelId])
+    .gte("last_seen", since);
+  return (count ?? 0) > 0;
 }
 
 export async function load(id: string): Promise<Generation> {

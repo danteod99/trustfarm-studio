@@ -1,0 +1,19 @@
+{
+  "supabase_url": "https://jlxaubqvgjahcsnotvih.supabase.co",
+  "service_role_key": "PEGAR_SERVICE_ROLE_KEY",
+  "worker_id": "pc-5090-casa",
+  "comfy_url": "http://127.0.0.1:8188",
+  "job_timeout_seg": 1500,
+  "models": {
+    "wan-22": {
+      "workflow": "workflows/wan22_t2v.json",
+      "workflow_con_imagen": "workflows/wan22_i2v.json",
+      "fps": 16,
+      "negative": "texto, subtítulos, marca de agua, borroso, deformado, manos deformes, baja calidad"
+    },
+    "qwen-image": {
+      "workflow": "workflows/qwen_image.json",
+      "negative": ""
+    }
+  }
+}

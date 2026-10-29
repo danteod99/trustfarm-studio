@@ -7,7 +7,8 @@ interface Stats {
   revenueUsd: number;
   purchases: number;
   buyers: number;
-  byModel: Record<string, { total: number; failed: number; credits: number }>;
+  byModel: Record<string, { total: number; failed: number; credits: number; local: number }>;
+  workers: { id: string; models: string[]; lastSeen: string; online: boolean; info: { gpu?: string } | null }[];
 }
 
 export default function AdminPanel() {
@@ -61,6 +62,7 @@ export default function AdminPanel() {
             <tr>
               <th className="py-2">Modelo</th>
               <th>Generaciones</th>
+              <th>En servidor local</th>
               <th>Fallidas</th>
               <th>Créditos cobrados</th>
             </tr>
@@ -72,6 +74,7 @@ export default function AdminPanel() {
                 <tr key={m.id} className="border-t border-line">
                   <td className="py-2">{m.name}</td>
                   <td>{s?.total ?? 0}</td>
+                  <td>{m.localCapable ? s?.local ?? 0 : "—"}</td>
                   <td>{s?.failed ?? 0}</td>
                   <td>{s?.credits ?? 0}</td>
                 </tr>
@@ -79,6 +82,25 @@ export default function AdminPanel() {
             })}
           </tbody>
         </table>
+      </section>
+
+      <section className="card p-5">
+        <h2 className="font-semibold">Servidores locales</h2>
+        {!stats?.workers.length ? (
+          <p className="mt-2 text-sm text-mute">Ninguno registrado. Wan 2.2 y Qwen-Image se generan en fal.ai.</p>
+        ) : (
+          <ul className="mt-3 space-y-2 text-sm">
+            {stats.workers.map((w) => (
+              <li key={w.id} className="flex flex-wrap items-center gap-3">
+                <span className={`h-2.5 w-2.5 rounded-full ${w.online ? "bg-emerald-400" : "bg-red-400"}`} />
+                <span className="font-medium">{w.id}</span>
+                <span className="text-mute">{w.info?.gpu ?? ""}</span>
+                <span className="text-mute">{w.models.join(", ")}</span>
+                <span className="text-mute">visto {new Date(w.lastSeen).toLocaleString("es")}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="card p-5">

@@ -161,7 +161,7 @@ begin
      set status = 'running', worker = p_worker, updated_at = now()
    where g.id = (
      select id from ai_generations
-      where status = 'queued' and model = any(p_models)
+      where status = 'queued' and model = any(p_models) and provider_ref->>'local' = 'true'
       order by created_at
       for update skip locked
       limit 1
@@ -171,3 +171,12 @@ end;
 $$;
 revoke all on function ai_claim_job(text, text[]) from public, anon, authenticated;
 grant execute on function ai_claim_job(text, text[]) to service_role;
+
+-- Señal de vida de cada servidor local (ver supabase/02_servidor_local.sql).
+create table if not exists ai_workers (
+  id        text primary key,
+  models    text[] not null default '{}',
+  last_seen timestamptz not null default now(),
+  info      jsonb not null default '{}'::jsonb
+);
+alter table ai_workers enable row level security;
