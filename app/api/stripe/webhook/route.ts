@@ -2,6 +2,8 @@ import type Stripe from "stripe";
 import { stripe } from "@/app/lib/stripe";
 import { PLAN, getPack } from "@/app/lib/catalog";
 import { addCredits } from "@/app/lib/credits";
+import { decidirRama, procesarSesionMinipc } from "@/app/lib/minipc-pedidos";
+import { pedidosStoreSupabase } from "@/app/lib/minipc-store-supabase";
 import { saveSub, subFields } from "@/app/lib/subscription";
 
 // Paquetes: acredita cuando Stripe confirma el pago (idempotente por id de sesión).
@@ -52,6 +54,19 @@ export async function POST(req: Request) {
       return Response.json({ received: true });
     }
     if (session.payment_status !== "paid") return Response.json({ received: true, pending: true });
+
+    // Mini PC: rama aparte; retorna antes de leer user_id/pack de créditos.
+    if (decidirRama(session) === "minipc") {
+      try {
+        const resultado = await procesarSesionMinipc({ store: pedidosStoreSupabase(), log: console.error }, session);
+        if (resultado.resultado === "pendiente") return Response.json({ received: true, pending: true });
+        return Response.json({ received: true, minipc: resultado });
+      } catch (e) {
+        // Mensaje fijo + código SQLSTATE (o el aviso de entorno de supabaseAdmin): sin datos personales.
+        console.error("[stripe] no se pudo guardar el pedido de mini PC:", session.id, e instanceof Error ? e.message : "error");
+        return new Response("pedido failed", { status: 500 }); // Stripe reintenta
+      }
+    }
 
     const userId = session.metadata?.user_id || session.client_reference_id;
     const pack = getPack(session.metadata?.pack_id || "");

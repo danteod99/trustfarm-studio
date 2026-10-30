@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MODELS } from "@/app/lib/catalog";
+import PedidosMinipc from "@/app/admin/PedidosMinipc";
 
 interface Stats {
   revenueUsd: number;
@@ -321,6 +322,8 @@ export default function AdminPanel() {
         </form>
         {msg && <p className="mt-3 text-sm text-mute">{msg}</p>}
       </section>
+
+      <PedidosMinipc />
     </div>
   );
 }
