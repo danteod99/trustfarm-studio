@@ -1,0 +1,15 @@
+# Modelos en el network volume (serverless lo monta en /runpod-volume).
+trustfarm_volume:
+  base_path: /runpod-volume/models
+  checkpoints: checkpoints
+  diffusion_models: |
+    diffusion_models
+    unet
+  text_encoders: |
+    text_encoders
+    clip
+  vae: vae
+  loras: loras
+  latent_upscale_models: latent_upscale_models
+  model_patches: model_patches
+  upscale_models: upscale_models

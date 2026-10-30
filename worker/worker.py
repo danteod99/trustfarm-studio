@@ -10,6 +10,7 @@ Uso:  python worker.py            (lee config.json junto a este archivo)
 from __future__ import annotations
 
 import json
+import os
 import random
 import socket
 import sys
@@ -21,12 +22,13 @@ from pathlib import Path
 import requests
 
 AQUI = Path(__file__).resolve().parent
-CFG = json.loads((AQUI / "config.json").read_text(encoding="utf-8"))
+# En RunPod la config viene en la imagen (sin la clave) y la clave en una variable de entorno.
+CFG = json.loads(Path(os.environ.get("WORKER_CONFIG", AQUI / "config.json")).read_text(encoding="utf-8"))
 
-SUPA = CFG["supabase_url"].rstrip("/")
-KEY = CFG["service_role_key"]
+SUPA = (os.environ.get("SUPABASE_URL") or CFG["supabase_url"]).rstrip("/")
+KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or CFG["service_role_key"]
 COMFY = CFG.get("comfy_url", "http://127.0.0.1:8188").rstrip("/")
-WORKER_ID = CFG.get("worker_id") or socket.gethostname()
+WORKER_ID = os.environ.get("WORKER_ID") or CFG.get("worker_id") or socket.gethostname()
 BUCKET = "ai-media"
 HEARTBEAT_SEG = 30
 JOB_TIMEOUT_SEG = int(CFG.get("job_timeout_seg", 25 * 60))
@@ -66,6 +68,19 @@ def actualizar(gen_id: str, cambios: dict, solo_si: str = "running") -> list:
     )
     r.raise_for_status()
     return r.json()
+
+
+def reclamar(gen_id: str) -> dict | None:
+    """Toma un trabajo concreto (RunPod recibe el id); None si ya lo tomó otro o no existe."""
+    r = requests.patch(
+        f"{SUPA}/rest/v1/ai_generations?id=eq.{gen_id}&status=eq.queued",
+        headers={**H, "Prefer": "return=representation"},
+        json={"status": "running", "worker": WORKER_ID, "updated_at": ahora()},
+        timeout=30,
+    )
+    r.raise_for_status()
+    filas = r.json()
+    return filas[0] if filas else None
 
 
 def heartbeat(modelos: list[str], gpu: str):
@@ -194,6 +209,7 @@ def procesar(job: dict):
         "NEGATIVE": modelo.get("negative", ""),
         "SEED": random.randint(1, 2**31 - 1),
         "PREFIX": f"studio/{job['id']}",
+        "STEPS": int(modelo.get("steps", 20)),
     }
 
     # Cada modelo puede traer sus tamaños en config.json (p. ej. Wan 2.2 5B: 1280x704).

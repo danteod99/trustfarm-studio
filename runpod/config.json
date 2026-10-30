@@ -1,0 +1,81 @@
+{
+  "supabase_url": "https://jlxaubqvgjahcsnotvih.supabase.co",
+  "worker_id": "runpod",
+  "comfy_url": "http://127.0.0.1:8188",
+  "job_timeout_seg": 1500,
+  "models": {
+    "z-image": {
+      "workflow": "workflows/z_image.json",
+      "image_size": {
+        "1:1": [
+          1024,
+          1024
+        ],
+        "9:16": [
+          768,
+          1344
+        ],
+        "16:9": [
+          1344,
+          768
+        ]
+      }
+    },
+    "qwen-image": {
+      "workflow": "workflows/qwen_image.json",
+      "image_size": {
+        "1:1": [
+          1328,
+          1328
+        ],
+        "9:16": [
+          928,
+          1664
+        ],
+        "16:9": [
+          1664,
+          928
+        ]
+      },
+      "negative": "",
+      "workflow_con_imagen": "workflows/qwen_image_ref.json"
+    },
+    "wan-22": {
+      "workflow": "workflows/wan22_t2v.json",
+      "workflow_con_imagen": "workflows/wan22_i2v.json",
+      "fps": 24,
+      "video_size": {
+        "480p": {
+          "16:9": [
+            832,
+            480
+          ],
+          "9:16": [
+            480,
+            832
+          ],
+          "1:1": [
+            640,
+            640
+          ]
+        },
+        "720p": {
+          "16:9": [
+            1280,
+            704
+          ],
+          "9:16": [
+            704,
+            1280
+          ],
+          "1:1": [
+            960,
+            960
+          ]
+        }
+      },
+      "negative": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "steps": 20
+    }
+  }
+}
