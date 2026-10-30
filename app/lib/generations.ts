@@ -60,6 +60,8 @@ export interface StartInput {
   characterId?: string;
   styleId?: string;
   motion?: string;
+  /** Caja desde la que se pidió (para el tope diario por caja); null/ausente = desde la web. */
+  cajaId?: string;
 }
 
 export type StartResult = { ok: true; generation: Generation } | { ok: false; error: string; status: number };
@@ -143,6 +145,7 @@ export async function startGeneration(userId: string, free: boolean, input: Star
       prompt: finalPrompt,
       params: { ...opts, withImage: !!image },
       cost_credits: cost,
+      caja_id: input.cajaId ?? null,
     })
     .select()
     .single();

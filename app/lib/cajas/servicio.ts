@@ -111,6 +111,25 @@ async function calcularEstado(deps: ServicioDeps, registro: RegistroCaja): Promi
   return { estado: 'pendiente' }
 }
 
+/**
+ * Identifica la caja que llama (para las rutas del Estudio): 401 igual para secreto malo, registro inexistente y caja
+ * desvinculada (no se revela cuál); 409 si todavía no tiene cuenta dueña (pendiente o código vencido).
+ */
+export async function resolverCaja(
+  deps: ServicioDeps,
+  { registroId, bearer }: { registroId: string; bearer: string | null | undefined },
+): Promise<
+  | { ok: true; caja: CajaDatos; registroId: string; ownerEmail: string | null }
+  | { ok: false; status: 401 | 409; error: string }
+> {
+  const registro = await autenticar(deps.store, registroId, bearer)
+  if (!registro) return { ok: false, status: 401, error: 'No autorizado.' }
+  const c = await calcularEstado(deps, registro)
+  if (c.estado === 'desvinculada') return { ok: false, status: 401, error: 'No autorizado.' }
+  if (c.estado !== 'vinculada') return { ok: false, status: 409, error: 'Esta caja todavía no está vinculada.' }
+  return { ok: true, caja: c.caja, registroId: registro.id, ownerEmail: await deps.store.obtenerEmailDueno(c.caja.ownerId) }
+}
+
 export async function estadoCaja(
   deps: ServicioDeps,
   { registroId, bearer, conToken }: { registroId: string; bearer: string | null | undefined; conToken: boolean },
