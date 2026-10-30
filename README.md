@@ -20,10 +20,13 @@ Next.js 16 + Supabase (mismo proyecto que trustmind.online → login compartido)
 - El navegador consulta `GET /api/generations/:id` cada 8 s; Vercel Cron `/api/cron/refresh` (1 vez al día, plan Hobby) cubre pestañas cerradas.
 - Si falla o pasa 30 min: `failGeneration` reembolsa una sola vez (`ref = refund:<id>`).
 - Stripe Checkout (pago único) → webhook `checkout.session.completed` → `ai_credit` idempotente (`ref = stripe:<session>`).
+- **Formatos** (`app/lib/templates.ts`, basados en el kit Kitbase): Frutinovelas, Modelos IA y Miniseries TikTok como botones principales + Misterios, Fábulas, Datos curiosos y Finanzas. Cada uno es una receta de pasos que precarga modelo, formato y prompt; lo que va `[entre corchetes]` hay que completarlo antes de generar.
+- **Personajes y estilos** (`ai_presets`, supabase/03_personajes.sql): se anteponen al prompt para mantener el mismo personaje en todas las escenas. La foto del personaje va como referencia solo a modelos de imagen; en video la imagen es el primer cuadro.
+- **Animar**: cualquier imagen terminada se usa como primer cuadro de un video (`fromGeneration`, el servidor la toma del bucket). Movimientos de cámara predefinidos (`MOTIONS`).
 - Admins (`ADMIN_EMAILS`) generan gratis y ven `/admin` (ventas, uso por modelo, regalar créditos).
 
 ## Puesta en marcha
-1. Correr `supabase/schema.sql` en el SQL Editor de Supabase.
+1. Correr `supabase/schema.sql`, `02_servidor_local.sql` y `03_personajes.sql` en el SQL Editor de Supabase.
 2. Supabase → Auth → URL Configuration: agregar `https://trustfarm.online/auth/callback` a Redirect URLs.
 3. Vercel: proyecto nuevo con este repo, dominio trustfarm.online, variables de `.env.example`.
 4. Stripe (cuenta LLC): webhook a `https://trustfarm.online/api/stripe/webhook` con eventos

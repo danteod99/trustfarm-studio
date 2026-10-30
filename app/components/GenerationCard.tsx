@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Loader2, TriangleAlert } from "lucide-react";
+import { Clapperboard, Download, Loader2, TriangleAlert, UserRoundPlus } from "lucide-react";
 import { getModel } from "@/app/lib/catalog";
 
 export interface PublicGeneration {
@@ -22,9 +22,18 @@ const ASPECT_CLASS: Record<string, string> = {
   "1:1": "aspect-square",
 };
 
-export default function GenerationCard({ g }: { g: PublicGeneration }) {
+interface Props {
+  g: PublicGeneration;
+  /** Usar esta imagen como primer cuadro de un video. */
+  onAnimate?: (g: PublicGeneration) => void;
+  /** Guardar esta imagen como personaje reutilizable. */
+  onSaveCharacter?: (g: PublicGeneration) => void;
+}
+
+export default function GenerationCard({ g, onAnimate, onSaveCharacter }: Props) {
   const model = getModel(g.model);
   const aspect = ASPECT_CLASS[g.params.aspect] ?? "aspect-square";
+  const readyImage = g.kind === "image" && g.status === "done" && !!g.url;
   return (
     <div className="card overflow-hidden">
       <div className={`relative ${aspect} max-h-[520px] w-full bg-panel-2`}>
@@ -62,6 +71,20 @@ export default function GenerationCard({ g }: { g: PublicGeneration }) {
             </a>
           )}
         </div>
+        {readyImage && (onAnimate || onSaveCharacter) && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            {onAnimate && (
+              <button onClick={() => onAnimate(g)} className="chip flex items-center gap-1">
+                <Clapperboard size={13} /> Animar
+              </button>
+            )}
+            {onSaveCharacter && (
+              <button onClick={() => onSaveCharacter(g)} className="chip flex items-center gap-1">
+                <UserRoundPlus size={13} /> Usar como personaje
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

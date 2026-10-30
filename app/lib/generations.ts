@@ -12,6 +12,8 @@ import {
 import * as gemini from "@/app/lib/providers/gemini";
 import * as fal from "@/app/lib/providers/fal";
 import { ProviderError, type InputImage, type PollResult } from "@/app/lib/providers/gemini";
+import { getPreset, presetPrefix, storageImage } from "@/app/lib/presets";
+import { getMotion } from "@/app/lib/templates";
 
 export interface Generation {
   id: string;
@@ -49,6 +51,11 @@ export interface StartInput {
   duration?: number;
   resolution?: Resolution;
   image?: InputImage;
+  /** Imagen ya generada por el usuario que se usa como entrada ("Animar"). */
+  fromGeneration?: string;
+  characterId?: string;
+  styleId?: string;
+  motion?: string;
 }
 
 export type StartResult = { ok: true; generation: Generation } | { ok: false; error: string; status: number };
@@ -77,6 +84,34 @@ export async function startGeneration(userId: string, free: boolean, input: Star
   }
 
   const db = supabaseAdmin();
+
+  if (input.fromGeneration && !image) {
+    if (!model.acceptsImage) return { ok: false, error: "Este modelo no acepta imagen de entrada.", status: 400 };
+    const { data: src } = await db
+      .from("ai_generations")
+      .select("output_path, kind, status")
+      .eq("id", input.fromGeneration)
+      .eq("user_id", userId)
+      .maybeSingle();
+    const loaded = src?.kind === "image" && src.status === "done" && src.output_path ? await storageImage(src.output_path) : null;
+    if (!loaded) return { ok: false, error: "No se encontró la imagen a animar.", status: 400 };
+    image = loaded;
+  }
+
+  // Personaje y estilo guardados: se anteponen al prompt. La foto del personaje solo se
+  // manda a los modelos de imagen; en video la imagen es el primer cuadro, no una referencia.
+  const style = input.styleId ? await getPreset(userId, input.styleId) : null;
+  const character = input.characterId ? await getPreset(userId, input.characterId) : null;
+  if ((input.styleId && !style) || (input.characterId && !character)) {
+    return { ok: false, error: "Ese personaje o estilo ya no existe.", status: 400 };
+  }
+  let characterImage = false;
+  if (character?.image_path && !image && model.kind === "image" && model.acceptsImage) {
+    image = (await storageImage(character.image_path)) ?? undefined;
+    characterImage = !!image;
+  }
+  const motion = model.kind === "video" ? getMotion(input.motion) : undefined;
+  const finalPrompt = presetPrefix(style, character, characterImage) + prompt + (motion ? `\n${motion.text}` : "");
   const { count } = await db
     .from("ai_generations")
     .select("id", { count: "exact", head: true })
@@ -93,7 +128,7 @@ export async function startGeneration(userId: string, free: boolean, input: Star
       user_id: userId,
       kind: model.kind,
       model: model.id,
-      prompt,
+      prompt: finalPrompt,
       params: { ...opts, withImage: !!image },
       cost_credits: cost,
     })
@@ -134,13 +169,13 @@ export async function startGeneration(userId: string, free: boolean, input: Star
 
   try {
     if (model.provider === "gemini-image") {
-      const out = await gemini.generateImage(model.providerModel, prompt, opts.aspect, image);
+      const out = await gemini.generateImage(model.providerModel, finalPrompt, opts.aspect, image);
       const path = await saveOutput(userId, row.id, out.bytes, out.mime);
       await update(row.id, { status: "done", output_path: path });
     } else if (model.provider === "veo") {
       const operation = await gemini.startVeo(
         model.providerModel,
-        prompt,
+        finalPrompt,
         { aspect: opts.aspect, resolution: opts.resolution!, duration: opts.duration! },
         image
       );
@@ -150,8 +185,8 @@ export async function startGeneration(userId: string, free: boolean, input: Star
       const endpoint = image && model.providerModelImage ? model.providerModelImage : model.providerModel;
       const falInput =
         model.kind === "image"
-          ? fal.qwenInput(prompt, opts.aspect)
-          : fal.wanInput(prompt, opts.aspect, opts.resolution!, dataUri);
+          ? fal.qwenInput(finalPrompt, opts.aspect)
+          : fal.wanInput(finalPrompt, opts.aspect, opts.resolution!, dataUri);
       const ref = await fal.submit(endpoint, falInput);
       await update(row.id, { status: "running", provider_ref: ref });
     }

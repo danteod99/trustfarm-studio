@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import GenerationCard from "@/app/components/GenerationCard";
 import { useGenerations } from "@/app/components/useGenerations";
 
@@ -12,6 +13,7 @@ const FILTERS = [
 ];
 
 export default function Gallery() {
+  const router = useRouter();
   const [kind, setKind] = useState("");
   const { items, loading } = useGenerations(`?limit=60${kind ? `&kind=${kind}` : ""}`);
 
@@ -40,7 +42,12 @@ export default function Gallery() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((g) => (
-            <GenerationCard key={g.id} g={g} />
+            <GenerationCard
+              key={g.id}
+              g={g}
+              onAnimate={(x) => router.push(`/estudio?animar=${x.id}`)}
+              onSaveCharacter={(x) => router.push(`/estudio?personaje=${x.id}`)}
+            />
           ))}
         </div>
       )}

@@ -23,6 +23,10 @@ export async function POST(req: Request) {
     duration: body.duration ? Number(body.duration) : undefined,
     resolution: body.resolution,
     image: body.image?.data && body.image?.mime ? { data: String(body.image.data), mime: String(body.image.mime) } : undefined,
+    fromGeneration: body.fromGeneration ? String(body.fromGeneration) : undefined,
+    characterId: body.characterId ? String(body.characterId) : undefined,
+    styleId: body.styleId ? String(body.styleId) : undefined,
+    motion: body.motion ? String(body.motion) : undefined,
   });
   if (!result.ok) return Response.json({ error: result.error }, { status: result.status });
 
