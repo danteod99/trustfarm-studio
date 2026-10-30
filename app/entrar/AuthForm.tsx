@@ -15,7 +15,13 @@ export default function AuthForm() {
 
   const rawNext = params.get("next") || "/estudio";
   const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/estudio";
-  const callback = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+  // La URL de vuelta va sin parámetros: Supabase solo acepta las que coinciden con su lista de
+  // Redirect URLs; con "?next=…" no coincidía y mandaba a la Site URL (trustmind.online).
+  // A dónde ir después del login viaja en una cookie corta que lee /auth/callback.
+  const callback = () => {
+    document.cookie = `tf_next=${encodeURIComponent(next)}; path=/; max-age=900; samesite=lax; secure`;
+    return `${window.location.origin}/auth/callback`;
+  };
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();

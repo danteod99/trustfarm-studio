@@ -78,9 +78,6 @@ function Frame({ item, className = "", priority = false }: { item: Showcase; cla
     // Sin "relative" fijo: las tarjetas del hero van en "absolute" y el resto lo pasa en className.
     <div className={`group overflow-hidden rounded-2xl border border-line bg-panel shadow-2xl shadow-black/50 ${className}`}>
       <Media item={item} priority={priority} className="transition duration-700 group-hover:scale-105" />
-      <span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur">
-        {item.model}
-      </span>
     </div>
   );
 }
@@ -96,7 +93,7 @@ export default function Home() {
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-16 sm:pt-24 lg:grid-cols-[1.05fr_1fr]">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-brand/40 bg-brand/10 px-3 py-1 text-xs font-medium text-brand-2">
-              <Sparkles size={13} /> Nuevo: LTX-2.5, video con voz en español
+              <Sparkles size={13} /> Nuevo: videos con voz en español
             </span>
             <h1 className="mt-6 text-4xl font-extrabold tracking-tight sm:text-6xl">
               Imágenes y videos con IA, <span className="text-brand-2">en minutos</span>
@@ -132,7 +129,7 @@ export default function Home() {
               <AudioLines size={15} className="text-brand-2" />
               <span>
                 «Hoy les traigo el mejor café de Miraflores»
-                <span className="block text-mute">Video con voz · LTX-2.5</span>
+                <span className="block text-mute">Video con voz generado con IA</span>
               </span>
             </div>
           </div>
@@ -174,7 +171,6 @@ export default function Home() {
                     <ArrowRight size={16} className="text-mute transition group-hover:translate-x-1 group-hover:text-brand-2" />
                   </h3>
                   <p className="mt-1 text-sm text-mute">{f.d}</p>
-                  <p className="mt-3 text-xs text-brand-2">{f.item.model}</p>
                 </div>
               </Link>
             </Reveal>
@@ -323,7 +319,7 @@ export default function Home() {
                   {p.credits.toLocaleString("es")} créditos {p.bonus && <span className="text-brand-2">({p.bonus})</span>}
                 </p>
                 <ul className="mt-5 flex-1 space-y-1.5 text-sm text-mute">
-                  <li>≈ {Math.floor(p.credits / 10)} videos con voz LTX-2.5 de 5 s</li>
+                  <li>≈ {Math.floor(p.credits / 10)} videos con voz de 5 s</li>
                   <li>≈ {Math.floor(p.credits / 3)} imágenes Nano Banana 2</li>
                   <li>≈ {p.credits} imágenes Z-Image Turbo</li>
                 </ul>
