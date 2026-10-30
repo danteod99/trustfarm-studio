@@ -1,30 +1,59 @@
 -- Cajas (Empleado IA): vinculación de cajas con cuentas, registros con código y límite de intentos.
 -- Correr DESPUÉS de schema.sql (usa auth.users). Idempotente y no destructivo: pegar en el SQL Editor.
+-- Todo va en UNA transacción: si la guarda de abajo se detiene, no se crea ni se cambia nada.
+
+begin;
+
+-- Guarda para el proyecto compartido: si ya hay una tabla o función con estos nombres que NO creó
+-- este script (no lleva la marca 'empleado-ia/cajas'), se detiene sin tocar nada.
+-- La primera vez no existe ninguna (to_regclass/to_regprocedure dan NULL) y sigue; las siguientes
+-- existen con la marca que este mismo script les pone, y también sigue.
+do $$
+declare
+  t text;
+  f text;
+begin
+  foreach t in array array['cajas', 'caja_registros', 'caja_intentos'] loop
+    if to_regclass('public.' || t) is not null
+       and obj_description(to_regclass('public.' || t), 'pg_class') is distinct from 'empleado-ia/cajas' then
+      raise exception 'La tabla % ya existe y no es de Empleado IA: revisa antes de continuar.', t;
+    end if;
+  end loop;
+  foreach f in array array['caja_vincular(text,uuid,text,text,text)', 'caja_desvincular(uuid)', 'caja_registros_al_borrar_caja()'] loop
+    if to_regprocedure('public.' || f) is not null
+       and obj_description(to_regprocedure('public.' || f), 'pg_proc') is distinct from 'empleado-ia/cajas' then
+      raise exception 'La función % ya existe y no es de Empleado IA: revisa antes de continuar.', f;
+    end if;
+  end loop;
+end
+$$;
 
 create table if not exists cajas (
   id         uuid primary key default gen_random_uuid(),
   owner_id   uuid not null references auth.users(id) on delete cascade,
-  nombre     text not null default 'Mi caja',
+  nombre     text not null default 'Mi caja' check (char_length(nombre) between 1 and 60),
   slug       text not null unique check (slug ~ '^[a-z0-9]{8}$'),
   tunnel_id  text not null,
   last_seen  timestamptz,
   version    text,
-  created_at timestamptz default now(),
-  linked_at  timestamptz default now()
+  created_at timestamptz not null default now(),
+  linked_at  timestamptz not null default now()
 );
+comment on table cajas is 'empleado-ia/cajas';
 create index if not exists cajas_owner_idx on cajas (owner_id);
 
 create table if not exists caja_registros (
   id          uuid primary key default gen_random_uuid(),
-  codigo      text not null unique,          -- 8 caracteres normalizados, sin guion
-  secreto_hash text not null,                -- SHA-256 hex del secreto de la caja
+  codigo      text not null unique check (codigo ~ '^[A-HJKMNP-Z2-9]{8}$'),  -- 8 caracteres normalizados, sin guion
+  secreto_hash text not null check (secreto_hash ~ '^[0-9a-f]{64}$'),      -- SHA-256 hex del secreto de la caja
   expira_en   timestamptz not null,
   caja_id     uuid references cajas(id) on delete set null,
   estado      text not null default 'pendiente' check (estado in ('pendiente','vinculada','desvinculada')),
   version     text,
   ip          text,
-  created_at  timestamptz default now()
+  created_at  timestamptz not null default now()
 );
+comment on table caja_registros is 'empleado-ia/cajas';
 create index if not exists caja_registros_expira_idx on caja_registros (expira_en);
 create index if not exists caja_registros_caja_idx on caja_registros (caja_id);
 
@@ -33,6 +62,7 @@ create table if not exists caja_intentos (
   clave  text not null,
   creado timestamptz not null default now()
 );
+comment on table caja_intentos is 'empleado-ia/cajas';
 create index if not exists caja_intentos_clave_idx on caja_intentos (clave, creado desc);
 
 alter table cajas          enable row level security;
@@ -75,8 +105,9 @@ begin
   end if;
 
   -- Si el slug choca, la violación de unicidad se propaga (y revierte el UPDATE): el llamador reintenta.
+  -- El nombre se limpia y se recorta a 60 (el CHECK de cajas.nombre lo exige); vacío → 'Mi caja'.
   insert into cajas (owner_id, nombre, slug, tunnel_id)
-  values (p_owner, coalesce(nullif(p_nombre, ''), 'Mi caja'), p_slug, p_tunnel_id)
+  values (p_owner, coalesce(nullif(left(btrim(p_nombre), 60), ''), 'Mi caja'), p_slug, p_tunnel_id)
   returning id into v_caja;
 
   update caja_registros set caja_id = v_caja where id = v_registro;
@@ -84,6 +115,7 @@ begin
   return v_caja;
 end;
 $$;
+comment on function caja_vincular(text, uuid, text, text, text) is 'empleado-ia/cajas';
 revoke all on function caja_vincular(text, uuid, text, text, text) from public, anon, authenticated;
 grant execute on function caja_vincular(text, uuid, text, text, text) to service_role;
 
@@ -99,6 +131,7 @@ begin
   delete from cajas where id = p_caja;
 end;
 $$;
+comment on function caja_desvincular(uuid) is 'empleado-ia/cajas';
 revoke all on function caja_desvincular(uuid) from public, anon, authenticated;
 grant execute on function caja_desvincular(uuid) to service_role;
 
@@ -118,9 +151,12 @@ begin
   return old;
 end
 $$;
+comment on function caja_registros_al_borrar_caja() is 'empleado-ia/cajas';
 revoke all on function caja_registros_al_borrar_caja() from public, anon, authenticated;
 
 drop trigger if exists cajas_marcar_desvinculada on cajas;
 create trigger cajas_marcar_desvinculada
   before delete on cajas
   for each row execute function caja_registros_al_borrar_caja();
+
+commit;
