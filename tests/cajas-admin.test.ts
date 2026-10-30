@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { paginaAdminCajas, TAM_PAGINA_ADMIN } from '../app/lib/cajas/admin-lista.ts'
+import { fijarTopeAdmin, paginaAdminCajas, TAM_PAGINA_ADMIN } from '../app/lib/cajas/admin-lista.ts'
 import { crearClienteMem } from './cajas-cliente-mem.ts'
 
 const T0 = new Date('2026-10-30T12:00:00Z')
@@ -46,8 +46,56 @@ test('paginaAdminCajas: justo 100 no marca hay_mas; página vacía', async () =>
 test('paginaAdminCajas: forma de salida sin tunnel_id y página inválida cae a 0', async () => {
   const { deps } = conCajas(1)
   const p = await paginaAdminCajas(deps, -3)
-  assert.deepEqual(Object.keys(p.cajas[0]).sort(), ['direccion', 'estado', 'id', 'nombre', 'owner_id', 'ultima_senal', 'version', 'vinculada_en'])
+  assert.deepEqual(Object.keys(p.cajas[0]).sort(), ['direccion', 'estado', 'gastado_hoy', 'id', 'nombre', 'owner_id', 'tope_diario', 'ultima_senal', 'version', 'vinculada_en'])
   assert.equal(p.cajas[0].direccion, 's0.cajas.test')
   assert.equal(p.cajas[0].estado, 'apagada')
   assert.ok(!JSON.stringify(p).includes('TUNEL-SECRETO'))
+})
+
+test('paginaAdminCajas: muestra el tope (100 por defecto) y lo gastado hoy desde el inicio del día en Lima', async () => {
+  const { m, deps } = conCajas(2)
+  m.cajas[1].topeDiario = 250
+  m.gasto[m.cajas[1].id] = 37
+  const p = await paginaAdminCajas(deps, 0)
+  const porNombre = Object.fromEntries(p.cajas.map(c => [c.nombre, c]))
+  assert.equal(porNombre.c0.tope_diario, 100)
+  assert.equal(porNombre.c0.gastado_hoy, 0)
+  assert.equal(porNombre.c1.tope_diario, 250)
+  assert.equal(porNombre.c1.gastado_hoy, 37)
+  // 2026-10-30T12:00Z son las 07:00 en Lima: el día de Lima empezó a las 05:00Z de ese día
+  assert.equal(m.gastoConsultas[0].desdeIso, '2026-10-30T05:00:00.000Z')
+  assert.deepEqual(m.gastoConsultas[0].ids.sort(), m.cajas.map(c => c.id).sort())
+})
+
+test('fijarTopeAdmin: solo enteros de 0 a 10000', async () => {
+  const { m, deps } = conCajas(1)
+  const id = m.cajas[0].id
+  for (const malo of [-1, 10001, 2.5, '5', null, undefined, NaN]) {
+    const r = await fijarTopeAdmin(deps, { cajaId: id, tope: malo })
+    assert.equal(r.ok, false, String(malo))
+    if (!r.ok) {
+      assert.equal(r.status, 400)
+      assert.equal(r.error, 'El tope debe ser un número entero entre 0 y 10000.')
+    }
+  }
+  assert.equal(m.cajas[0].topeDiario, undefined)
+})
+
+test('fijarTopeAdmin: guarda el tope (también 0 y 10000) y la lista lo refleja', async () => {
+  const { m, deps } = conCajas(1)
+  const id = m.cajas[0].id
+  for (const ok of [0, 10000, 150]) {
+    assert.deepEqual(await fijarTopeAdmin(deps, { cajaId: id, tope: ok }), { ok: true })
+    assert.equal((await paginaAdminCajas(deps, 0)).cajas[0].tope_diario, ok)
+  }
+})
+
+test('fijarTopeAdmin: una caja que no existe → 404', async () => {
+  const { deps } = conCajas(1)
+  const r = await fijarTopeAdmin(deps, { cajaId: '00000000-0000-4000-8000-0000000000ff', tope: 50 })
+  assert.equal(r.ok, false)
+  if (!r.ok) {
+    assert.equal(r.status, 404)
+    assert.equal(r.error, 'No encontré esa caja.')
+  }
 })

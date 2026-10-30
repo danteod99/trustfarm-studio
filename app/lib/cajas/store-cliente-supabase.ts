@@ -3,9 +3,9 @@
 import { supabaseAdmin } from '../supabase/admin'
 import type { CajaCliente, ClienteStore } from './cliente-servicio'
 
-const COLS = 'id, owner_id, nombre, slug, tunnel_id, last_seen, version, created_at'
-type Fila = { id: string; owner_id: string; nombre: string; slug: string; tunnel_id: string; last_seen: string | null; version?: string | null; created_at?: string | null }
-const mapear = (f: Fila): CajaCliente => ({ id: f.id, ownerId: f.owner_id, nombre: f.nombre, slug: f.slug, tunnelId: f.tunnel_id, lastSeen: f.last_seen ?? null, version: f.version ?? null, creadaEn: f.created_at ?? null })
+const COLS = 'id, owner_id, nombre, slug, tunnel_id, last_seen, version, created_at, tope_diario'
+type Fila = { id: string; owner_id: string; nombre: string; slug: string; tunnel_id: string; last_seen: string | null; version?: string | null; created_at?: string | null; tope_diario?: number | null }
+const mapear = (f: Fila): CajaCliente => ({ id: f.id, ownerId: f.owner_id, nombre: f.nombre, slug: f.slug, tunnelId: f.tunnel_id, lastSeen: f.last_seen ?? null, version: f.version ?? null, creadaEn: f.created_at ?? null, topeDiario: f.tope_diario ?? undefined })
 
 export function clienteStoreSupabase(): ClienteStore {
   const db = supabaseAdmin()
@@ -64,6 +64,21 @@ export function clienteStoreSupabase(): ClienteStore {
     async desvincularCaja(cajaId) {
       const { error } = await db.rpc('caja_desvincular', { p_caja: cajaId })
       if (error) throw new Error('No se pudo desvincular la caja.')
+    },
+    async fijarTope(cajaId, tope) {
+      const { data, error } = await db.from('cajas').update({ tope_diario: tope }).eq('id', cajaId).select('id')
+      if (error) throw new Error('No se pudo guardar el tope.')
+      return (data?.length ?? 0) > 0
+    },
+    async gastoHoyPorCajas(ids, desdeIso) {
+      const total: Record<string, number> = Object.fromEntries(ids.map(i => [i, 0]))
+      if (!ids.length) return total
+      // Una sola consulta para toda la página; se suma aquí (misma regla que la función SQL caja_gasto_hoy).
+      const { data, error } = await db.from('ai_generations').select('caja_id, cost_credits')
+        .in('caja_id', ids).eq('charged', true).neq('status', 'failed').gte('created_at', desdeIso)
+      if (error) throw new Error('No se pudo leer el gasto de las cajas.')
+      for (const f of (data ?? []) as Array<{ caja_id: string; cost_credits: number }>) total[f.caja_id] = (total[f.caja_id] ?? 0) + f.cost_credits
+      return total
     },
     async listarTodasLasCajas(desde, limite) {
       const { data, error } = await db.from('cajas').select(COLS).order('created_at', { ascending: false }).range(desde, desde + limite - 1)

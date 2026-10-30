@@ -17,6 +17,9 @@ export function crearClienteMem(ahora: { t: Date }) {
     desvincularFalla: false,
     eventos: [] as string[],
     renombres: [] as { cajaId: string; nombre: string }[],
+    // Estudio: gasto de hoy por caja y registro de las consultas (para comprobar desde cuándo se pide)
+    gasto: {} as Record<string, number>,
+    gastoConsultas: [] as { ids: string[]; desdeIso: string }[],
   }
   let n = 0
   const store: ClienteStore = {
@@ -44,6 +47,8 @@ export function crearClienteMem(ahora: { t: Date }) {
       if (m.desvincularFalla) throw new Error('boom')
       m.cajas = m.cajas.filter(c => c.id !== id)
     },
+    async fijarTope(id, tope) { const c = m.cajas.find(x => x.id === id); if (!c) return false; c.topeDiario = tope; return true },
+    async gastoHoyPorCajas(ids, desdeIso) { m.gastoConsultas.push({ ids: [...ids], desdeIso }); return Object.fromEntries(ids.map(i => [i, m.gasto[i] ?? 0])) },
     async listarTodasLasCajas(desde, limite) {
       return [...m.cajas].sort((a, b) => (b.creadaEn ?? '').localeCompare(a.creadaEn ?? '')).slice(desde, desde + limite)
     },

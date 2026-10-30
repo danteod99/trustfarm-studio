@@ -20,9 +20,54 @@ interface CajaAdmin {
   ultima_senal: string | null;
   version: string | null;
   vinculada_en: string | null;
+  tope_diario: number;
+  gastado_hoy: number;
 }
 
 const fecha = (iso: string | null) => (iso ? new Date(iso).toLocaleString("es") : "—");
+
+/** Tope diario de créditos del Estudio de una caja: lo gastado hoy y un campo para cambiarlo. */
+function TopeCaja({ c, onGuardado }: { c: CajaAdmin; onGuardado: (id: string, tope: number) => void }) {
+  const [valor, setValor] = useState(String(c.tope_diario));
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function guardar() {
+    setGuardando(true);
+    setError(null);
+    try {
+      const r = await fetch("/api/admin/cajas", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caja_id: c.id, tope_diario: Number(valor) }),
+      });
+      if (!r.ok) setError((await r.json().catch(() => ({}))).error ?? "No se pudo guardar el tope.");
+      else onGuardado(c.id, Number(valor));
+    } catch {
+      setError("No se pudo conectar.");
+    }
+    setGuardando(false);
+  }
+
+  return (
+    <span className="flex flex-wrap items-center gap-2 text-xs">
+      <span className="text-mute">Hoy {c.gastado_hoy} /</span>
+      <input
+        className="input !w-20 !py-1"
+        type="number"
+        min={0}
+        max={10000}
+        aria-label={`Tope diario de ${c.nombre}`}
+        value={valor}
+        onChange={(e) => setValor(e.target.value)}
+      />
+      <button className="btn-ghost !px-3 !py-1.5" disabled={guardando || Number(valor) === c.tope_diario} onClick={guardar}>
+        {guardando ? "Guardando…" : "Guardar"}
+      </button>
+      {error && <span className="text-red-400">{error}</span>}
+    </span>
+  );
+}
 
 function CajasAdmin() {
   const [cajas, setCajas] = useState<CajaAdmin[]>([]);
@@ -71,6 +116,8 @@ function CajasAdmin() {
     setQuitando(null);
   }
 
+  const topeGuardado = (id: string, tope: number) => setCajas((prev) => prev.map((x) => (x.id === id ? { ...x, tope_diario: tope } : x)));
+
   const acciones = (c: CajaAdmin) =>
     confirmar === c.id ? (
       <span className="flex flex-wrap items-center gap-2">
@@ -117,6 +164,9 @@ function CajasAdmin() {
             </p>
             <p className="text-xs text-mute">Última señal: {fecha(c.ultima_senal)}</p>
             <p className="text-xs text-mute">Vinculada: {fecha(c.vinculada_en)}</p>
+            <div className="mt-2">
+              <TopeCaja key={`${c.id}-${c.tope_diario}`} c={c} onGuardado={topeGuardado} />
+            </div>
             <div className="mt-2">{acciones(c)}</div>
           </li>
         ))}
@@ -133,6 +183,7 @@ function CajasAdmin() {
               <th>Estado</th>
               <th>Última señal</th>
               <th>Versión</th>
+              <th>Estudio (créditos hoy / tope)</th>
               <th></th>
             </tr>
           </thead>
@@ -145,6 +196,9 @@ function CajasAdmin() {
                 <td className="pr-3">{estado(c)}</td>
                 <td className="pr-3 text-xs">{fecha(c.ultima_senal)}</td>
                 <td className="pr-3 text-xs">{c.version ?? "—"}</td>
+                <td className="pr-3">
+                  <TopeCaja key={`${c.id}-${c.tope_diario}`} c={c} onGuardado={topeGuardado} />
+                </td>
                 <td>{acciones(c)}</td>
               </tr>
             ))}

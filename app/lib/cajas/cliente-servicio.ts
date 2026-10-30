@@ -4,7 +4,7 @@ import { randomInt } from 'node:crypto'
 import { normalizarCodigo } from './codigo.ts'
 import { firmarPase } from './pase.ts'
 
-export interface CajaCliente { id: string; ownerId: string; nombre: string; slug: string; tunnelId: string; lastSeen: string | null; version?: string | null; creadaEn?: string | null }
+export interface CajaCliente { id: string; ownerId: string; nombre: string; slug: string; tunnelId: string; lastSeen: string | null; version?: string | null; creadaEn?: string | null; topeDiario?: number }
 
 export type ResultadoVincular =
   | { ok: true; cajaId: string }
@@ -25,6 +25,10 @@ export interface ClienteStore {
   desvincularCaja(cajaId: string): Promise<void>
   /** Para el panel de administración: más recientes primero, `limite` filas desde la posición `desde`. */
   listarTodasLasCajas(desde: number, limite: number): Promise<CajaCliente[]>
+  /** Cambia el tope diario del Estudio; false si la caja no existe. */
+  fijarTope(cajaId: string, tope: number): Promise<boolean>
+  /** Créditos gastados hoy por cada caja (sin contar generaciones fallidas), desde `desdeIso`. */
+  gastoHoyPorCajas(ids: string[], desdeIso: string): Promise<Record<string, number>>
 }
 
 export interface ClienteDeps {
