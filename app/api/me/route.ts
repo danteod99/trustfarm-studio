@@ -1,6 +1,7 @@
 import { getUser, isAdminEmail, UNAUTHORIZED } from "@/app/lib/auth";
 import { getBalance } from "@/app/lib/credits";
 import { supabaseAdmin } from "@/app/lib/supabase/admin";
+import { readSub } from "@/app/lib/subscription";
 
 export async function GET() {
   const user = await getUser();
@@ -16,5 +17,6 @@ export async function GET() {
     admin: isAdminEmail(user.email),
     balance: await getBalance(user.id),
     ledger: ledger ?? [],
+    subscription: readSub(user.app_metadata),
   });
 }
