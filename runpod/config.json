@@ -76,6 +76,117 @@
       },
       "negative": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
       "steps": 20
+    },
+    "qwen-image-pro": {
+      "workflow": "workflows/qwen21_full.json",
+      "workflow_con_imagen": "workflows/qwen21_full_ref.json",
+      "steps": 25,
+      "negative": "",
+      "image_size": {
+        "1:1": [
+          1328,
+          1328
+        ],
+        "9:16": [
+          928,
+          1664
+        ],
+        "16:9": [
+          1664,
+          928
+        ]
+      }
+    },
+    "z-image-pro": {
+      "workflow": "workflows/z_image_base.json",
+      "steps": 25,
+      "negative": "borroso, deformado, manos deformes, texto ilegible, marca de agua, baja calidad",
+      "image_size": {
+        "1:1": [
+          1024,
+          1024
+        ],
+        "9:16": [
+          768,
+          1344
+        ],
+        "16:9": [
+          1344,
+          768
+        ]
+      }
+    },
+    "wan-14b": {
+      "workflow": "workflows/wan14b_t2v.json",
+      "workflow_con_imagen": "workflows/wan14b_i2v.json",
+      "fps": 16,
+      "negative": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "video_size": {
+        "480p": {
+          "16:9": [
+            832,
+            480
+          ],
+          "9:16": [
+            480,
+            832
+          ],
+          "1:1": [
+            640,
+            640
+          ]
+        },
+        "720p": {
+          "16:9": [
+            1280,
+            720
+          ],
+          "9:16": [
+            720,
+            1280
+          ],
+          "1:1": [
+            960,
+            960
+          ]
+        }
+      }
+    },
+    "ltx-25": {
+      "workflow": "workflows/ltx25_t2v.json",
+      "workflow_con_imagen": "workflows/ltx25_i2v.json",
+      "fps": 24,
+      "negative": "pc game, console game, video game, cartoon, childish, ugly, blurry, distorted, subtitles, watermark",
+      "video_size": {
+        "720p": {
+          "16:9": [
+            1280,
+            704
+          ],
+          "9:16": [
+            704,
+            1280
+          ],
+          "1:1": [
+            960,
+            960
+          ]
+        },
+        "1080p": {
+          "16:9": [
+            1920,
+            1088
+          ],
+          "9:16": [
+            1088,
+            1920
+          ],
+          "1:1": [
+            1408,
+            1408
+          ]
+        }
+      }
     }
   }
 }

@@ -10,7 +10,7 @@
 //   Qwen-Image (fal) ~$0.02/img · Wan 2.2 A14B (fal) ~$0.40 por clip 720p de 5 s
 
 export type Kind = "image" | "video";
-export type Provider = "gemini-image" | "veo" | "fal" | "local";
+export type Provider = "gemini-image" | "veo" | "fal" | "local" | "runpod";
 export type Aspect = "16:9" | "9:16" | "1:1";
 export type Resolution = "480p" | "720p" | "1080p";
 
@@ -31,13 +31,27 @@ export interface ModelDef {
   credits: number | Partial<Record<Resolution, number>>;
   acceptsImage: boolean;
   badge?: string;
-  /** Lo genera el servidor local (GPU en casa) cuando está en línea; si no, fal.ai. */
+  /** Lo genera el servidor local (GPU en casa) cuando está en línea; si no, la nube. */
   localCapable?: boolean;
+  /** Solo admins lo ven (modelos en prueba, sin precio definitivo). */
+  adminOnly?: boolean;
+  /** Lo puede generar RunPod (desborde del servidor de casa, o único lugar si provider = "runpod"). */
+  cloud?: boolean;
 }
 
-/** Sin respaldo en la nube: solo se puede usar con el servidor local encendido. */
-export function needsLocal(m: ModelDef, falConfigured: boolean): boolean {
-  return m.provider === "local" || (!!m.localCapable && !falConfigured);
+export interface Capacity {
+  /** Modelos que el servidor de casa puede generar ahora. */
+  online: string[];
+  fal: boolean;
+  runpod: boolean;
+}
+
+/** ¿Se puede generar este modelo ahora mismo? (Gemini/Veo siempre). */
+export function available(m: ModelDef, c: Capacity): boolean {
+  if (m.provider === "gemini-image" || m.provider === "veo") return true;
+  if (m.cloud && c.runpod) return true;
+  if (m.localCapable && c.online.includes(m.id)) return true;
+  return m.provider === "fal" && c.fal;
 }
 
 export const MODELS: ModelDef[] = [
@@ -73,9 +87,10 @@ export const MODELS: ModelDef[] = [
     providerModel: "fal-ai/qwen-image",
     aspects: ["1:1", "9:16", "16:9"],
     credits: 1,
-    acceptsImage: false,
+    acceptsImage: true,
     badge: "Económico",
     localCapable: true,
+    cloud: true,
   },
   {
     id: "z-image",
@@ -89,6 +104,7 @@ export const MODELS: ModelDef[] = [
     acceptsImage: false,
     badge: "Económico",
     localCapable: true,
+    cloud: true,
   },
   {
     id: "veo-lite",
@@ -132,8 +148,58 @@ export const MODELS: ModelDef[] = [
     credits: { "480p": 1.2, "720p": 2 },
     acceptsImage: true,
     localCapable: true,
+    cloud: true,
   },
 ];
+
+// Modelos grandes: solo en RunPod. Solo visibles para admins hasta fijar precios con el costo real.
+MODELS.push(
+  {
+    id: "qwen-image-pro",
+    kind: "image",
+    provider: "runpod",
+    name: "Qwen-Image 2.1 Pro",
+    tagline: "El mejor modelo abierto, sin comprimir. Texto en la imagen y personajes con foto de referencia.",
+    providerModel: "qwen_image_2.1_bf16",
+    aspects: ["1:1", "9:16", "16:9"],
+    credits: 3,
+    acceptsImage: true,
+    badge: "Calidad",
+    cloud: true,
+    adminOnly: true,
+  },
+  {
+    id: "wan-14b",
+    kind: "video",
+    provider: "runpod",
+    name: "Wan 2.2 14B",
+    tagline: "Video abierto de 14B, el que más LoRAs tiene. Sin audio.",
+    providerModel: "wan2.2_14B",
+    aspects: ["9:16", "16:9", "1:1"],
+    durations: [5],
+    resolutions: ["480p", "720p"],
+    credits: { "480p": 1, "720p": 2 },
+    acceptsImage: true,
+    cloud: true,
+    adminOnly: true,
+  },
+  {
+    id: "ltx-25",
+    kind: "video",
+    provider: "runpod",
+    name: "LTX-2.5",
+    tagline: "Video con audio y voces sincronizadas, 22B. Lo más parecido a Veo en abierto.",
+    providerModel: "ltx-2.5-22b",
+    aspects: ["9:16", "16:9", "1:1"],
+    durations: [5, 8],
+    resolutions: ["720p", "1080p"],
+    credits: { "720p": 1.5, "1080p": 2.5 },
+    acceptsImage: true,
+    badge: "Con audio",
+    cloud: true,
+    adminOnly: true,
+  }
+);
 
 export function getModel(id: string): ModelDef | undefined {
   return MODELS.find((m) => m.id === id);

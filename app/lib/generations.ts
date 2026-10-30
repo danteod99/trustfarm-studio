@@ -5,13 +5,14 @@ import {
   MAX_PROMPT,
   creditCost,
   getModel,
-  needsLocal,
   validOptions,
   type Aspect,
+  type ModelDef,
   type Resolution,
 } from "@/app/lib/catalog";
 import * as gemini from "@/app/lib/providers/gemini";
 import * as fal from "@/app/lib/providers/fal";
+import * as runpod from "@/app/lib/providers/runpod";
 import { ProviderError, type InputImage, type PollResult } from "@/app/lib/providers/gemini";
 import { getPreset, presetPrefix, storageImage } from "@/app/lib/presets";
 import { getMotion } from "@/app/lib/templates";
@@ -42,6 +43,8 @@ const FINALIZE_STALE_MS = 5 * 60 * 1000;
 const LOCAL_QUEUE_MAX_MS = 10 * 60 * 1000;
 /** El servidor local manda señal de vida cada 30 s. */
 const WORKER_HEARTBEAT_MS = 90 * 1000;
+/** Con esta cantidad de trabajos esperando en el servidor de casa, los nuevos van a RunPod. */
+const LOCAL_MAX_QUEUE = 3;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const IMAGE_MIMES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -63,7 +66,8 @@ export type StartResult = { ok: true; generation: Generation } | { ok: false; er
 
 export async function startGeneration(userId: string, free: boolean, input: StartInput): Promise<StartResult> {
   const model = getModel(input.model);
-  if (!model) return { ok: false, error: "Modelo no válido.", status: 400 };
+  // Los modelos en prueba (adminOnly) solo los usan los admins, que son los que generan gratis.
+  if (!model || (model.adminOnly && !free)) return { ok: false, error: "Modelo no válido.", status: 400 };
 
   const prompt = (input.prompt || "").trim();
   if (prompt.length < 3) return { ok: false, error: "Escribe una descripción.", status: 400 };
@@ -122,10 +126,11 @@ export async function startGeneration(userId: string, free: boolean, input: Star
     return { ok: false, error: `Tienes ${MAX_ACTIVE_JOBS} generaciones en curso. Espera a que termine una.`, status: 429 };
   }
 
-  // Sin FAL_KEY (o modelo solo local) no hay respaldo: se avisa antes de cobrar.
-  const useLocal = !!model.localCapable && (await workerOnline(model.id));
-  if (!useLocal && needsLocal(model, !!process.env.FAL_KEY)) {
-    return { ok: false, error: `${model.name} corre en nuestro servidor y ahora está apagado. Usa otro modelo.`, status: 503 };
+  // Dónde se genera: servidor de casa (gratis) → RunPod (desborde o modelos grandes) → fal.
+  // Si no hay dónde, se avisa antes de cobrar.
+  const route = await pickRoute(model);
+  if (!route) {
+    return { ok: false, error: `${model.name} no está disponible en este momento. Usa otro modelo.`, status: 503 };
   }
 
   const cost = free ? 0 : creditCost(model, opts);
@@ -155,10 +160,9 @@ export async function startGeneration(userId: string, free: boolean, input: Star
     await db.from("ai_generations").update({ charged: true }).eq("id", row.id);
   }
 
-  if (useLocal) {
+  if (route === "local" || route === "runpod") {
     try {
-      // El servidor local toma el trabajo de la cola (ai_claim_job). Solo es reclamable
-      // cuando provider_ref.local = true, que se marca después de cobrar.
+      // El worker (en casa o en RunPod) toma el trabajo de Supabase; la imagen de entrada va al bucket.
       let inputPath: string | undefined;
       if (image) {
         inputPath = `inputs/${userId}/${row.id}.jpg`;
@@ -167,7 +171,15 @@ export async function startGeneration(userId: string, free: boolean, input: Star
           .upload(inputPath, Buffer.from(image.data, "base64"), { contentType: image.mime, upsert: true });
         if (error) throw new Error(`storage: ${error.message}`);
       }
-      await update(row.id, { params: { ...opts, withImage: !!image, inputPath }, provider_ref: { local: true } });
+      const params = { ...opts, withImage: !!image, inputPath };
+      if (route === "local") {
+        // Solo es reclamable (ai_claim_job) cuando provider_ref.local = true, que se marca después de cobrar.
+        await update(row.id, { params, provider_ref: { local: true } });
+      } else {
+        await update(row.id, { params, provider_ref: { runpod: true } });
+        const runpodId = await runpod.submit(row.id);
+        await update(row.id, { provider_ref: { runpod: true, runpod_id: runpodId } });
+      }
     } catch (e) {
       await failGeneration(row.id, publicError(e));
     }
@@ -216,6 +228,22 @@ export async function refreshGeneration(gen: Generation): Promise<Generation> {
   if (age > JOB_TIMEOUT_MS) {
     await failGeneration(gen.id, "La generación tardó demasiado. Te devolvimos los créditos.");
     return load(gen.id);
+  }
+
+  if (gen.provider_ref?.runpod) {
+    // Lo genera y guarda el worker en RunPod; aquí solo se detecta si RunPod lo dio por fallido.
+    if (!gen.provider_ref.runpod_id || gen.status === "done") return gen;
+    try {
+      const st = await runpod.status(gen.provider_ref.runpod_id);
+      if (st.state === "failed") {
+        await failGeneration(gen.id, `El servidor en la nube falló. Te devolvimos los créditos. (${st.error ?? ""})`.slice(0, 300));
+        return load(gen.id);
+      }
+      if (st.state === "done") return load(gen.id);
+    } catch (e) {
+      console.error(`[gen ${gen.id}] runpod:`, e);
+    }
+    return gen;
   }
 
   if (gen.provider_ref?.local) {
@@ -288,6 +316,30 @@ export async function failGeneration(id: string, error: string): Promise<void> {
       console.error(`[gen ${id}] reembolso falló:`, e);
     }
   }
+}
+
+type Route = "local" | "runpod" | "fal" | "google";
+
+async function pickRoute(model: ModelDef): Promise<Route | null> {
+  if (model.provider === "gemini-image" || model.provider === "veo") return "google";
+  if (model.provider === "runpod") return runpod.runpodConfigured() ? "runpod" : null;
+  if (model.localCapable && (await workerOnline(model.id))) {
+    if (!model.cloud || !runpod.runpodConfigured() || (await localQueue(model.id)) < LOCAL_MAX_QUEUE) return "local";
+  }
+  if (model.cloud && runpod.runpodConfigured()) return "runpod";
+  if (model.provider === "fal" && process.env.FAL_KEY) return "fal";
+  return null;
+}
+
+/** Trabajos de este modelo esperando turno en el servidor de casa. */
+async function localQueue(modelId: string): Promise<number> {
+  const { count } = await supabaseAdmin()
+    .from("ai_generations")
+    .select("id", { count: "exact", head: true })
+    .eq("model", modelId)
+    .eq("status", "queued")
+    .eq("provider_ref->>local", "true");
+  return count ?? 0;
 }
 
 /** Modelos que algún servidor local encendido puede generar ahora. */

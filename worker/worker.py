@@ -221,6 +221,9 @@ def procesar(job: dict):
         w, h = (modelo.get("image_size") or IMAGE_SIZE)[aspecto]
         valores.update({"WIDTH": w, "HEIGHT": h})
 
+    # LTX genera la 1.ª pasada a media resolución (luego sube el latente ×2).
+    valores.update({"WIDTH_HALF": valores["WIDTH"] // 2, "HEIGHT_HALF": valores["HEIGHT"] // 2})
+
     if p.get("inputPath"):
         valores["IMAGE"] = subir_a_comfy(bajar_storage(p["inputPath"]), f"{job['id']}.jpg")
         plantilla = modelo["workflow_con_imagen"]

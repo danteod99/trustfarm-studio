@@ -46,11 +46,16 @@ bajar loras         Comfy-Org/Wan-2.2/resolve/main/split_files/loras/wan2.2_t2v_
 bajar loras         Comfy-Org/Wan-2.2/resolve/main/split_files/loras/wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors
 bajar loras         Comfy-Org/Wan-2.2/resolve/main/split_files/loras/wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors
 # LTX-2.5 22B (video + audio). Licencia: gratis bajo US$10M de facturación anual.
+# Repo con licencia que hay que aceptar en Hugging Face: sin HF_TOKEN se salta.
+if [ -n "${HF_TOKEN:-}" ]; then
 bajar diffusion_models     Lightricks/LTX-2.5/resolve/main/diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors
 bajar text_encoders        Lightricks/LTX-2.5/resolve/main/text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors
 bajar vae                  Lightricks/LTX-2.5/resolve/main/vae/ltx-2.5-video-vae-bf16.safetensors
 bajar vae                  Lightricks/LTX-2.5/resolve/main/vae/ltx-2.5-audio-vae-bf16.safetensors
 bajar latent_upscale_models Lightricks/LTX-2.5/resolve/main/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors
+else
+  echo "⚠ LTX-2.5 saltado: falta HF_TOKEN"
+fi
 
 mkdir -p "$M/loras/propias"   # aquí van las LoRAs entrenadas por nosotros
 echo "LISTO: $(du -sh "$M" | cut -f1)"

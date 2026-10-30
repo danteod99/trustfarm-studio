@@ -7,8 +7,9 @@ import {
   MAX_PROMPT,
   MODELS,
   creditCost,
+  available,
   getModel,
-  needsLocal,
+  type Capacity,
   validOptions,
   type Aspect,
   type Kind,
@@ -74,7 +75,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
   const [modelId, setModelId] = useState(MODELS.find((m) => m.kind === "video")!.id);
   const model = getModel(modelId)!;
   const kind = model.kind;
-  const models = useMemo(() => MODELS.filter((m) => m.kind === kind), [kind]);
+  const models = useMemo(() => MODELS.filter((m) => m.kind === kind && (!m.adminOnly || free)), [kind, free]);
   const [opts, setOpts] = useState(defaultsFor(model));
   const [prompt, setPrompt] = useState("");
   const [image, setImage] = useState<Img | null>(null);
@@ -93,7 +94,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
   const [styleId, setStyleId] = useState("");
   const [draft, setDraft] = useState<Draft | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
-  const [server, setServer] = useState<{ online: string[]; fal: boolean } | null>(null);
+  const [server, setServer] = useState<Capacity | null>(null);
 
   const { items, balance: polledBalance, setBalance, prepend } = useGenerations("?limit=12");
   const balance = polledBalance ?? initialBalance;
@@ -125,7 +126,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
     const t = setInterval(check, 60_000);
     return () => clearInterval(t);
   }, []);
-  const offline = (m: ModelDef) => !!server && needsLocal(m, server.fal) && !server.online.includes(m.id);
+  const offline = (m: ModelDef) => !!server && !available(m, server);
 
   // Enlaces desde la galería: /estudio?animar=<id> o ?personaje=<id>.
   useEffect(() => {
@@ -399,11 +400,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold">{m.name}</span>
                   <span className="flex items-center gap-2 text-xs">
-                    {server && m.localCapable && (server.online.includes(m.id) || needsLocal(m, server.fal)) && (
-                      <span className={server.online.includes(m.id) ? "text-emerald-400" : "text-mute"}>
-                        ● {server.online.includes(m.id) ? "Servidor en línea" : "Servidor apagado"}
-                      </span>
-                    )}
+                    {server && offline(m) && <span className="text-mute">● No disponible</span>}
                     {m.badge && <span className="text-brand-2">{m.badge}</span>}
                   </span>
                 </div>
@@ -556,7 +553,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
 
         {modelOffline && (
           <p className="rounded-xl bg-amber-500/10 p-3 text-sm text-amber-200">
-            {model.name} corre en nuestro servidor y ahora está apagado. Elige otro modelo o intenta más tarde.
+            {model.name} no está disponible en este momento. Elige otro modelo o intenta más tarde.
           </p>
         )}
         {error && <p className="rounded-xl bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
