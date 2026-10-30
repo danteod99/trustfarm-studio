@@ -4,7 +4,18 @@
 
 const API = 'https://api.cloudflare.com/client/v4'
 const SERVICIO_CAJA = 'http://localhost:8080'
-const SLUG_VALIDO = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/
+/** Contrato: el slug de una caja son 8 caracteres [a-z0-9]. */
+export const SLUG_REGEX = /^[a-z0-9]{8}$/
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+/** Tiempo límite de cada llamada a Cloudflare. */
+export const CLOUDFLARE_TIMEOUT_MS = 10_000
+
+function validarSlug(slug: string) {
+  if (typeof slug !== 'string' || !SLUG_REGEX.test(slug)) throw new Error('El identificador de la caja no es válido para su túnel.')
+}
+function validarTunnelId(id: string) {
+  if (typeof id !== 'string' || !UUID_REGEX.test(id)) throw new Error('El identificador del túnel no es válido.')
+}
 
 export interface CloudflareEnv {
   token: string
@@ -13,9 +24,9 @@ export interface CloudflareEnv {
   dominio: string
 }
 
-interface RegistroDns { id: string; name?: string }
+interface RegistroDns { id: string; name?: string; type?: string; content?: string }
 
-export function crearCloudflare(env: CloudflareEnv, fetchFn: typeof fetch = fetch) {
+export function crearCloudflare(env: CloudflareEnv, fetchFn: typeof fetch = fetch, timeoutMs: number = CLOUDFLARE_TIMEOUT_MS) {
   const cuenta = encodeURIComponent(env.accountId)
   const zona = encodeURIComponent(env.zoneId)
 
@@ -31,6 +42,7 @@ export function crearCloudflare(env: CloudflareEnv, fetchFn: typeof fetch = fetc
     try {
       res = await fetchFn(`${API}${ruta}`, {
         method: metodo,
+        signal: AbortSignal.timeout(timeoutMs),
         headers: {
           Authorization: `Bearer ${env.token}`,
           ...(cuerpo !== undefined ? { 'Content-Type': 'application/json' } : {}),
@@ -57,6 +69,7 @@ export function crearCloudflare(env: CloudflareEnv, fetchFn: typeof fetch = fetc
   const hostnameDe = (slug: string) => `${slug}.${env.dominio}`
 
   async function obtenerTokenTunel(tunnelId: string): Promise<string> {
+    validarTunnelId(tunnelId)
     const token = await llamar('obtener token del túnel', 'GET', `/accounts/${cuenta}/cfd_tunnel/${encodeURIComponent(tunnelId)}/token`)
     if (typeof token !== 'string' || !token) throw new Error('Cloudflare rechazó la operación (obtener token del túnel). Respuesta inesperada.')
     return token
@@ -71,7 +84,7 @@ export function crearCloudflare(env: CloudflareEnv, fetchFn: typeof fetch = fetc
   }
 
   async function crearTunel(slug: string): Promise<{ tunnelId: string; tunnelToken: string; hostname: string }> {
-    if (!SLUG_VALIDO.test(slug)) throw new Error('El identificador de la caja no es válido para crear su túnel.')
+    validarSlug(slug)
     const hostname = hostnameDe(slug)
 
     const creado = await llamar('crear túnel', 'POST', `/accounts/${cuenta}/cfd_tunnel`, { name: `caja-${slug}`, config_src: 'cloudflare' })
@@ -101,13 +114,20 @@ export function crearCloudflare(env: CloudflareEnv, fetchFn: typeof fetch = fetc
   }
 
   async function borrarTunel(tunnelId: string, slug: string): Promise<void> {
+    validarSlug(slug)
+    validarTunnelId(tunnelId)
     const hostname = hostnameDe(slug)
+    const destino = `${tunnelId}.cfargotunnel.com`.toLowerCase()
     const registros: RegistroDns[] | null = await llamar(
       'buscar registro DNS', 'GET', `/zones/${zona}/dns_records?name=${encodeURIComponent(hostname)}`,
     )
     for (const r of Array.isArray(registros) ? registros : []) {
-      // Solo el registro exacto de esta caja
-      if (r?.id && typeof r.name === 'string' && r.name.toLowerCase() === hostname.toLowerCase()) await borrarDns(r.id)
+      // Solo el CNAME de esta caja: nombre exacto, tipo CNAME y apuntando a ESTE túnel
+      if (
+        r?.id && r.type === 'CNAME'
+        && typeof r.name === 'string' && r.name.toLowerCase() === hostname.toLowerCase()
+        && typeof r.content === 'string' && r.content.toLowerCase() === destino
+      ) await borrarDns(r.id)
     }
     // Un túnel con conectores activos no se puede borrar: se limpian primero
     await llamar('limpiar conexiones del túnel', 'DELETE', `/accounts/${cuenta}/cfd_tunnel/${encodeURIComponent(tunnelId)}/connections`, undefined, true)
