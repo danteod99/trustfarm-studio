@@ -152,7 +152,7 @@ export const MODELS: ModelDef[] = [
   },
 ];
 
-// Modelos grandes: solo en RunPod. Solo visibles para admins hasta fijar precios con el costo real.
+// Modelos grandes: solo en RunPod. Precios aprobados 30-10 con el costo medido (~US$0.001/s de GPU, margen ≥3×).
 MODELS.push(
   {
     id: "qwen-image-pro",
@@ -162,11 +162,10 @@ MODELS.push(
     tagline: "El mejor modelo abierto, sin comprimir. Texto en la imagen y personajes con foto de referencia.",
     providerModel: "qwen_image_2.1_bf16",
     aspects: ["1:1", "9:16", "16:9"],
-    credits: 3,
+    credits: 4,
     acceptsImage: true,
     badge: "Calidad",
     cloud: true,
-    adminOnly: true,
   },
   {
     id: "wan-14b",
@@ -178,10 +177,9 @@ MODELS.push(
     aspects: ["9:16", "16:9", "1:1"],
     durations: [5],
     resolutions: ["480p", "720p"],
-    credits: { "480p": 1, "720p": 2 },
+    credits: { "480p": 1.2, "720p": 2 },
     acceptsImage: true,
     cloud: true,
-    adminOnly: true,
   },
   {
     id: "ltx-25",
@@ -193,11 +191,10 @@ MODELS.push(
     aspects: ["9:16", "16:9", "1:1"],
     durations: [5, 8],
     resolutions: ["720p", "1080p"],
-    credits: { "720p": 1.5, "1080p": 2.5 },
+    credits: { "720p": 2, "1080p": 3 },
     acceptsImage: true,
     badge: "Con audio",
     cloud: true,
-    adminOnly: true,
   }
 );
 

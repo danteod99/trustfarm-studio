@@ -81,7 +81,7 @@
       "workflow": "workflows/qwen21_full.json",
       "workflow_con_imagen": "workflows/qwen21_full_ref.json",
       "steps": 25,
-      "negative": "",
+      "negative": "logos de marcas registradas, marcas de agua, texto ilegible",
       "image_size": {
         "1:1": [
           1328,
@@ -120,7 +120,7 @@
       "workflow": "workflows/wan14b_t2v.json",
       "workflow_con_imagen": "workflows/wan14b_i2v.json",
       "fps": 16,
-      "negative": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "negative": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走，商标，品牌标志，文字，乱码文字",
       "video_size": {
         "480p": {
           "16:9": [
@@ -156,7 +156,7 @@
       "workflow": "workflows/ltx25_t2v.json",
       "workflow_con_imagen": "workflows/ltx25_i2v.json",
       "fps": 24,
-      "negative": "pc game, console game, video game, cartoon, childish, ugly, blurry, distorted, subtitles, watermark",
+      "negative": "pc game, console game, video game, cartoon, childish, ugly, blurry, distorted, subtitles, watermark, brand logos, trademarks, gibberish text",
       "video_size": {
         "720p": {
           "16:9": [
