@@ -32,10 +32,12 @@ Regla de oro: **nada de dinero real hasta que tú lo decidas.** Todo el recorrid
 
 | Variable | Dónde se lee | Efecto |
 |---|---|---|
-| `MINIPC_VENTA_ACTIVA` | Solo servidor, **en cada petición** | `1` abre la venta. Vacía, ausente o con cualquier otro valor: el botón dice "Próximamente" y el servidor responde 503 ("Las ventas aún no están abiertas."), incluso si alguien llama a la ruta directo. |
+| `MINIPC_VENTA_ACTIVA` | Solo servidor (dentro de un mismo despliegue se lee por petición, pero **el valor lo fija el despliegue**) | `1` abre la venta. Vacía, ausente o con cualquier otro valor: el botón dice "Próximamente" y el servidor responde 503 ("Las ventas aún no están abiertas."), incluso si alguien llama a la ruta directo. |
 | `NEXT_PUBLIC_MINIPC_VISIBLE` | Se fija **al compilar** | `1` muestra los enlaces "Mini PC" (encabezado y pie) y quita el `noindex` (deja que Google indexe la página). **Cambiarla exige un redeploy en Vercel.** No abre la venta: eso lo hace solo `MINIPC_VENTA_ACTIVA`. |
 | `NEXT_PUBLIC_LIBRO_RECLAMACIONES_URL` | Se fija **al compilar** | El enlace al Libro de Reclamaciones aparece al pie de `/minipc`. Debe empezar por `https://`; si no, el enlace no aparece. También exige redeploy. **En Perú el Libro de Reclamaciones es obligatorio para vender en línea: es requisito antes de abrir la venta.** |
-| `NEXT_PUBLIC_SITE_URL` | Se fija **al compilar** | Es a donde Stripe devuelve al cliente al terminar o cancelar (`/minipc/gracias` y `/minipc`). Si no la pones, usa `https://trustfarm.online`. En la vista previa debes ponerla con la URL de la vista previa (ver 3.3). |
+| `NEXT_PUBLIC_SITE_URL` | Se fija **al compilar** | Es a donde Stripe devuelve al cliente al terminar o cancelar (`/minipc/gracias` y `/minipc`). Si no la pones, usa `https://trustfarm.online`. En la vista previa debes ponerla con la URL de la rama (ver 3.3).
+
+**Regla general en Vercel: cambiar, añadir o quitar CUALQUIER variable (también las de servidor como `MINIPC_VENTA_ACTIVA`) solo surte efecto en el siguiente despliegue.** Después de tocar una variable haz un redeploy: Deployments → los tres puntos (⋯) del último despliegue → Redeploy. |
 
 Con `MINIPC_VENTA_ACTIVA` cerrada, el servidor responde 503 antes de mirar si hay sesión. Con la venta abierta: sin sesión responde 401 (la página te lleva a `/entrar?next=/minipc`) y un plan que no existe responde 400.
 
@@ -72,11 +74,12 @@ Ojo: el proyecto de Supabase es **compartido con trustmind.online**. El script e
 
 ### 3.2 Crear el endpoint de webhook de prueba en Stripe
 
-1. Crea la vista previa de Vercel de la rama `feat/landing-minipc` y copia su URL (algo como `https://….vercel.app`).
-2. En Stripe, con el **modo de prueba** activado, ve a **Desarrolladores → Webhooks → Añadir endpoint**.
-3. URL del endpoint: `https://<tu-vista-previa>.vercel.app/api/stripe/webhook`
-4. Eventos a escuchar, solo estos 2: `checkout.session.completed` y `checkout.session.async_payment_succeeded`.
-5. Al crearlo, Stripe te muestra un **secreto de firma** (empieza por `whsec_`). Cópialo directo al paso siguiente; no lo pegues en ningún chat.
+1. **Primero desactiva la protección de Vercel para las vistas previas.** En Vercel: Settings → Deployment Protection → desactiva **Vercel Authentication** para Preview mientras pruebas (o usa Protection Bypass for Automation). Viene activa por defecto y hace que Vercel responda 401 a Stripe: todas las entregas del webhook fallarían, tú verías `/minipc/gracias` (tu navegador sí está autenticado) pero `/admin` no tendría pedidos. Cuando termines de probar, vuelve a activarla.
+2. Crea la vista previa de Vercel de la rama `feat/landing-minipc` y copia la **URL de la rama**, algo como `https://…-git-feat-landing-minipc-….vercel.app`; es estable entre redeploys, a diferencia de la URL de un despliegue concreto. Para verla: Vercel → tu proyecto → Settings → Domains (o Deployments → el despliegue de la rama → Domains).
+3. En Stripe, con el **modo de prueba** activado, ve a **Desarrolladores → Webhooks → Añadir endpoint**.
+4. URL del endpoint: `https://<url-de-la-rama>.vercel.app/api/stripe/webhook`
+5. Eventos a escuchar, solo estos 2: `checkout.session.completed` y `checkout.session.async_payment_succeeded`.
+6. Al crearlo, Stripe te muestra un **secreto de firma** (empieza por `whsec_`). Cópialo directo al paso siguiente; no lo pegues en ningún chat.
 
 ### 3.3 Variables de entorno solo de Preview en Vercel
 
@@ -86,13 +89,13 @@ En Vercel: **Settings → Environment Variables**, y al crear cada una marca **s
 - `STRIPE_WEBHOOK_SECRET` = el `whsec_…` del endpoint de prueba de arriba
 - `MINIPC_VENTA_ACTIVA` = `1`
 - `NEXT_PUBLIC_MINIPC_VISIBLE` = `1` (para ver los enlaces y la vista previa al compartir)
-- `NEXT_PUBLIC_SITE_URL` = la URL de la vista previa (sin barra final). Sin esto, al pagar Stripe te devolvería al sitio de producción.
+- `NEXT_PUBLIC_SITE_URL` = la URL de la rama de 3.2 (sin barra final). Sin esto, al pagar Stripe te devolvería al sitio de producción.
 - `NEXT_PUBLIC_LIBRO_RECLAMACIONES_URL` = tu enlace `https://…` (opcional para probar, pero necesario para ver el enlace)
 - Las demás variables que ya usa el sitio (Supabase, `ADMIN_EMAILS`, etc.) deben estar disponibles también en Preview.
 
-Después de guardar, **haz un redeploy de la vista previa** (Deployments → los tres puntos → Redeploy). Las variables `NEXT_PUBLIC_…` no surten efecto sin recompilar. Si cambias solo `MINIPC_VENTA_ACTIVA`, basta con esperar: se lee en cada petición (aun así, el redeploy es lo más seguro la primera vez).
+Después de guardar, **haz un redeploy de la vista previa** (Deployments → ⋯ → Redeploy). Cambiar o quitar cualquier variable en Vercel, también las de servidor como `MINIPC_VENTA_ACTIVA`, solo surte efecto en el siguiente despliegue; las `NEXT_PUBLIC_…` además se fijan al compilar.
 
-Cosas que pueden estorbar y que no dependen del código (anótalas si pasan): la protección de despliegues de Vercel puede bloquear las llamadas de Stripe a una vista previa (el webhook recibiría un error 401), y Supabase puede exigir que la URL de la vista previa esté en sus URLs permitidas para iniciar sesión.
+Cosa que puede estorbar y no depende del código (anótala si pasa): Supabase puede exigir que la URL de la vista previa esté en sus URLs permitidas para iniciar sesión.
 
 ---
 
@@ -102,7 +105,7 @@ Usa siempre la URL de la vista previa. Para pagar usa la tarjeta de prueba **424
 
 ### 4.1 Antes de abrir: la venta cerrada
 
-Para ver este estado, quita `MINIPC_VENTA_ACTIVA` en Preview (o ponle `0`) y revisa la vista previa. Si ya la abriste, sáltate este paso y vuelve a él al final.
+Para ver este estado, quita `MINIPC_VENTA_ACTIVA` en Preview (o ponle `0`), **haz redeploy** y revisa la vista previa. Si ya la abriste, sáltate este paso y vuelve a él al final.
 
 1. Abre `/minipc` sin iniciar sesión. Debes ver la página con los 3 planes y, en cada plan, un botón gris **"Próximamente"** que no se puede pulsar.
 
@@ -209,7 +212,7 @@ Esto es un acto tuyo, explícito. No lo hagas hasta que esta lista esté complet
 4. **Haz redeploy** (las dos variables `NEXT_PUBLIC_…` lo exigen).
 5. Haz una compra real pequeña contigo mismo si lo decides, y reembólsala a mano en Stripe, para confirmar el recorrido completo en producción.
 
-**Cerrar la venta:** quita `MINIPC_VENTA_ACTIVA` (o ponla en cualquier valor distinto de `1`). El botón vuelve a "Próximamente" y el servidor devuelve 503. Ojo: **las sesiones de Checkout que ya se crearon siguen siendo pagables hasta 24 horas**. Si hace falta, expíralas a mano en Stripe (Pagos → sesiones de Checkout).
+**Cerrar la venta:** quita `MINIPC_VENTA_ACTIVA` (o ponla en cualquier valor distinto de `1`) **y haz redeploy** (Deployments → ⋯ → Redeploy), o usa Instant Rollback al despliegue anterior. Hasta que el nuevo despliegue esté activo, la venta sigue abierta. Después, el botón vuelve a "Próximamente" y el servidor devuelve 503. Ojo: **las sesiones de Checkout que ya se crearon siguen siendo pagables hasta 24 horas**. Si hace falta, expíralas a mano en Stripe (Pagos → sesiones de Checkout).
 
 ---
 
@@ -222,5 +225,7 @@ Anota esto y mándamelo:
 - La **URL** de la página.
 - El **id del pedido** (en `/admin`) o el id de la sesión/pago de Stripe (empieza por `cs_` o `pi_`), si hay.
 - Qué paso de esta guía estabas haciendo.
+
+**Caso conocido:** si en Stripe → Desarrolladores → Webhooks → tu endpoint las entregas marcan **401**, es la Protección de Despliegues de Vercel (Vercel Authentication) de la vista previa: desactívala como en 3.2 y reenvía el evento.
 
 **Nunca pegues claves (`sk_…`, `whsec_…`, claves de Supabase) ni el secreto del webhook en el chat, ni en capturas.** Si por error se vio alguna, rótala (genérala de nuevo) en Stripe/Supabase.

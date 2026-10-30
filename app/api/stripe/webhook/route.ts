@@ -31,7 +31,8 @@ export async function POST(req: Request) {
         if (resultado.resultado === "pendiente") return Response.json({ received: true, pending: true });
         return Response.json({ received: true, minipc: resultado });
       } catch (e) {
-        console.error("[stripe] no se pudo guardar el pedido de mini PC:", session.id, e instanceof Error ? e.name : "error");
+        // Mensaje fijo + código SQLSTATE (o el aviso de entorno de supabaseAdmin): sin datos personales.
+        console.error("[stripe] no se pudo guardar el pedido de mini PC:", session.id, e instanceof Error ? e.message : "error");
         return new Response("pedido failed", { status: 500 }); // Stripe reintenta
       }
     }

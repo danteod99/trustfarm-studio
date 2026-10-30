@@ -198,7 +198,8 @@ export default function PedidosMinipc() {
                   <p>
                     ¿Seguro que quieres pasar este pedido a «{ETIQUETA[confirma]}»?
                     {confirma === "reembolsado" && " El dinero se devuelve a mano en Stripe."}
-                    {(confirma === "cancelado" || confirma === "reembolsado") && " No se puede deshacer."}
+                    {confirma === "cancelado" && " No devuelve el dinero. Es final y sin retorno; para devolverlo usa Reembolsado."}
+                    {confirma === "reembolsado" && " No se puede deshacer."}
                   </p>
                   <div className="mt-2 flex gap-2">
                     <button type="button" className="btn-primary" disabled={ocupado} onClick={() => aplicar(p, confirma)}>

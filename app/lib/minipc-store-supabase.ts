@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/app/lib/supabase/admin";
+import { errorGenerico } from "./minipc-errores.ts";
 import type { Envio, EstadoPedido, NuevoPedido, PedidoFila, PedidosStore } from "./minipc-pedidos.ts";
 
 // Almacén de pedidos de la mini PC sobre la tabla pedidos_minipc (supabase/05_pedidos_minipc.sql).
@@ -84,17 +85,17 @@ export function pedidosStoreSupabase(): PedidosStore {
       if (!error) return "creado";
       const d = decidirError(error.code);
       if (d === "duplicado") return "duplicado";
-      if (d === "fallo") throw new Error(ERROR_GUARDAR);
+      if (d === "fallo") throw new Error(errorGenerico(ERROR_GUARDAR, error));
 
       const { error: error2 } = await db.from(TABLA).insert(aInsert(sinUsuario(p)));
       if (!error2) return "creado";
       if (error2.code === "23505") return "duplicado";
-      throw new Error(ERROR_GUARDAR);
+      throw new Error(errorGenerico(ERROR_GUARDAR, error2));
     },
 
     async obtener(id) {
       const { data, error } = await supabaseAdmin().from(TABLA).select("*").eq("id", id).maybeSingle();
-      if (error) throw new Error(ERROR_LEER);
+      if (error) throw new Error(errorGenerico(ERROR_LEER, error));
       return data ? aFila(data as Fila) : null;
     },
 
@@ -105,7 +106,7 @@ export function pedidosStoreSupabase(): PedidosStore {
         .eq("id", id)
         .eq("estado", estadoEsperado)
         .select("id");
-      if (error) throw new Error(ERROR_ACTUALIZAR);
+      if (error) throw new Error(errorGenerico(ERROR_ACTUALIZAR, error));
       return Array.isArray(data) && data.length === 1;
     },
 
@@ -115,7 +116,7 @@ export function pedidosStoreSupabase(): PedidosStore {
         .select("*")
         .order("creado", { ascending: false })
         .range(desde, desde + limite - 1);
-      if (error) throw new Error(ERROR_LEER);
+      if (error) throw new Error(errorGenerico(ERROR_LEER, error));
       return (data ?? []).map((r) => aFila(r as Fila));
     },
   };
