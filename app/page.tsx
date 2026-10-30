@@ -13,12 +13,13 @@ import {
   UserRound,
   Wand2,
 } from "lucide-react";
-import { MODELS, PACKS, creditCost } from "@/app/lib/catalog";
+import { MODELS, PACKS, PLAN, creditCost } from "@/app/lib/catalog";
 import { BRAND } from "@/app/lib/brand";
-import { MARQUEE, SHOW, type Showcase } from "@/app/lib/showcase";
+import { BRAINROT, MARQUEE, SHOW, type Showcase } from "@/app/lib/showcase";
 import ParticleGlobe from "@/app/components/ParticleGlobe";
 import Reveal from "@/app/components/Reveal";
 import Media from "@/app/components/Media";
+import SoundReel from "@/app/components/SoundReel";
 
 function exampleCost(id: string) {
   const m = MODELS.find((x) => x.id === id)!;
@@ -34,7 +35,7 @@ function exampleCost(id: string) {
 const FAQ = [
   {
     q: "¿Cómo funcionan los créditos?",
-    a: "Compras un paquete una sola vez y cada generación descuenta créditos según el modelo, la duración y la resolución. No hay suscripción ni cobros automáticos.",
+    a: "Te suscribes al plan mensual (US$20, 260 créditos cada mes) o compras un paquete suelto. Cada generación descuenta créditos según el modelo, la duración y la resolución.",
   },
   {
     q: "¿Qué pasa si una generación falla?",
@@ -46,7 +47,11 @@ const FAQ = [
   },
   {
     q: "¿Los créditos vencen?",
-    a: "No. Tus créditos quedan en tu cuenta hasta que los uses.",
+    a: "No. Tus créditos quedan en tu cuenta hasta que los uses, también los del plan mensual: lo que no gastes un mes se suma al siguiente.",
+  },
+  {
+    q: "¿Cómo cancelo el plan mensual?",
+    a: "Desde Créditos → Gestionar plan, cuando quieras. Sigue activo hasta el final del mes pagado y no se vuelve a cobrar. Tus créditos se quedan.",
   },
   {
     q: "¿Cómo pago?",
@@ -112,7 +117,7 @@ export default function Home() {
             </div>
             <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-mute">
               <span className="flex items-center gap-1.5"><Wand2 size={15} className="text-brand-2" /> {MODELS.length} modelos de IA</span>
-              <span className="flex items-center gap-1.5"><Coins size={15} className="text-brand-2" /> Sin suscripción</span>
+              <span className="flex items-center gap-1.5"><Coins size={15} className="text-brand-2" /> Desde US$10, sin contratos</span>
               <span className="flex items-center gap-1.5"><Languages size={15} className="text-brand-2" /> Todo en español</span>
             </div>
           </div>
@@ -176,6 +181,18 @@ export default function Home() {
             </Reveal>
           ))}
         </div>
+      </section>
+
+      {/* Brainrot */}
+      <section className="mx-auto mt-28 max-w-6xl px-4">
+        <SectionHead
+          eyebrow="Brainrot peruano"
+          title="Personajes absurdos que se vuelven virales"
+          sub="Fusiona animales, comida y objetos de aquí con voz incluida. Toca un video para escucharlo."
+        />
+        <Reveal>
+          <SoundReel items={BRAINROT} />
+        </Reveal>
       </section>
 
       {/* Personajes consistentes */}
@@ -301,9 +318,27 @@ export default function Home() {
       <section id="precios" className="mx-auto mt-28 max-w-6xl scroll-mt-24 px-4">
         <SectionHead
           eyebrow="Precios"
-          title="Paquetes de créditos"
-          sub="Pago único en USD. Mientras más grande el paquete, más créditos de regalo. Los créditos no vencen."
+          title="Planes y precios"
+          sub="Plan mensual con más créditos o paquetes sueltos. En dólares, los créditos no vencen."
         />
+        <Reveal>
+          <div className="card mb-6 grid items-center gap-6 border-brand/60 bg-gradient-to-br from-brand/15 to-transparent p-6 sm:grid-cols-[1fr_auto] sm:p-8">
+            <div>
+              <p className="eyebrow !text-brand-2">{PLAN.name} · el que más rinde</p>
+              <p className="mt-2 text-4xl font-extrabold">
+                ${PLAN.priceUsd}
+                <span className="text-lg font-medium text-mute"> / mes</span>
+              </p>
+              <p className="mt-2 text-mute">
+                {PLAN.credits} créditos cada mes <span className="text-brand-2">({PLAN.bonus})</span>: ≈ {Math.floor(PLAN.credits / 10)} videos con
+                voz o ≈ {PLAN.credits} imágenes Z-Image. Se acumulan, no vencen y cancelas cuando quieras.
+              </p>
+            </div>
+            <Link href="/entrar?modo=registro&next=/creditos" className="btn-primary !px-8 !py-3 text-base">
+              Suscribirme <ArrowRight size={17} />
+            </Link>
+          </div>
+        </Reveal>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {PACKS.map((p, i) => (
             <Reveal key={p.id} delay={i * 80}>

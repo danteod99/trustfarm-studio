@@ -16,6 +16,14 @@ export default function Terminos() {
         El servicio funciona con créditos prepagados. Cada generación descuenta la cantidad de créditos indicada antes de
         confirmarla. Los créditos no vencen, no son transferibles entre cuentas y no tienen valor fuera de la plataforma.
       </p>
+      <h2>1.1 Plan mensual</h2>
+      <p>
+        El plan mensual cuesta US$20 y se cobra automáticamente a tu tarjeta cada mes, en la misma fecha en que te
+        suscribiste, hasta que lo canceles. Cada cobro pagado suma 260 créditos a tu saldo; los créditos que no uses se
+        acumulan y no vencen. Puedes cancelar en cualquier momento desde Créditos → Gestionar plan: el plan sigue activo hasta
+        el final del período pagado y no se vuelve a cobrar. Si un cobro falla, Stripe lo reintenta y no se suman créditos
+        hasta que se pague.
+      </p>
       <h2>2. Uso aceptable</h2>
       <p>Está prohibido usar el servicio para generar:</p>
       <ul>

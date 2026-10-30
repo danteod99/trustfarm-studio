@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
-import { PACKS } from "@/app/lib/catalog";
+import { CalendarClock, CheckCircle2, Loader2, Repeat, ShieldCheck } from "lucide-react";
+import { PACKS, PLAN } from "@/app/lib/catalog";
 
 interface Me {
   balance: number;
+  subscription: { status: string; periodEnd: string | null; cancelAtPeriodEnd: boolean } | null;
   ledger: { delta: number; balance_after: number | null; reason: string; created_at: string }[];
 }
 
@@ -24,7 +25,8 @@ function reasonLabel(r: string) {
 
 export default function Credits() {
   const params = useSearchParams();
-  const paid = params.get("pago") === "ok";
+  const planOk = params.get("plan") === "ok";
+  const paid = params.get("pago") === "ok" || planOk;
   const [me, setMe] = useState<Me | null>(null);
   const [buying, setBuying] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +52,22 @@ export default function Credits() {
     };
   }, [paid]);
 
+  async function go(path: string, key: string) {
+    setBuying(key);
+    setError(null);
+    const r = await fetch(path, { method: "POST" });
+    const d = await r.json().catch(() => ({}));
+    if (d.url) window.location.href = d.url;
+    else {
+      setError(d.error || "No se pudo continuar.");
+      setBuying(null);
+    }
+  }
+
+  const sub = me?.subscription;
+  const subActive = !!sub && ["active", "trialing", "past_due"].includes(sub.status);
+  const fecha = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("es", { day: "numeric", month: "long" }) : "");
+
   async function buy(pack: string) {
     setBuying(pack);
     setError(null);
@@ -71,7 +89,7 @@ export default function Credits() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Créditos</h1>
-          <p className="mt-1 text-mute">Pago único, sin suscripción. Los créditos no vencen.</p>
+          <p className="mt-1 text-mute">Plan mensual o paquetes sueltos. Los créditos no vencen.</p>
         </div>
         <div className="card px-5 py-3 text-right">
           <p className="text-xs uppercase tracking-wider text-mute">Tu saldo</p>
@@ -81,12 +99,49 @@ export default function Credits() {
 
       {paid && (
         <p className="mt-6 flex items-center gap-2 rounded-xl bg-emerald-500/10 p-3 text-sm text-emerald-300">
-          <CheckCircle2 size={16} /> ¡Pago recibido! Tus créditos se acreditan en unos segundos.
+          <CheckCircle2 size={16} />{" "}
+          {planOk ? "¡Bienvenido al plan mensual! Tus 260 créditos se acreditan en unos segundos." : "¡Pago recibido! Tus créditos se acreditan en unos segundos."}
         </p>
       )}
       {error && <p className="mt-6 rounded-xl bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Plan mensual */}
+      <div className="card mt-8 grid items-center gap-6 border-brand/60 bg-gradient-to-br from-brand/15 to-transparent p-6 sm:grid-cols-[1fr_auto]">
+        <div>
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-2">
+            <Repeat size={14} /> {PLAN.name} · el que más rinde
+          </p>
+          <p className="mt-2 text-3xl font-extrabold">
+            ${PLAN.priceUsd}
+            <span className="text-base font-medium text-mute"> / mes</span>
+          </p>
+          <p className="mt-1 text-sm text-mute">
+            {PLAN.credits} créditos cada mes <span className="text-brand-2">({PLAN.bonus} vs. paquetes)</span> · se acumulan y no
+            vencen · cancelas cuando quieras
+          </p>
+          {subActive && (
+            <p className="mt-3 flex items-center gap-2 text-sm text-emerald-300">
+              <CalendarClock size={15} />
+              {sub!.cancelAtPeriodEnd
+                ? `Cancelado: sigue activo hasta el ${fecha(sub!.periodEnd)} y no se renueva.`
+                : `Activo. Se renueva el ${fecha(sub!.periodEnd)} con ${PLAN.credits} créditos nuevos.`}
+              {sub!.status === "past_due" && " Hay un pago pendiente: actualiza tu tarjeta."}
+            </p>
+          )}
+        </div>
+        {subActive ? (
+          <button onClick={() => go("/api/suscripcion/portal", "portal")} disabled={!!buying} className="btn-ghost !px-6 !py-3">
+            {buying === "portal" ? <Loader2 size={15} className="animate-spin" /> : null} Gestionar plan
+          </button>
+        ) : (
+          <button onClick={() => go("/api/suscripcion", "plan")} disabled={!!buying || !me} className="btn-primary !px-6 !py-3">
+            {buying === "plan" ? <Loader2 size={15} className="animate-spin" /> : null} Suscribirme
+          </button>
+        )}
+      </div>
+
+      <h2 className="mt-10 text-lg font-semibold">O compra un paquete suelto</h2>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {PACKS.map((p) => (
           <div key={p.id} className={`card flex flex-col p-6 ${p.popular ? "border-brand" : ""}`}>
             <h3 className="font-semibold">{p.name}</h3>
@@ -102,7 +157,7 @@ export default function Credits() {
         ))}
       </div>
       <p className="mt-4 flex items-center gap-2 text-sm text-mute">
-        <ShieldCheck size={15} /> Pago seguro con tarjeta a través de Stripe.
+        <ShieldCheck size={15} /> Pago seguro con tarjeta a través de Stripe. El plan se renueva cada mes hasta que lo canceles.
       </p>
 
       <h2 className="mt-12 text-lg font-semibold">Movimientos</h2>

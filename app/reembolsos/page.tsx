@@ -16,6 +16,12 @@ export default function Reembolsos() {
         créditos. Una vez usados, los créditos no son reembolsables, ya que el costo de generación ya se pagó al proveedor del
         modelo.
       </p>
+      <h2>Plan mensual</h2>
+      <p>
+        Puedes cancelar el plan cuando quieras desde Créditos → Gestionar plan; no se cobrarán más meses. Puedes pedir el
+        reembolso del último cobro dentro de los 14 días si no has usado ninguno de los créditos de ese mes. Los meses ya
+        usados no son reembolsables.
+      </p>
       <h2>Equipos mini PC</h2>
       <div className="mt-4 rounded-lg border border-brand/40 bg-panel p-3 text-ink">
         <strong>Texto provisional: pendiente de revisión legal</strong>

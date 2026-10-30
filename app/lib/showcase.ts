@@ -31,8 +31,17 @@ export const SHOW = {
   machu: S("machu-picchu", "Machu Picchu al amanecer", "Z-Image Turbo"),
 } satisfies Record<string, Showcase>;
 
+/** Personajes brainrot originales (video con voz; el audio se activa al tocarlos). */
+export const BRAINROT: (Showcase & { title: string })[] = [
+  { ...S("brainrot-llama", "Llama con cuerpo de licuadora y chicha morada en el Cusco", "", true), title: "Llamalicuadora Chichamorada" },
+  { ...S("brainrot-cuy", "Cuy astronauta en mototaxi volador", "", true), title: "Cuyastronauto Mototaxino" },
+  { ...S("brainrot-pollo", "Pollo a la brasa bailando marinera", "", true), title: "Pollerina Marinerina" },
+  { ...S("brainrot-papa", "Papa con lentes manejando una mototaxi", "", true), title: "Papasito Mototaxito" },
+  { ...S("brainrot-pez", "Pez con cuerpo de taxi en el tráfico de Lima", "", true), title: "Pescadito Taxidito" },
+];
+
 /** Cinta que se desplaza en la portada. */
 export const MARQUEE: Showcase[] = [
-  SHOW.retrato, SHOW.fresa, SHOW.taxi, SHOW.serum, SHOW.granja, SHOW.zorro,
-  SHOW.frutilandia, SHOW.modelo, SHOW.machu, SHOW.creadora, SHOW.fresaLlorando,
+  SHOW.retrato, BRAINROT[0], SHOW.fresa, SHOW.taxi, BRAINROT[2], SHOW.serum, SHOW.granja, BRAINROT[1], SHOW.zorro,
+  SHOW.frutilandia, BRAINROT[3], SHOW.modelo, SHOW.machu, BRAINROT[4], SHOW.creadora, SHOW.fresaLlorando,
 ];

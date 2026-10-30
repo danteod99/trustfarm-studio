@@ -241,6 +241,9 @@ export const PACKS: Pack[] = [
   { id: "agencia", name: "Agencia", credits: 1300, priceUsd: 100, bonus: "+30 %" },
 ];
 
+/** Plan mensual (Stripe Billing, precio STRIPE_SUB_PRICE_ID). Los créditos se acumulan como los de los paquetes. */
+export const PLAN = { id: "mensual", name: "Plan mensual", priceUsd: 20, credits: 260, bonus: "+30 %" } as const;
+
 export function getPack(id: string): Pack | undefined {
   return PACKS.find((p) => p.id === id);
 }
