@@ -19,6 +19,20 @@ export function clienteStoreSupabase(): ClienteStore {
       const { error } = await db.from('caja_intentos').insert({ clave: `vincular:${userId}` })
       if (error) throw new Error('No se pudo registrar el intento.')
     },
+    async contarExitosVincular(userId, desdeIso) {
+      const { count, error } = await db.from('caja_intentos').select('id', { count: 'exact', head: true }).eq('clave', `vincular_ok:${userId}`).gte('creado', desdeIso)
+      if (error) throw new Error('No se pudo contar los intentos.')
+      return count ?? 0
+    },
+    async registrarExitoVincular(userId) {
+      const { error } = await db.from('caja_intentos').insert({ clave: `vincular_ok:${userId}` })
+      if (error) throw new Error('No se pudo registrar el intento.')
+    },
+    async contarCajas(ownerId) {
+      const { count, error } = await db.from('cajas').select('id', { count: 'exact', head: true }).eq('owner_id', ownerId)
+      if (error) throw new Error('No se pudo contar las cajas.')
+      return count ?? 0
+    },
     async buscarRegistroVinculable(codigo) {
       const { data, error } = await db.from('caja_registros').select('id').eq('codigo', codigo).eq('estado', 'pendiente').is('caja_id', null).gt('expira_en', new Date().toISOString()).maybeSingle()
       if (error) throw new Error('No se pudo leer el registro.')

@@ -154,6 +154,79 @@ test('vincularCaja: si borrarTunel falla en la limpieza la respuesta no cambia',
   } finally { console.error = orig }
 })
 
+// ---- topes de cajas y de éxitos
+const MSG_MAX = { error: 'Ya tienes el máximo de cajas vinculadas (10). Quita una para agregar otra.' }
+const MSG_429 = { error: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.' }
+const relleno = (x: Nuevo, owner: string, n: number) => {
+  for (let i = 0; i < n; i++) x.m.cajas.push({ id: `r${owner}${i}`, ownerId: owner, nombre: 'x', slug: 'zz' + String(i).padStart(6, '0'), tunnelId: 't', lastSeen: null })
+}
+
+test('tope: con 10 cajas => 409, sin túnel y sin fallo registrado', async () => {
+  const x = nuevo()
+  relleno(x, U1, 10)
+  const r = await vincularCaja(x.deps, { userId: U1, codigo: COD })
+  assert.deepEqual(r, { status: 409, body: MSG_MAX })
+  assert.equal(x.m.tunelesCreados.length, 0)
+  assert.equal(x.m.fallos.length, 0)
+  assert.equal(x.m.vincularLlamadas, 0)
+})
+
+test('tope: con 9 cajas vincula la décima; el tope es por usuario', async () => {
+  const x = nuevo()
+  relleno(x, U1, 9)
+  relleno(x, U2, 10)
+  assert.equal((await vincularCaja(x.deps, { userId: U1, codigo: COD })).status, 200)
+  x.m.vinculables.add('ABCD2345')
+  assert.deepEqual((await vincularCaja(x.deps, { userId: U1, codigo: COD })).body, MSG_MAX)
+  const y = nuevo()
+  relleno(y, U2, 10)
+  assert.equal((await vincularCaja(y.deps, { userId: U1, codigo: COD })).status, 200)
+})
+
+test('éxitos: 5 en una hora, la 6.ª da 429 sin túnel; pasada la hora vuelve a permitir', async () => {
+  const x = nuevo()
+  for (let i = 0; i < 5; i++) {
+    x.m.vinculables.add('ABCD2345')
+    assert.equal((await vincularCaja(x.deps, { userId: U1, codigo: COD })).status, 200)
+    x.m.cajas.pop() // evita el tope de cajas para aislar este límite
+  }
+  assert.equal(x.m.exitos.length, 5)
+  x.m.vinculables.add('ABCD2345')
+  const antes = x.m.tunelesCreados.length
+  assert.deepEqual(await vincularCaja(x.deps, { userId: U1, codigo: COD }), { status: 429, body: MSG_429 })
+  assert.equal(x.m.tunelesCreados.length, antes)
+  assert.equal(x.m.fallos.length, 0)
+  assert.equal(x.m.exitos.length, 5)
+  // otro usuario no se ve afectado
+  assert.equal((await vincularCaja(x.deps, { userId: U2, codigo: COD })).status, 200)
+  x.m.vinculables.add('ABCD2345')
+  x.ahora.t = new Date(T0.getTime() + 60 * MIN + 1000)
+  assert.equal((await vincularCaja(x.deps, { userId: U1, codigo: COD })).status, 200)
+})
+
+test('éxitos y fallos no se mezclan; vincular fallido no registra éxito', async () => {
+  const x = nuevo()
+  for (let i = 0; i < 9; i++) await vincularCaja(x.deps, { userId: U1, codigo: 'ZZZZ-2222' })
+  assert.equal(x.m.exitos.length, 0)
+  assert.equal((await vincularCaja(x.deps, { userId: U1, codigo: COD })).status, 200)
+  assert.equal(x.m.fallos.length, 9)
+  assert.equal(x.m.exitos.length, 1)
+  const y = nuevo()
+  y.m.forzarVincular.push({ ok: false, motivo: 'error' })
+  await vincularCaja(y.deps, { userId: U1, codigo: COD })
+  assert.equal(y.m.exitos.length, 0)
+})
+
+test('orden: código inválido da 400 antes que el tope de cajas y el de éxitos', async () => {
+  const x = nuevo()
+  relleno(x, U1, 10)
+  for (let i = 0; i < 5; i++) x.m.exitos.push({ userId: U1, creado: T0.toISOString() })
+  assert.deepEqual(await vincularCaja(x.deps, { userId: U1, codigo: 'ZZZZ-2222' }), { status: 400, body: MSG_CODIGO })
+  assert.equal(x.m.fallos.length, 1)
+  // tope de cajas antes que el de éxitos
+  assert.deepEqual((await vincularCaja(x.deps, { userId: U1, codigo: COD })).body, MSG_MAX)
+})
+
 // ---- listarMisCajas
 test('listarMisCajas: solo las del usuario; encendida/apagada según la última señal', async () => {
   const { m, deps } = nuevo()

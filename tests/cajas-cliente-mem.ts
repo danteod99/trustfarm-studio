@@ -3,6 +3,7 @@ import type { CajaCliente, ClienteDeps, ClienteStore, ResultadoVincular } from '
 
 export function crearClienteMem(ahora: { t: Date }) {
   const m = {
+    exitos: [] as { userId: string; creado: string }[],
     fallos: [] as { userId: string; creado: string }[],
     // Códigos vinculables conocidos (normalizados).
     vinculables: new Set<string>(),
@@ -21,6 +22,9 @@ export function crearClienteMem(ahora: { t: Date }) {
   const store: ClienteStore = {
     async contarFallosVincular(userId, desde) { return m.fallos.filter(f => f.userId === userId && f.creado >= desde).length },
     async registrarFalloVincular(userId) { m.fallos.push({ userId, creado: ahora.t.toISOString() }) },
+    async contarCajas(o) { return m.cajas.filter(c => c.ownerId === o).length },
+    async contarExitosVincular(userId, desde) { return m.exitos.filter(f => f.userId === userId && f.creado >= desde).length },
+    async registrarExitoVincular(userId) { m.exitos.push({ userId, creado: ahora.t.toISOString() }) },
     async buscarRegistroVinculable(c) { return m.vinculables.has(c) ? { id: 'reg-' + c } : null },
     async vincular(o) {
       m.vincularLlamadas++

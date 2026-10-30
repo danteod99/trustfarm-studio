@@ -13,6 +13,9 @@ export type ResultadoVincular =
 export interface ClienteStore {
   contarFallosVincular(userId: string, desdeIso: string): Promise<number>
   registrarFalloVincular(userId: string): Promise<void>
+  contarExitosVincular(userId: string, desdeIso: string): Promise<number>
+  registrarExitoVincular(userId: string): Promise<void>
+  contarCajas(ownerId: string): Promise<number>
   /** SELECT barato: estado pendiente, caja_id null y no vencido. */
   buscarRegistroVinculable(codigoNormalizado: string): Promise<{ id: string } | null>
   vincular(o: { codigo: string; ownerId: string; nombre: string; slug: string; tunnelId: string }): Promise<ResultadoVincular>
@@ -42,10 +45,14 @@ const MIN = 60_000
 const VENTANA_FALLOS_MS = 10 * MIN
 const MAX_FALLOS = 10
 const MAX_INTENTOS_SLUG = 3
+export const MAX_CAJAS_POR_CUENTA = 10
+const MAX_EXITOS_HORA = 5
+const HORA_MS = 60 * MIN
 const ENCENDIDA_MS = 10 * MIN
 const NOMBRE_INICIAL = 'Mi caja'
 
 const ERR_LIMITE = 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.'
+const ERR_MAX_CAJAS = `Ya tienes el máximo de cajas vinculadas (${MAX_CAJAS_POR_CUENTA}). Quita una para agregar otra.`
 const ERR_CODIGO = 'Ese código no es válido o ya venció.'
 const ERR_TUNEL = 'No se pudo preparar la conexión de tu caja. Inténtalo de nuevo.'
 const ERR_VINCULAR = 'No se pudo vincular la caja. Inténtalo de nuevo.'
@@ -78,6 +85,10 @@ export async function vincularCaja(deps: ClienteDeps, { userId, codigo }: { user
   if (!normalizado) return fallo()
   if (!(await store.buscarRegistroVinculable(normalizado))) return fallo()
 
+  if ((await store.contarCajas(userId)) >= MAX_CAJAS_POR_CUENTA) return { status: 409, body: { error: ERR_MAX_CAJAS } }
+  const desdeHora = new Date(deps.now().getTime() - HORA_MS).toISOString()
+  if ((await store.contarExitosVincular(userId, desdeHora)) >= MAX_EXITOS_HORA) return { status: 429, body: { error: ERR_LIMITE } }
+
   for (let i = 0; i < MAX_INTENTOS_SLUG; i++) {
     const slug = deps.nuevoSlug()
     let tunel: { tunnelId: string; tunnelToken: string; hostname: string }
@@ -94,6 +105,7 @@ export async function vincularCaja(deps: ClienteDeps, { userId, codigo }: { user
       r = { ok: false, motivo: 'error' }
     }
     if (r.ok) {
+      try { await store.registrarExitoVincular(userId) } catch { /* la caja ya está vinculada */ }
       return { status: 200, body: { caja: { id: r.cajaId, nombre: NOMBRE_INICIAL, direccion: `${slug}.${deps.env.dominio}` } } }
     }
     await limpiarTunel(deps, tunel.tunnelId, slug)
