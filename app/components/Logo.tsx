@@ -3,7 +3,7 @@ import { BRAND } from "@/app/lib/brand";
 
 /**
  * Logo TRUST — el mismo wordmark de trustmind.online (Michroma ≈ Eurostile Extended, con trazo
- * para engrosarlo, en currentColor) + "Studio" para distinguir el producto.
+ * para engrosarlo, en currentColor) + "Studio" como firma a mano (Mrs Saint Delafield).
  */
 export default function Logo({ size = 18 }: { size?: number }) {
   return (
@@ -22,7 +22,20 @@ export default function Logo({ size = 18 }: { size?: number }) {
       >
         TRUST
       </span>
-      <span className="text-sm font-semibold tracking-wide text-brand-2">Studio</span>
+      <span
+        className="text-brand-2"
+        style={{
+          fontFamily: "var(--font-firma), 'Brush Script MT', cursive",
+          fontSize: size * 1.9,
+          lineHeight: 0.6,
+          marginLeft: -size * 0.15,
+          transform: "rotate(-6deg) translateY(2px)",
+          display: "inline-block",
+          whiteSpace: "nowrap",
+        }}
+      >
+        Studio
+      </span>
     </Link>
   );
 }
