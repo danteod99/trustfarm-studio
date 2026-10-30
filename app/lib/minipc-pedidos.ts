@@ -84,6 +84,11 @@ export function esSesionMinipc(s: { metadata?: Record<string, string> | null }):
   return s?.metadata?.kind === 'minipc'
 }
 
+/** Decide a qué rama va una sesión del webhook. Solo `metadata.kind === 'minipc'` exacto es mini PC. */
+export function decidirRama(s: { metadata?: Record<string, string> | null }): 'minipc' | 'creditos' {
+  return esSesionMinipc(s) ? 'minipc' : 'creditos'
+}
+
 export function extraerEnvio(s: SesionMinipc): Envio | null {
   // stripe 18.5.0 trae el envío en collected_information.shipping_details;
   // versiones anteriores del API lo traen en shipping_details.
