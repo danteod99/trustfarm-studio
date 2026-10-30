@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { Michroma } from "next/font/google";
 import "./globals.css";
 import { BRAND, SITE_URL } from "@/app/lib/brand";
 import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
+
+// Wordmark "TRUST": Michroma ≈ Eurostile Extended, la misma fuente del logo de trustmind.online.
+const michroma = Michroma({ variable: "--font-michroma", weight: "400", subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -19,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
       </head>
-      <body className="min-h-screen antialiased">
+      <body className={`${michroma.variable} min-h-screen antialiased`}>
         <Header />
         <main>{children}</main>
         <Footer />
