@@ -51,6 +51,16 @@ export function estudioDepsReales(): EstudioDeps | null {
         if (error) throw new Error("No se pudo leer el gasto de la caja.");
         return Number(data) || 0;
       },
+      async tomarCandado(cajaId) {
+        // 150 s: lo que dura la ruta generar (maxDuration 120 s) más un margen
+        const { data, error } = await db().rpc("caja_candado_tomar", { p_caja: cajaId, p_segundos: 150 });
+        if (error) throw new Error("No se pudo reservar la generación.");
+        return data === true;
+      },
+      async soltarCandado(cajaId) {
+        const { error } = await db().rpc("caja_candado_soltar", { p_caja: cajaId });
+        if (error) console.error("[estudio] no se pudo soltar el candado:", error.message); // caduca solo
+      },
       async topeDe(cajaId) {
         const { data, error } = await db().from("cajas").select("tope_diario").eq("id", cajaId).maybeSingle();
         if (error) throw new Error("No se pudo leer el tope de la caja.");

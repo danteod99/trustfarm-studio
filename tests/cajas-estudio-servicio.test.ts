@@ -14,7 +14,7 @@ const GEN = (id: string, extra: Partial<GenPublica> = {}): GenPublica => ({
   id, kind: 'image', model: 'nano-banana-2', prompt: 'un gato', params: { aspect: '1:1' }, status: 'running', cost: 3, error: null, url: null, createdAt: T0.toISOString(), ...extra,
 })
 
-async function montar(o: { admin?: boolean; gasto?: number; tope?: number; costo?: number | null; saldo?: number } = {}) {
+async function montar(o: { admin?: boolean; gasto?: number; tope?: number; costo?: number | null; saldo?: number; limites?: { leer: number; generar: number }; lento?: boolean } = {}) {
   const ahora = { t: new Date(T0) }
   const c = crearDeps(ahora)
   const r = await registrarCaja(c.deps, { ip: 'x', version: 'v' })
@@ -25,20 +25,27 @@ async function montar(o: { admin?: boolean; gasto?: number; tope?: number; costo
   c.m.cajas.push({ id: 'caja-1', slug: 'abcd1234', tunnelId: 'tun-1', ownerId: 'cuenta-1' })
   c.m.emails['cuenta-1'] = o.admin ? 'admin@trust.com' : 'dueno@negocio.com'
 
-  const llamadas = { iniciar: [] as Array<{ userId: string; gratis: boolean; input: any }>, gastoHoy: [] as Array<{ cajaId: string; desde: string }>, listar: [] as any[] }
+  const llamadas = { iniciar: [] as Array<{ userId: string; gratis: boolean; input: any }>, gastoHoy: [] as Array<{ cajaId: string; desde: string }>, listar: [] as any[], candado: { tomas: 0, sueltas: 0, tomado: false } }
   let iniciarResp: any = { ok: true, generation: GEN('g1') }
   const propias: Record<string, GenPublica> = { g1: GEN('g1'), g2: GEN('g2', { status: 'done', url: 'https://x/g2.png' }) }
   const motor: EstudioMotor = {
     balance: async () => o.saldo ?? 50,
     modelos: async (esAdmin) => (esAdmin ? [MODELO, { ...MODELO, id: 'prueba-admin' }] : [MODELO]),
     costo: () => (o.costo === undefined ? 3 : o.costo),
-    iniciar: async (userId, gratis, input) => { llamadas.iniciar.push({ userId, gratis, input }); return iniciarResp },
+    iniciar: async (userId, gratis, input) => { llamadas.iniciar.push({ userId, gratis, input }); if (o.lento) await new Promise((r) => setTimeout(r, 20)); if (iniciarResp instanceof Error) throw iniciarResp; return iniciarResp },
     listar: async (userId, q) => { llamadas.listar.push({ userId, q }); return Object.values(propias) },
     obtener: async (userId, id) => (userId === 'cuenta-1' ? propias[id] ?? null : null),
   }
   const d: EstudioDeps = {
     servicio: c.deps,
-    store: { gastoHoy: async (cajaId, desde) => { llamadas.gastoHoy.push({ cajaId, desde }); return o.gasto ?? 0 }, topeDe: async () => o.tope ?? 100 },
+    store: {
+      gastoHoy: async (cajaId, desde) => { llamadas.gastoHoy.push({ cajaId, desde }); return o.gasto ?? 0 },
+      topeDe: async () => o.tope ?? 100,
+      // Candado por caja: una sola generación a la vez (el que llega con el candado tomado no entra).
+      tomarCandado: async () => { if (llamadas.candado.tomado) return false; llamadas.candado.tomado = true; llamadas.candado.tomas++; return true },
+      soltarCandado: async () => { llamadas.candado.tomado = false; llamadas.candado.sueltas++ },
+    },
+    limites: o.limites,
     motor,
     esAdmin: (email) => email === 'admin@trust.com',
   }
@@ -166,12 +173,57 @@ test('una caja desvinculada deja de gastar de inmediato (401) y no llega a inici
   assert.equal(t.llamadas.iniciar.length, 1)
 })
 
-test('límite de peticiones: la 601.ª en una hora → 429 y vuelve a permitir pasada la ventana', async () => {
-  const t = await montar()
-  for (let i = 0; i < 600; i++) assert.equal((await estudioObtener(t.d, t.a, 'g1')).status, 200, `petición ${i + 1}`)
+test('límites de peticiones: lectura y generar tienen contadores distintos (el sondeo no bloquea a generar)', async () => {
+  const t = await montar({ limites: { leer: 5, generar: 2 } })
+  for (let i = 0; i < 5; i++) assert.equal((await estudioObtener(t.d, t.a, 'g1')).status, 200, `lectura ${i + 1}`)
   const r = await estudioObtener(t.d, t.a, 'g1')
   assert.equal(r.status, 429)
   assert.equal((r.body as any).error, 'Demasiados intentos. Espera un rato e inténtalo de nuevo.')
+  // Agotada la lectura, generar sigue disponible hasta su propio límite
+  assert.equal((await estudioGenerar(t.d, t.a, BODY)).status, 200)
+  assert.equal((await estudioGenerar(t.d, t.a, BODY)).status, 200)
+  assert.equal((await estudioGenerar(t.d, t.a, BODY)).status, 429)
+  // y pasada la hora vuelven los dos
   t.ahora.t = new Date(T0.getTime() + 3600_000 + 1000)
   assert.equal((await estudioObtener(t.d, t.a, 'g1')).status, 200)
+  assert.equal((await estudioGenerar(t.d, t.a, BODY)).status, 200)
+})
+
+test('límites por defecto: 3000 lecturas y 120 generaciones por hora', async () => {
+  const m = await import('../app/lib/cajas/estudio-servicio.ts')
+  assert.equal(m.LIMITE_LECTURAS_POR_HORA, 3000)
+  assert.equal(m.LIMITE_GENERAR_POR_HORA, 120)
+})
+
+// ───────── Concurrencia: el tope no se puede saltar con peticiones simultáneas ─────────
+test('20 generar simultáneos de la misma caja: solo uno entra, los demás reciben 429 y el candado se libera', async () => {
+  const t = await montar({ gasto: 0, costo: 22, lento: true })
+  const rs = await Promise.all(Array.from({ length: 20 }, () => estudioGenerar(t.d, t.a, BODY)))
+  assert.equal(rs.filter((r) => r.status === 200).length, 1)
+  const rechazadas = rs.filter((r) => r.status === 429)
+  assert.equal(rechazadas.length, 19)
+  assert.equal((rechazadas[0].body as any).error, 'Ya hay una generación en curso en esta caja. Espera a que termine.')
+  assert.equal(t.llamadas.iniciar.length, 1)
+  assert.equal(t.llamadas.candado.tomado, false)
+  // Terminada la primera, la caja puede volver a generar
+  assert.equal((await estudioGenerar(t.d, t.a, BODY)).status, 200)
+})
+
+test('el candado se libera aunque iniciar falle o lance una excepción, y también si el tope bloquea', async () => {
+  const t = await montar()
+  t.setIniciar(new Error('boom'))
+  await assert.rejects(estudioGenerar(t.d, t.a, BODY), /boom/)
+  assert.equal(t.llamadas.candado.tomado, false)
+  t.setIniciar({ ok: false, error: 'No disponible.', status: 503 })
+  assert.equal((await estudioGenerar(t.d, t.a, BODY)).status, 503)
+  assert.equal(t.llamadas.candado.tomado, false)
+  const tope = await montar({ gasto: 99, costo: 5 })
+  assert.equal((await estudioGenerar(tope.d, tope.a, BODY)).status, 429)
+  assert.equal(tope.llamadas.candado.tomado, false)
+})
+
+test('una cuenta admin no toma el candado (no hay tope que proteger)', async () => {
+  const t = await montar({ admin: true })
+  assert.equal((await estudioGenerar(t.d, t.a, BODY)).status, 200)
+  assert.equal(t.llamadas.candado.tomas, 0)
 })

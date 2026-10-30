@@ -73,11 +73,10 @@ export function clienteStoreSupabase(): ClienteStore {
     async gastoHoyPorCajas(ids, desdeIso) {
       const total: Record<string, number> = Object.fromEntries(ids.map(i => [i, 0]))
       if (!ids.length) return total
-      // Una sola consulta para toda la página; se suma aquí (misma regla que la función SQL caja_gasto_hoy).
-      const { data, error } = await db.from('ai_generations').select('caja_id, cost_credits')
-        .in('caja_id', ids).eq('charged', true).neq('status', 'failed').gte('created_at', desdeIso)
+      // Una sola implementación de la suma (la función SQL), agrupada en la base: sin el corte de 1000 filas de PostgREST.
+      const { data, error } = await db.rpc('caja_gasto_hoy_varias', { p_cajas: ids, p_desde: desdeIso })
       if (error) throw new Error('No se pudo leer el gasto de las cajas.')
-      for (const f of (data ?? []) as Array<{ caja_id: string; cost_credits: number }>) total[f.caja_id] = (total[f.caja_id] ?? 0) + f.cost_credits
+      for (const f of (data ?? []) as Array<{ caja_id: string; total: number }>) total[f.caja_id] = Number(f.total) || 0
       return total
     },
     async listarTodasLasCajas(desde, limite) {

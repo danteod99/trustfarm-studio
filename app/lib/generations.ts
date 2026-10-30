@@ -145,7 +145,8 @@ export async function startGeneration(userId: string, free: boolean, input: Star
       prompt: finalPrompt,
       params: { ...opts, withImage: !!image },
       cost_credits: cost,
-      caja_id: input.cajaId ?? null,
+      // Solo si viene: así la generación web no depende de que la columna exista todavía
+      ...(input.cajaId ? { caja_id: input.cajaId } : {}),
     })
     .select()
     .single();

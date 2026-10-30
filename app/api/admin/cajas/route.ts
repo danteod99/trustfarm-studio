@@ -36,6 +36,7 @@ export async function PATCH(req: Request) {
   } catch {
     return json({ error: "Solicitud inválida." }, 400);
   }
+  if (!body || typeof body !== "object") return json({ error: "Solicitud inválida." }, 400);
   if (typeof body.caja_id !== "string" || !UUID_REGEX.test(body.caja_id)) return json({ error: "Caja no válida." }, 400);
   try {
     const r = await fijarTopeAdmin(deps, { cajaId: body.caja_id, tope: body.tope_diario });

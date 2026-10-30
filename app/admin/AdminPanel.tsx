@@ -61,7 +61,7 @@ function TopeCaja({ c, onGuardado }: { c: CajaAdmin; onGuardado: (id: string, to
         value={valor}
         onChange={(e) => setValor(e.target.value)}
       />
-      <button className="btn-ghost !px-3 !py-1.5" disabled={guardando || Number(valor) === c.tope_diario} onClick={guardar}>
+      <button className="btn-ghost !px-3 !py-1.5" disabled={guardando || valor.trim() === "" || Number(valor) === c.tope_diario} onClick={guardar}>
         {guardando ? "Guardando…" : "Guardar"}
       </button>
       {error && <span className="text-red-400">{error}</span>}

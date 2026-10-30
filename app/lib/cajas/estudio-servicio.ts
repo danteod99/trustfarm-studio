@@ -34,6 +34,9 @@ export interface EstudioStore {
   gastoHoy(cajaId: string, desdeIso: string): Promise<number>
   /** Tope diario de esa caja (editable por un admin). */
   topeDe(cajaId: string): Promise<number>
+  /** Candado por caja (una sola generación a la vez). false = ya hay otra en curso. Caduca solo. */
+  tomarCandado(cajaId: string): Promise<boolean>
+  soltarCandado(cajaId: string): Promise<void>
 }
 
 export interface EstudioMotor {
@@ -53,23 +56,32 @@ export interface EstudioDeps {
   store: EstudioStore
   motor: EstudioMotor
   esAdmin(email: string | null): boolean
+  /** Peticiones por hora y por caja; solo las pruebas lo cambian. */
+  limites?: { leer: number; generar: number }
 }
 
 export type Auth = { registroId: string; bearer: string | null | undefined }
 
 const HORA = 3600_000
-const MAX_PETICIONES_POR_HORA = 600
+// Lecturas (saldo, lista, estado): el sondeo cada 8 s de 3 generaciones en curso son 1350/h, así que se deja holgura.
+// Generar tiene su propio contador para que el sondeo nunca lo bloquee.
+export const LIMITE_LECTURAS_POR_HORA = 3000
+export const LIMITE_GENERAR_POR_HORA = 120
+/** El candado de una generación dura lo que la ruta (maxDuration 120 s) más un margen; si el servidor muere, caduca solo. */
+const CANDADO_SEGUNDOS = 150
+const EN_CURSO = 'Ya hay una generación en curso en esta caja. Espera a que termine.'
 const DEMASIADOS = 'Demasiados intentos. Espera un rato e inténtalo de nuevo.'
 const LIMITE_POR_DEFECTO = 24
 const LIMITE_MAXIMO = 60
 
 type Contexto = { ok: true; userId: string; cajaId: string; admin: boolean } | { ok: false; r: Respuesta }
 
-/** Autentica la caja y aplica el límite de peticiones (600/hora por registro; el sondeo cada 8 s no lo alcanza). */
-async function contexto(d: EstudioDeps, a: Auth): Promise<Contexto> {
+/** Autentica la caja y aplica el límite de peticiones por hora (contador distinto para generar y para leer). */
+async function contexto(d: EstudioDeps, a: Auth, tipo: 'leer' | 'generar' = 'leer'): Promise<Contexto> {
   const c = await resolverCaja(d.servicio, a)
   if (!c.ok) return { ok: false, r: { status: c.status, body: { error: c.error } } }
-  if (!(await limitarIntentos(d.servicio.store, `estudio:${c.registroId}`, MAX_PETICIONES_POR_HORA, HORA, d.servicio.now()))) {
+  const max = tipo === 'generar' ? d.limites?.generar ?? LIMITE_GENERAR_POR_HORA : d.limites?.leer ?? LIMITE_LECTURAS_POR_HORA
+  if (!(await limitarIntentos(d.servicio.store, `estudio-${tipo}:${c.registroId}`, max, HORA, d.servicio.now()))) {
     return { ok: false, r: { status: 429, body: { error: DEMASIADOS } } }
   }
   return { ok: true, userId: c.caja.ownerId, cajaId: c.caja.id, admin: d.esAdmin(c.ownerEmail) }
@@ -90,7 +102,7 @@ export async function estudioMe(d: EstudioDeps, a: Auth): Promise<Respuesta> {
 }
 
 export async function estudioGenerar(d: EstudioDeps, a: Auth, body: unknown): Promise<Respuesta> {
-  const x = await contexto(d, a)
+  const x = await contexto(d, a, 'generar')
   if (!x.ok) return x.r
   if (!body || typeof body !== 'object' || Array.isArray(body)) return { status: 400, body: { error: 'Solicitud inválida.' } }
   const b = body as Record<string, unknown>
@@ -106,14 +118,24 @@ export async function estudioGenerar(d: EstudioDeps, a: Auth, body: unknown): Pr
   const costo = d.motor.costo({ model: input.model, aspect: input.aspect, duration: input.duration, resolution: input.resolution }, x.admin)
   if (costo === null) return { status: 400, body: { error: 'Modelo no válido.' } }
 
-  // El tope cuenta lo gastado por la caja hoy; una cuenta admin genera gratis y no lo consume.
-  if (!x.admin) {
+  // Una cuenta admin genera gratis: no consume tope ni necesita candado.
+  if (x.admin) return iniciar(d, x, input, true)
+
+  // Leer el gasto, compararlo con el tope y cobrar no es atómico: sin candado, 20 peticiones simultáneas pasarían todas
+  // el chequeo. El candado deja entrar una generación a la vez por caja y se suelta siempre al terminar.
+  if (!(await d.store.tomarCandado(x.cajaId))) return { status: 429, body: { error: EN_CURSO } }
+  try {
     const [gastado, tope] = await Promise.all([d.store.gastoHoy(x.cajaId, desdeHoy(d)), d.store.topeDe(x.cajaId)])
     const t = evaluarTope({ gastado, costo, tope })
     if (!t.ok) return { status: 429, body: { error: t.error } }
+    return await iniciar(d, x, input, false)
+  } finally {
+    await d.store.soltarCandado(x.cajaId)
   }
+}
 
-  const r = await d.motor.iniciar(x.userId, x.admin, input)
+async function iniciar(d: EstudioDeps, x: Extract<Contexto, { ok: true }>, input: StartInput, gratis: boolean): Promise<Respuesta> {
+  const r = await d.motor.iniciar(x.userId, gratis, input)
   if (!r.ok) return { status: r.status, body: { error: r.error } }
   return { status: 200, body: { generacion: r.generation, saldo: await d.motor.balance(x.userId) } }
 }

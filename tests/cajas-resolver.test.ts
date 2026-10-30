@@ -75,5 +75,6 @@ test('resolverCaja: pendiente → 409 y vencida → 409, con el aviso de vincula
 test('generations.ts: startGeneration guarda caja_id al insertar (prueba estática del texto)', () => {
   const src = readFileSync(new URL('../app/lib/generations.ts', import.meta.url), 'utf8')
   assert.match(src, /cajaId\?: string/)
-  assert.match(src, /caja_id: input\.cajaId \?\? null/)
+  // Solo se envía si viene: así la generación web no depende de que la columna exista todavía
+  assert.match(src, /\.\.\.\(input\.cajaId \? \{ caja_id: input\.cajaId \} : \{\}\)/)
 })

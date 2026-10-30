@@ -49,7 +49,9 @@ const sql = crudo.split('\n').map((l) => l.replace(/--.*$/, '')).join('\n')
 test('SQL: transacción única e idempotente', () => {
   assert.match(sql, /\bbegin;/)
   assert.match(sql, /\bcommit;/)
-  assert.match(sql, /add column if not exists caja_id uuid references cajas\(id\) on delete set null/)
+  // Sin clave foránea: al desvincular y borrar la caja, sus generaciones conservan el rastro de qué gastó
+  assert.match(sql, /add column if not exists caja_id uuid;/)
+  assert.doesNotMatch(sql, /caja_id uuid references/)
   assert.match(sql, /add column if not exists tope_diario integer not null default 100 check \(tope_diario >= 0\)/)
   assert.match(sql, /create index if not exists \w+ on ai_generations \(caja_id, created_at desc\)/)
 })
@@ -61,7 +63,9 @@ test('SQL: caja_gasto_hoy suma solo lo cobrado y no fallido desde la fecha dada'
   assert.match(cuerpo, /returns integer/)
   assert.match(cuerpo, /coalesce\(sum\(cost_credits\), ?0\)/)
   assert.match(cuerpo, /caja_id = p_caja/)
-  assert.match(cuerpo, /charged = true/)
+  // Cuenta toda fila no fallida con costo (aunque `charged` aún no se haya escrito): contar de más es el lado seguro
+  assert.doesNotMatch(cuerpo, /charged/)
+  assert.match(cuerpo, /cost_credits > 0/)
   assert.match(cuerpo, /status <> 'failed'/)
   assert.match(cuerpo, /created_at >= p_desde/)
 })
@@ -69,4 +73,33 @@ test('SQL: caja_gasto_hoy suma solo lo cobrado y no fallido desde la fecha dada'
 test('SQL: la función solo la ejecuta service_role', () => {
   assert.match(sql, /revoke all on function caja_gasto_hoy\(uuid, timestamptz\) from public, anon, authenticated;/)
   assert.match(sql, /grant execute on function caja_gasto_hoy\(uuid, timestamptz\) to service_role;/)
+})
+
+test('SQL: caja_gasto_hoy_varias agrupa por caja con la misma regla (una sola implementación de la suma)', () => {
+  const f = sql.match(/create or replace function caja_gasto_hoy_varias\(p_cajas uuid\[\], p_desde timestamptz\)[\s\S]*?\$\$;/)
+  assert.ok(f, 'falta caja_gasto_hoy_varias')
+  const c = f[0]
+  assert.match(c, /returns table \(caja_id uuid, total integer\)/)
+  assert.match(c, /caja_id = any\(p_cajas\)/)
+  assert.match(c, /status <> 'failed'/)
+  assert.match(c, /created_at >= p_desde/)
+  assert.match(c, /group by/)
+  assert.doesNotMatch(c, /charged/)
+  assert.match(sql, /revoke all on function caja_gasto_hoy_varias\(uuid\[\], timestamptz\) from public, anon, authenticated;/)
+  assert.match(sql, /grant execute on function caja_gasto_hoy_varias\(uuid\[\], timestamptz\) to service_role;/)
+})
+
+test('SQL: candado por caja con caducidad (una sola UPDATE atómica) y solo service_role', () => {
+  assert.match(sql, /add column if not exists generando_hasta timestamptz/)
+  const t = sql.match(/create or replace function caja_candado_tomar\(p_caja uuid, p_segundos integer\)[\s\S]*?\$\$;/)
+  assert.ok(t, 'falta caja_candado_tomar')
+  assert.match(t[0], /returns boolean/)
+  assert.match(t[0], /update cajas/)
+  assert.match(t[0], /generando_hasta is null or generando_hasta < now\(\)/)
+  assert.match(t[0], /now\(\) \+ make_interval\(secs => p_segundos\)/)
+  assert.match(sql, /create or replace function caja_candado_soltar\(p_caja uuid\)/)
+  for (const firma of ['caja_candado_tomar\\(uuid, integer\\)', 'caja_candado_soltar\\(uuid\\)']) {
+    assert.match(sql, new RegExp(`revoke all on function ${firma} from public, anon, authenticated;`))
+    assert.match(sql, new RegExp(`grant execute on function ${firma} to service_role;`))
+  }
 })
