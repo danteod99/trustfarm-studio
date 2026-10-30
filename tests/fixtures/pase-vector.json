@@ -1,0 +1,11 @@
+{
+  "nota": "Clave DESECHABLE generada solo para pruebas. No es de produccion y no protege nada; la privada esta aqui a proposito para que la web central pueda probar. Nunca la uses en un entorno real.",
+  "privateKeyB64": "MC4CAQAwBQYDK2VwBCIEIHmyayFg2+e4JwRs0OAe/tpxYfr/lSEaqDUKDwgGufE3",
+  "publicKeyB64": "MCowBQYDK2VwAyEA5dJ/gdKWZQ16tC/rjkQIRrB/t9rU2HfrSqSUPjRCN3k=",
+  "cajaId": "ec77e545-47f5-44c4-95c9-00dd7004a262",
+  "ownerId": "f2ebed30-50df-424c-a9e5-fd571cfcadf6",
+  "now": "2026-10-30T12:00:00.000Z",
+  "exp": 1793361660,
+  "jti": "bc16a504791c6bd571c1d383078d3e0c",
+  "pase": "eyJ2IjoxLCJzdWIiOiJmMmViZWQzMC01MGRmLTQyNGMtYTllNS1mZDU3MWNmY2FkZjYiLCJib3giOiJlYzc3ZTU0NS00N2Y1LTQ0YzQtOTVjOS0wMGRkNzAwNGEyNjIiLCJleHAiOjE3OTMzNjE2NjAsImp0aSI6ImJjMTZhNTA0NzkxYzZiZDU3MWMxZDM4MzA3OGQzZTBjIn0.Vy6nDUn0DrulsWnhYZEy3PeM_GU_hlhlSGj9w0OAZgHiTWA-SxoG7Mlai-GAWl0IyglpvqHNHDPLonI2BS-JBQ"
+}
