@@ -20,6 +20,9 @@ export default async function Header() {
               <Link href="/galeria" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink sm:block">
                 Galería
               </Link>
+              <Link href="/cajas" className="rounded-lg px-2 py-2 text-mute hover:text-ink sm:px-3">
+                Mis cajas
+              </Link>
               {isAdminEmail(user.email) && (
                 <Link href="/admin" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink sm:block">
                   Admin
