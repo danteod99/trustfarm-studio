@@ -15,6 +15,7 @@ export function crearMem(reloj: () => Date = () => new Date()) {
     forzarDuplicados: 0,
     intentosCrear: 0,
     fallaLimpieza: false,
+    emailLookups: 0,
   }
   const store: CajasStore = {
     async contarIntentos(clave, desdeIso) { return m.intentos.filter(i => i.clave === clave && i.creado >= desdeIso).length },
@@ -32,7 +33,7 @@ export function crearMem(reloj: () => Date = () => new Date()) {
       return r ? { id: r.id, secretoHash: r.secretoHash, estado: r.estado as 'pendiente' | 'vinculada' | 'desvinculada', expiraEn: r.expiraEn, cajaId: r.cajaId } : null
     },
     async obtenerCaja(id) { return m.cajas.find(c => c.id === id) ?? null },
-    async obtenerEmailDueno(o) { return m.emails[o] ?? null },
+    async obtenerEmailDueno(o) { m.emailLookups++; return m.emails[o] ?? null },
     async tocarCaja(cajaId, version, ahora) { m.toques.push({ cajaId, version, ahora }) },
     async borrarRegistrosVencidos(antes) { if (m.fallaLimpieza) throw new Error('boom'); m.limpiezas.push('r:' + antes) },
     async borrarIntentosViejos(antes) { if (m.fallaLimpieza) throw new Error('boom'); m.limpiezas.push('i:' + antes) },

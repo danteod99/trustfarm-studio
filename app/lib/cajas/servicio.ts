@@ -43,6 +43,8 @@ const DIA = 24 * HORA
 const VIDA_CODIGO_MS = 15 * MIN
 const MAX_REGISTROS_POR_IP = 20
 const MAX_REINTENTOS_CODIGO = 5
+const MAX_TOKENS_POR_REGISTRO = 10
+const DEMASIADOS_INTENTOS = 'Demasiados intentos. Espera un rato e inténtalo de nuevo.'
 
 const NO_AUTORIZADO = (): Respuesta => ({ status: 401, body: { error: 'No autorizado.' } })
 
@@ -63,7 +65,7 @@ export async function registrarCaja(deps: ServicioDeps, { ip, version }: { ip: s
   const ahora = deps.now()
 
   if (!(await limitarIntentos(store, `registrar:${ip}`, MAX_REGISTROS_POR_IP, HORA, ahora))) {
-    return { ok: false, status: 429, error: 'Demasiados intentos. Espera un rato e inténtalo de nuevo.' }
+    return { ok: false, status: 429, error: DEMASIADOS_INTENTOS }
   }
 
   // Limpieza oportunista: un fallo aquí nunca rompe la respuesta.
@@ -118,6 +120,12 @@ export async function estadoCaja(
 
   const c = await calcularEstado(deps, registro)
   if (c.estado !== 'vinculada') return { status: 200, body: { estado: c.estado } }
+
+  // Protege la API de Cloudflare: solo cuenta cuando se pide el token y la caja está vinculada.
+  // Al superarlo se responde 429 (no 'vinculada' sin token: la caja reintenta con espera creciente).
+  if (conToken && !(await limitarIntentos(deps.store, `token:${registro.id}`, MAX_TOKENS_POR_REGISTRO, HORA, deps.now()))) {
+    return { status: 429, body: { error: DEMASIADOS_INTENTOS } }
+  }
 
   const ownerEmail = await deps.store.obtenerEmailDueno(c.caja.ownerId)
   const body: Record<string, unknown> = {

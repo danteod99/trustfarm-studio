@@ -143,3 +143,64 @@ test('latidoCaja: mismo 401', async () => {
   assert.deepEqual(await latidoCaja(c.deps, { registroId: c.registroId, bearer: 'mal', version: 'v' }), e)
   assert.equal(c.m.toques.length, 0)
 })
+
+// ---- límite de tunnel_token por registro
+const LIM = 'Demasiados intentos. Espera un rato e inténtalo de nuevo.'
+
+test('estadoCaja token: 10 pasan, la 11.ª da 429 sin llamar a Cloudflare ni al email', async () => {
+  const c = await conRegistro({ estado: 'vinculada', caja: true })
+  let cf = 0
+  c.deps.cloudflare = { obtenerTokenTunel: async () => { cf++; return 'tok' } }
+  for (let i = 0; i < 10; i++) {
+    const r = await estadoCaja(c.deps, { registroId: c.registroId, bearer: c.secreto, conToken: true })
+    assert.equal(r.status, 200)
+    assert.equal((r.body as { tunnel_token?: string }).tunnel_token, 'tok')
+  }
+  const r = await estadoCaja(c.deps, { registroId: c.registroId, bearer: c.secreto, conToken: true })
+  assert.deepEqual(r, { status: 429, body: { error: LIM } })
+  assert.equal(cf, 10)
+  assert.equal(c.m.emailLookups, 10)
+})
+
+test('estadoCaja token: el límite es por registro', async () => {
+  const a = await conRegistro({ estado: 'vinculada', caja: true })
+  for (let i = 0; i < 10; i++) await estadoCaja(a.deps, { registroId: a.registroId, bearer: a.secreto, conToken: true })
+  assert.equal((await estadoCaja(a.deps, { registroId: a.registroId, bearer: a.secreto, conToken: true })).status, 429)
+  // segundo registro en el mismo almacén
+  const r2 = await registrarCaja(a.deps, { ip: 'otra', version: 'v' })
+  if (!r2.ok) throw new Error('x')
+  a.m.registros[1].estado = 'vinculada'
+  a.m.registros[1].cajaId = 'caja-1'
+  const o = await estadoCaja(a.deps, { registroId: r2.registro_id, bearer: r2.secreto, conToken: true })
+  assert.equal(o.status, 200)
+})
+
+test('estadoCaja sin conToken no consume el límite', async () => {
+  const c = await conRegistro({ estado: 'vinculada', caja: true })
+  for (let i = 0; i < 50; i++) {
+    const r = await estadoCaja(c.deps, { registroId: c.registroId, bearer: c.secreto, conToken: false })
+    assert.equal(r.status, 200)
+    assert.ok(!('tunnel_token' in r.body))
+  }
+  assert.equal(c.m.intentos.filter(i => i.clave.startsWith('token:')).length, 0)
+  assert.equal((await estadoCaja(c.deps, { registroId: c.registroId, bearer: c.secreto, conToken: true })).status, 200)
+})
+
+test('estadoCaja token: pasada la hora vuelve a permitir', async () => {
+  const c = await conRegistro({ estado: 'vinculada', caja: true })
+  for (let i = 0; i < 10; i++) await estadoCaja(c.deps, { registroId: c.registroId, bearer: c.secreto, conToken: true })
+  assert.equal((await estadoCaja(c.deps, { registroId: c.registroId, bearer: c.secreto, conToken: true })).status, 429)
+  c.ahora.t = new Date(T0.getTime() + 3600_000 + 1000)
+  assert.equal((await estadoCaja(c.deps, { registroId: c.registroId, bearer: c.secreto, conToken: true })).status, 200)
+})
+
+test('estadoCaja token: secreto incorrecto da el mismo 401 y no consume cupo; estados no vinculados tampoco', async () => {
+  const c = await conRegistro({ estado: 'vinculada', caja: true })
+  const ref = await estadoCaja(c.deps, { registroId: 'zzz', bearer: null, conToken: true })
+  for (let i = 0; i < 20; i++) assert.deepEqual(await estadoCaja(c.deps, { registroId: c.registroId, bearer: 'mal', conToken: true }), ref)
+  assert.equal(c.m.intentos.filter(i => i.clave.startsWith('token:')).length, 0)
+  for (let i = 0; i < 10; i++) assert.equal((await estadoCaja(c.deps, { registroId: c.registroId, bearer: c.secreto, conToken: true })).status, 200)
+  const p = await conRegistro({ estado: 'pendiente' })
+  await estadoCaja(p.deps, { registroId: p.registroId, bearer: p.secreto, conToken: true })
+  assert.equal(p.m.intentos.filter(i => i.clave.startsWith('token:')).length, 0)
+})
