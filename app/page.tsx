@@ -15,10 +15,11 @@ import {
 } from "lucide-react";
 import { MODELS, PACKS, creditCost } from "@/app/lib/catalog";
 import { BRAND } from "@/app/lib/brand";
-import { MARQUEE, SHOW, type Showcase } from "@/app/lib/showcase";
+import { BRAINROT, MARQUEE, SHOW, type Showcase } from "@/app/lib/showcase";
 import ParticleGlobe from "@/app/components/ParticleGlobe";
 import Reveal from "@/app/components/Reveal";
 import Media from "@/app/components/Media";
+import SoundReel from "@/app/components/SoundReel";
 
 function exampleCost(id: string) {
   const m = MODELS.find((x) => x.id === id)!;
@@ -176,6 +177,18 @@ export default function Home() {
             </Reveal>
           ))}
         </div>
+      </section>
+
+      {/* Brainrot */}
+      <section className="mx-auto mt-28 max-w-6xl px-4">
+        <SectionHead
+          eyebrow="Brainrot peruano"
+          title="Personajes absurdos que se vuelven virales"
+          sub="Fusiona animales, comida y objetos de aquí con voz incluida. Toca un video para escucharlo."
+        />
+        <Reveal>
+          <SoundReel items={BRAINROT} />
+        </Reveal>
       </section>
 
       {/* Personajes consistentes */}
