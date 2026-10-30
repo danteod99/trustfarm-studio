@@ -43,10 +43,12 @@ export type PedidoFila = Omit<NuevoPedido, 'estado'> & {
 export interface PedidosStore {
   guardarSiNoExiste(p: NuevoPedido): Promise<'creado' | 'duplicado'>
   obtener(id: string): Promise<PedidoFila | null>
+  /** Condicional: update ... where id = ? and estado = estadoEsperado. true si afectó una fila. */
   actualizarEstado(
     id: string,
     patch: { estado: EstadoPedido; seguimiento?: string | null; enviadoEn?: string | null; entregadoEn?: string | null },
-  ): Promise<void>
+    estadoEsperado: EstadoPedido,
+  ): Promise<boolean>
   listar(desde: number, limite: number): Promise<PedidoFila[]>
 }
 
@@ -90,12 +92,12 @@ export function extraerEnvio(s: SesionMinipc): Envio | null {
   const a = sd.address
   return {
     nombre: sd.name || s.customer_details?.name || '',
-    linea1: a.line1 ?? '',
+    linea1: (a.line1 ?? '').trim(),
     linea2: a.line2 ? a.line2 : null,
     ciudad: a.city ?? '',
     region: a.state ?? '',
     codigoPostal: a.postal_code ?? '',
-    pais: a.country ?? '',
+    pais: (a.country ?? '').trim().toUpperCase(),
   }
 }
 
@@ -113,15 +115,16 @@ export async function procesarSesionMinipc(
 
   const motivos: string[] = []
   const plan = getPlan(s.metadata?.plan_id)
-  const userId = s.metadata?.user_id ? s.metadata.user_id : null
+  const userId = s.metadata?.user_id || s.client_reference_id || null
   const envio = extraerEnvio(s)
-  const telefono = s.customer_details?.phone ? s.customer_details.phone : null
+  const telefono = s.customer_details?.phone?.trim() || null
   const email = s.customer_details?.email ? s.customer_details.email : null
   const montoCentavos = s.amount_total ?? 0
   const monedaRaw = typeof s.currency === 'string' && s.currency ? s.currency.toLowerCase() : null
 
   if (!plan) motivos.push('plan desconocido')
-  else if (s.amount_total !== precioCentavos(plan)) {
+  else if (!plan.activo) motivos.push('plan inactivo')
+  if (plan && s.amount_total !== precioCentavos(plan)) {
     motivos.push(`monto distinto al del plan (${s.amount_total ?? 'sin monto'} vs ${precioCentavos(plan)})`)
   }
   if (!userId) motivos.push('sin usuario')
@@ -170,16 +173,22 @@ export function validarCambioEstado(actual: EstadoPedido, nuevo: EstadoPedido): 
   return Array.isArray(permitidos) && permitidos.includes(nuevo)
 }
 
+const CONTROL_Y_BIDI = /[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/g
+
 export async function cambiarEstadoPedido(
   deps: { store: PedidosStore; ahora: () => Date },
   o: { id: string; estado: EstadoPedido; seguimiento?: string | null },
 ): Promise<{ ok: true } | { ok: false; status: 400 | 404 | 409; error: string }> {
-  let seguimiento: string | null | undefined = undefined
-  if (o.seguimiento !== undefined) {
-    seguimiento = typeof o.seguimiento === 'string' ? o.seguimiento.trim() || null : null
-    if (seguimiento && seguimiento.length > 120) {
+  let seguimiento: string | undefined
+  if (o.seguimiento !== undefined && o.seguimiento !== null) {
+    if (typeof o.seguimiento !== 'string') {
+      return { ok: false, status: 400, error: 'El seguimiento no es válido.' }
+    }
+    const limpio = o.seguimiento.replace(CONTROL_Y_BIDI, '').trim()
+    if (limpio.length > 120) {
       return { ok: false, status: 400, error: 'El seguimiento no puede pasar de 120 caracteres.' }
     }
+    if (limpio) seguimiento = limpio // vacío no borra el guardado
   }
   const pedido = await deps.store.obtener(o.id)
   if (!pedido) return { ok: false, status: 404, error: 'No encontré ese pedido.' }
@@ -192,6 +201,7 @@ export async function cambiarEstadoPedido(
   if (seguimiento !== undefined) patch.seguimiento = seguimiento
   if (o.estado === 'enviado') patch.enviadoEn = deps.ahora().toISOString()
   if (o.estado === 'entregado') patch.entregadoEn = deps.ahora().toISOString()
-  await deps.store.actualizarEstado(o.id, patch)
+  const afectado = await deps.store.actualizarEstado(o.id, patch, pedido.estado)
+  if (!afectado) return { ok: false, status: 409, error: 'Ese cambio de estado no es posible.' }
   return { ok: true }
 }

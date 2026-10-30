@@ -1,3 +1,4 @@
+import { PLANES } from '../app/lib/minipc.ts'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
@@ -23,10 +24,12 @@ function crearStore(): PedidosStore & { filas: PedidoFila[]; parches: unknown[] 
     async obtener(id: string) {
       return filas.find((f) => f.id === id) ?? null
     },
-    async actualizarEstado(id, patch) {
+    async actualizarEstado(id, patch, estadoEsperado) {
       parches.push(patch)
       const f = filas.find((x) => x.id === id)
-      if (f) Object.assign(f, patch)
+      if (!f || f.estado !== estadoEsperado) return false
+      Object.assign(f, patch)
+      return true
     },
     async listar(desde, limite) {
       return filas.slice(desde, desde + limite)
@@ -111,12 +114,16 @@ test('payment_status unpaid es pendiente y no guarda nada', async () => {
 const sinDireccion = (): Partial<SesionMinipc> => ({ collected_information: null, shipping_details: null })
 const casosRevisar: Array<[string, Partial<SesionMinipc>, RegExp]> = [
   ['monto distinto', { amount_total: 78000 }, /monto/i],
+  ['monto mayor', { amount_total: 80000 }, /monto/i],
+  ['línea 1 vacía', { collected_information: { shipping_details: { name: 'X', address: { line1: '', city: 'Lima', country: 'PE' } } } }, /direcci/i],
+  ['línea 1 solo espacios', { collected_information: { shipping_details: { name: 'X', address: { line1: '   ', city: 'Lima', country: 'PE' } } } }, /direcci/i],
+  ['teléfono solo espacios', { customer_details: { email: 'a@b.pe', phone: '   ' } }, /tel[eé]fono/i],
   ['país distinto de PE', {
     collected_information: { shipping_details: { name: 'X', address: { line1: 'Calle 1', city: 'Bogotá', country: 'CO' } } },
   }, /país|pais/i],
   ['sin dirección', sinDireccion(), /direcci/i],
   ['sin teléfono', { customer_details: { email: 'a@b.pe', name: 'Ana' } }, /tel[eé]fono/i],
-  ['plan desconocido', { metadata: { kind: 'minipc', plan_id: 'zzz', user_id: 'u-1' } }, /plan/i],
+  ['plan desconocido', { metadata: { kind: 'minipc', plan_id: 'zzz', user_id: 'u-1' } }, /plan desconocido/],
   ['sin usuario', { metadata: { kind: 'minipc', plan_id: 'pro' } }, /usuario/i],
   ['moneda eur', { currency: 'eur' }, /moneda/i],
 ]
@@ -127,6 +134,7 @@ for (const [nombre, extra, patron] of casosRevisar) {
     assert.equal(r.resultado, 'revisar')
     assert.equal(store.filas.length, 1)
     assert.equal(store.filas[0].estado, 'revisar')
+    assert.equal(store.filas[0].montoCentavos, extra.amount_total ?? 79000)
     assert.match(store.filas[0].notaRevision ?? '', patron)
     assert.equal(lineas.length, 1)
     assert.ok(lineas[0].includes('cs_test_1'))
@@ -158,6 +166,63 @@ test('varios motivos se listan separados por "; " y se conserva la moneda en min
 test('moneda en mayúsculas USD no genera revisión', async () => {
   const { d } = deps()
   assert.equal((await procesarSesionMinipc(d, sesionOk({ currency: 'USD' }))).resultado, 'creado')
+})
+
+test('país en minúsculas pasa como PE y se guarda en mayúsculas', async () => {
+  const { store, d } = deps()
+  const r = await procesarSesionMinipc(d, sesionOk({ collected_information: { shipping_details: { name: 'X', address: { line1: 'Calle 1', city: 'Lima', country: 'pe' } } } }))
+  assert.equal(r.resultado, 'creado')
+  assert.equal(store.filas[0].envio?.pais, 'PE')
+})
+
+test('línea 1 y teléfono se guardan recortados', async () => {
+  const { store, d } = deps()
+  await procesarSesionMinipc(d, sesionOk({ customer_details: { phone: ' +51999 ' }, collected_information: { shipping_details: { name: 'X', address: { line1: '  Calle 1 ', country: 'PE' } } } }))
+  assert.equal(store.filas[0].telefono, '+51999')
+  assert.equal(store.filas[0].envio?.linea1, 'Calle 1')
+})
+
+test('user_id cae a client_reference_id; metadata.user_id gana', async () => {
+  const a = deps()
+  await procesarSesionMinipc(a.d, sesionOk({ metadata: { kind: 'minipc', plan_id: 'pro' }, client_reference_id: 'u-ref' }))
+  assert.equal(a.store.filas[0].userId, 'u-ref')
+  assert.equal(a.store.filas[0].estado, 'pagado')
+  const b = deps()
+  await procesarSesionMinipc(b.d, sesionOk({ client_reference_id: 'u-ref' }))
+  assert.equal(b.store.filas[0].userId, 'u-1')
+})
+
+test('plan inactivo se guarda para revisar', async () => {
+  const plan = PLANES.find((p) => p.id === 'pro')!
+  plan.activo = false
+  try {
+    const { store, d } = deps()
+    const r = await procesarSesionMinipc(d, sesionOk())
+    assert.equal(r.resultado, 'revisar')
+    assert.match(store.filas[0].notaRevision ?? '', /plan inactivo/)
+    assert.equal(store.filas[0].planId, 'pro')
+  } finally {
+    plan.activo = true
+  }
+})
+
+test('si el almacén rechaza al guardar, procesarSesionMinipc propaga y no registra log', async () => {
+  const store = crearStore()
+  store.guardarSiNoExiste = async () => { throw new Error('db caída') }
+  const lineas: string[] = []
+  await assert.rejects(procesarSesionMinipc({ store, log: (l) => { lineas.push(l) } }, sesionOk({ amount_total: 1 })), /db caída/)
+  assert.equal(lineas.length, 0)
+})
+
+test('sesión con metadata null y dirección con campos null no lanza', async () => {
+  const { store, d } = deps()
+  const r = await procesarSesionMinipc(d, {
+    id: 'cs_nulos', payment_status: 'paid', amount_total: 79000, currency: 'usd', metadata: null,
+    customer_details: null,
+    collected_information: { shipping_details: { name: null, address: { line1: null, line2: null, city: null, state: null, postal_code: null, country: null } } },
+  })
+  assert.equal(r.resultado, 'revisar')
+  assert.equal(store.filas.length, 1)
 })
 
 test('datos faltantes de Stripe nunca lanzan', async () => {
@@ -207,6 +272,21 @@ test('foco 6: validarCambioEstado', () => {
     ['pagado', 'revisar'], ['cancelado', 'pagado'],
   ]
   for (const [a, b] of no) assert.equal(validarCambioEstado(a, b), false, `${a}->${b}`)
+})
+
+test('matriz exhaustiva de transiciones (36 pares)', () => {
+  const todos: EstadoPedido[] = ['pagado', 'revisar', 'enviado', 'entregado', 'reembolsado', 'cancelado']
+  const esperado: Record<string, string[]> = {
+    pagado: ['enviado', 'cancelado', 'reembolsado'],
+    revisar: ['pagado', 'enviado', 'cancelado', 'reembolsado'],
+    enviado: ['entregado', 'reembolsado'],
+    entregado: ['reembolsado'],
+    cancelado: [],
+    reembolsado: [],
+  }
+  for (const a of todos) for (const b of todos) {
+    assert.equal(validarCambioEstado(a, b), esperado[a].includes(b), `${a}->${b}`)
+  }
 })
 
 async function pedidoEn(estado: EstadoPedido) {
@@ -262,4 +342,51 @@ test('foco 6: pedido cancelado no puede marcarse enviado', async () => {
   const r = await cambiarEstadoPedido({ store, ahora }, { id: 'ped_1', estado: 'enviado' })
   assert.equal(!r.ok && r.status, 409)
   assert.equal(store.filas[0].estado, 'cancelado')
+})
+
+test('carrera: si el estado cambia entre lectura y escritura, 409 y no se pisa', async () => {
+  const store = await pedidoEn('pagado')
+  const original = store.obtener.bind(store)
+  store.obtener = async (id) => {
+    const f = await original(id)
+    const copia = f ? { ...f } : null
+    if (f) f.estado = 'cancelado' // otro proceso lo cancela tras la lectura
+    return copia
+  }
+  const r = await cambiarEstadoPedido({ store, ahora }, { id: 'ped_1', estado: 'enviado' })
+  assert.deepEqual(r, { ok: false, status: 409, error: 'Ese cambio de estado no es posible.' })
+  assert.equal(store.filas[0].estado, 'cancelado')
+  assert.equal(store.filas[0].enviadoEn, null)
+})
+
+test('si el almacén rechaza al actualizar, cambiarEstadoPedido propaga', async () => {
+  const store = await pedidoEn('pagado')
+  store.actualizarEstado = async () => { throw new Error('db caída') }
+  await assert.rejects(cambiarEstadoPedido({ store, ahora }, { id: 'ped_1', estado: 'enviado' }), /db caída/)
+})
+
+test('seguimiento que no es cadena/null/undefined da 400', async () => {
+  const store = await pedidoEn('pagado')
+  for (const malo of [123, {}, ['a'], true]) {
+    const r = await cambiarEstadoPedido({ store, ahora }, { id: 'ped_1', estado: 'enviado', seguimiento: malo as unknown as string })
+    assert.equal(!r.ok && r.status, 400)
+  }
+  assert.equal(store.parches.length, 0)
+})
+
+test('seguimiento vacío o solo espacios no borra el guardado', async () => {
+  const store = await pedidoEn('enviado')
+  store.filas[0].seguimiento = 'ABC'
+  await cambiarEstadoPedido({ store, ahora }, { id: 'ped_1', estado: 'entregado', seguimiento: '   ' })
+  assert.equal(store.filas[0].seguimiento, 'ABC')
+  assert.equal(store.filas[0].estado, 'entregado')
+})
+
+test('seguimiento sin caracteres de control ni bidi, y se cuenta tras limpiar', async () => {
+  const store = await pedidoEn('pagado')
+  await cambiarEstadoPedido({ store, ahora }, { id: 'ped_1', estado: 'enviado', seguimiento: '‮AB\u0000C\n1⁦ ' })
+  assert.equal(store.filas[0].seguimiento, 'ABC1')
+  const s2 = await pedidoEn('pagado')
+  const r = await cambiarEstadoPedido({ store: s2, ahora }, { id: 'ped_1', estado: 'enviado', seguimiento: 'x'.repeat(120) + '‮\u0000' })
+  assert.deepEqual(r, { ok: true })
 })
