@@ -11,8 +11,9 @@ export interface Item {
 }
 
 export const PROMESA = 'Un vendedor con IA que atiende tu WhatsApp las 24 horas + un estudio de video con IA'
+export const TITULO = 'TRUST Assistant — Mini PC con vendedor IA'
 export const DESCRIPCION =
-  'Una mini PC con un vendedor con IA adentro: atiende tu WhatsApp, toma pedidos, agenda citas y edita tus videos. Elige tu plan y compra en línea.'
+  'Un vendedor con IA que atiende tu WhatsApp las 24 horas, toma pedidos y agenda citas, en una mini PC para tu negocio. Elige el plan que va con tu negocio.'
 
 export const QUE_HACE: Item[] = [
   { titulo: 'Vende por WhatsApp', texto: 'Responde en segundos, a cualquier hora, con tus precios reales.' },
@@ -87,25 +88,33 @@ export const CAJAS_WEB: Item[] = [
   },
 ]
 
-export const USOS: { titulo: string; foto: string; alt: string }[] = [
+export const USOS: { titulo: string; src: string; ancho: number; alto: number; alt: string }[] = [
   {
     titulo: 'Bodegas y minimarkets',
-    foto: '/minipc/uso-bodega.jpg',
+    src: '/minipc/uso-bodega.jpg',
+    ancho: 1600,
+    alto: 1194,
     alt: 'Caja de una bodega con la mini PC TRUST junto a la pantalla',
   },
   {
     titulo: 'Restaurantes y delivery',
-    foto: '/minipc/uso-restaurante.jpg',
+    src: '/minipc/uso-restaurante.jpg',
+    ancho: 1600,
+    alto: 1194,
     alt: 'Mostrador de un restaurante con la mini PC TRUST atendiendo pedidos',
   },
   {
     titulo: 'Belleza y citas',
-    foto: '/minipc/uso-belleza.jpg',
+    src: '/minipc/uso-belleza.jpg',
+    ancho: 1600,
+    alto: 1194,
     alt: 'Recepción de un salón de belleza con la mini PC TRUST agendando citas',
   },
   {
     titulo: 'Creadores y estudio de video',
-    foto: '/minipc/uso-creadores.jpg',
+    src: '/minipc/uso-creadores.jpg',
+    ancho: 1600,
+    alto: 1194,
     alt: 'Escritorio de un creador de contenido con la mini PC TRUST y su editor de video',
   },
 ]
@@ -154,9 +163,9 @@ export const EQUIPO = {
     'Una mini PC de aluminio del tamaño de tu mano, con el logo TRUST. La pones junto a la pantalla de tu caja y queda encendida todo el día, en silencio.',
   medidas: 'Aluminio · 13 × 13 cm',
   fotos: [
-    { src: '/minipc/equipo-frente.jpg', alt: 'Frente de la mini PC TRUST con USB-C, USB y audio', pie: 'Frente · USB-C · USB · audio' },
-    { src: '/minipc/equipo-atras.jpg', alt: 'Parte trasera de la mini PC TRUST con 2 HDMI, 4 USB y red', pie: 'Atrás · 2 HDMI · 4 USB · red' },
-    { src: '/minipc/equipo-arriba.jpg', alt: 'Vista superior de la mini PC TRUST de aluminio con el logo', pie: 'Vista superior' },
+    { src: '/minipc/equipo-frente.jpg', ancho: 1600, alto: 1194, alt: 'Frente de la mini PC TRUST con USB-C, USB y audio', pie: 'Frente · USB-C · USB · audio' },
+    { src: '/minipc/equipo-atras.jpg', ancho: 1600, alto: 1194, alt: 'Parte trasera de la mini PC TRUST con 2 HDMI, 4 USB y red', pie: 'Atrás · 2 HDMI · 4 USB · red' },
+    { src: '/minipc/equipo-arriba.jpg', ancho: 1600, alto: 1600, alt: 'Vista superior de la mini PC TRUST de aluminio con el logo', pie: 'Vista superior' },
   ],
   versiones: [
     {
@@ -170,4 +179,38 @@ export const EQUIPO = {
       datos: ['24 GB RAM · 512 GB o 1 TB SSD', '8 núcleos de potencia', '2 HDMI: pantalla de caja y una extra', 'Llega instalada y configurada'],
     },
   ],
+}
+
+// Fotos sueltas de la página, con sus dimensiones reales.
+export const FOTOS = {
+  hero: {
+    src: '/minipc/hero-equipo-monitor.jpg',
+    ancho: 1600,
+    alto: 1600,
+    alt: 'Mini PC TRUST de aluminio junto a un monitor de caja',
+  },
+  pantallaCaja: {
+    src: '/minipc/app-pantalla-caja.png',
+    ancho: 1660,
+    alto: 680,
+    alt: 'Pantalla de la caja con las ventas del día, los pedidos y los chats atendidos por la IA',
+  },
+  celularHoy: {
+    src: '/minipc/app-celular-1.png',
+    ancho: 780,
+    alto: 1250,
+    alt: 'La app en el celular, en la pantalla Hoy: lo vendido, los pedidos y los chats del día',
+  },
+  celularChat: {
+    src: '/minipc/app-celular-2.png',
+    ancho: 780,
+    alto: 1262,
+    alt: 'La app en el celular mostrando una conversación con un cliente',
+  },
+  cierre: {
+    src: '/minipc/cierre.jpg',
+    ancho: 1600,
+    alto: 1194,
+    alt: 'Equipo TRUST Assistant listo para instalarse en tu negocio',
+  },
 }

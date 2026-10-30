@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 /** La decisión de abrir la venta la toma el servidor; el endpoint la revalida igual. */
@@ -17,6 +17,15 @@ export default function BotonComprar({
 }) {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Al volver atrás desde Stripe, Safari iOS restaura la página con el estado "cargando".
+  useEffect(() => {
+    const alVolver = (e: PageTransitionEvent) => {
+      if (e.persisted) setCargando(false);
+    };
+    window.addEventListener("pageshow", alVolver);
+    return () => window.removeEventListener("pageshow", alVolver);
+  }, []);
 
   if (!ventaAbierta) {
     return (

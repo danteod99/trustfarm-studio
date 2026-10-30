@@ -15,6 +15,8 @@ import {
   CAJAS_WEB,
   CONTROL,
   DESCRIPCION,
+  FOTOS,
+  TITULO,
   EQUIPO,
   ESTUDIO_VIDEO,
   FAQ,
@@ -29,9 +31,22 @@ import {
 } from "@/app/lib/minipc-contenido";
 import PlanCard from "./PlanCard";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
-  title: "TRUST Assistant — Mini PC con vendedor IA",
+  title: TITULO,
   description: DESCRIPCION,
+  alternates: { canonical: "/minipc" },
+  openGraph: {
+    title: TITULO,
+    description: DESCRIPCION,
+    url: "/minipc",
+    siteName: "TrustFarm",
+    locale: "es_419",
+    type: "website",
+    images: [{ url: FOTOS.hero.src, width: FOTOS.hero.ancho, height: FOTOS.hero.alto, alt: FOTOS.hero.alt }],
+  },
+  twitter: { card: "summary_large_image", title: TITULO, description: DESCRIPCION, images: [FOTOS.hero.src] },
   robots: paginaVisible({ NEXT_PUBLIC_MINIPC_VISIBLE: process.env.NEXT_PUBLIC_MINIPC_VISIBLE })
     ? { index: true, follow: true }
     : { index: false, follow: false },
@@ -98,7 +113,7 @@ export default function MinipcPage() {
               <dd className="text-2xl font-bold">24/7</dd>
             </div>
             <div>
-              <dt className="text-mute">Clips con IA por video</dt>
+              <dt className="text-mute">Clips con IA por video (Pro y Negocio)</dt>
               <dd className="text-2xl font-bold">15</dd>
             </div>
             <div>
@@ -109,11 +124,11 @@ export default function MinipcPage() {
         </div>
         <div className="card overflow-hidden">
           <Image
-            src="/minipc/hero-equipo-monitor.jpg"
-            alt="Mini PC TRUST de aluminio junto a un monitor de caja mostrando el panel de TRUST Assistant"
-            width={1600}
-            height={1600}
-            priority
+            src={FOTOS.hero.src}
+            alt={FOTOS.hero.alt}
+            width={FOTOS.hero.ancho}
+            height={FOTOS.hero.alto}
+            preload
             sizes="(min-width: 1024px) 560px, 100vw"
             className="h-auto w-full"
           />
@@ -162,10 +177,10 @@ export default function MinipcPage() {
       >
         <Reveal className="card overflow-hidden p-2">
           <Image
-            src="/minipc/app-pantalla-caja.png"
-            alt="Pantalla de la caja con las ventas del día, los pedidos y los chats atendidos por la IA"
-            width={1660}
-            height={680}
+            src={FOTOS.pantallaCaja.src}
+            alt={FOTOS.pantallaCaja.alt}
+            width={FOTOS.pantallaCaja.ancho}
+            height={FOTOS.pantallaCaja.alto}
             sizes="(min-width: 1152px) 1120px, 100vw"
             className="h-auto w-full rounded-xl"
           />
@@ -173,18 +188,18 @@ export default function MinipcPage() {
         <div className="mt-6 grid gap-6 lg:grid-cols-[auto_1fr] lg:items-center">
           <div className="flex justify-center gap-4">
             <Image
-              src="/minipc/app-celular-1.png"
-              alt="La app en el celular mostrando una conversación con un cliente"
-              width={780}
-              height={1250}
+              src={FOTOS.celularHoy.src}
+              alt={FOTOS.celularHoy.alt}
+              width={FOTOS.celularHoy.ancho}
+              height={FOTOS.celularHoy.alto}
               sizes="(min-width: 640px) 220px, 42vw"
               className="h-auto w-[42vw] max-w-[220px] rounded-xl border border-line"
             />
             <Image
-              src="/minipc/app-celular-2.png"
-              alt="La app en el celular mostrando los avisos de clientes que necesitan a una persona"
-              width={780}
-              height={1262}
+              src={FOTOS.celularChat.src}
+              alt={FOTOS.celularChat.alt}
+              width={FOTOS.celularChat.ancho}
+              height={FOTOS.celularChat.alto}
               sizes="(min-width: 640px) 220px, 42vw"
               className="h-auto w-[42vw] max-w-[220px] rounded-xl border border-line"
             />
@@ -256,8 +271,8 @@ export default function MinipcPage() {
                 <Image
                   src={f.src}
                   alt={f.alt}
-                  width={1600}
-                  height={f.src.includes("arriba") ? 1600 : 1194}
+                  width={f.ancho}
+                  height={f.alto}
                   sizes="(min-width: 1152px) 360px, (min-width: 640px) 33vw, 100vw"
                   className="h-auto w-full"
                 />
@@ -294,10 +309,10 @@ export default function MinipcPage() {
             <li key={u.titulo}>
               <figure className="card overflow-hidden">
                 <Image
-                  src={u.foto}
+                  src={u.src}
                   alt={u.alt}
-                  width={1600}
-                  height={1194}
+                  width={u.ancho}
+                  height={u.alto}
                   sizes="(min-width: 1152px) 560px, (min-width: 640px) 50vw, 100vw"
                   className="h-auto w-full"
                 />
@@ -360,10 +375,10 @@ export default function MinipcPage() {
       <section aria-labelledby="contacto-t" className="mx-auto max-w-6xl px-4 py-14">
         <div className="card grid items-center gap-6 overflow-hidden md:grid-cols-2">
           <Image
-            src="/minipc/cierre.jpg"
-            alt="Equipo TRUST Assistant listo para instalarse en tu negocio"
-            width={1600}
-            height={1194}
+            src={FOTOS.cierre.src}
+            alt={FOTOS.cierre.alt}
+            width={FOTOS.cierre.ancho}
+            height={FOTOS.cierre.alto}
             sizes="(min-width: 1152px) 560px, (min-width: 768px) 50vw, 100vw"
             className="h-auto w-full"
           />
