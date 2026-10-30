@@ -318,7 +318,7 @@ export default function Home() {
       <section id="precios" className="mx-auto mt-28 max-w-6xl scroll-mt-24 px-4">
         <SectionHead
           eyebrow="Precios"
-          title="Paquetes de créditos"
+          title="Planes y precios"
           sub="Plan mensual con más créditos o paquetes sueltos. En dólares, los créditos no vencen."
         />
         <Reveal>
