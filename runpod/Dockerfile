@@ -4,6 +4,10 @@
 # Los modelos y LoRAs NO van en la imagen: viven en el network volume (/runpod-volume/models).
 FROM runpod/worker-comfyui:5.10.0-base
 
+# Triton compila kernels al vuelo y necesita un compilador de C.
+RUN apt-get update && apt-get install -y --no-install-recommends gcc g++ python3-dev \
+ && rm -rf /var/lib/apt/lists/*
+
 # ComfyUI 0.43 pide PyTorch con CUDA 13 (la base trae cu128). Todo va al venv de la imagen
 # (/opt/venv): un "uv pip install" sin --python lo instala fuera y ComfyUI no arranca.
 ARG COMFYUI_VERSION=v0.43.0
