@@ -8,6 +8,7 @@ import {
   MODELS,
   creditCost,
   getModel,
+  needsLocal,
   validOptions,
   type Aspect,
   type Kind,
@@ -92,6 +93,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
   const [styleId, setStyleId] = useState("");
   const [draft, setDraft] = useState<Draft | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
+  const [server, setServer] = useState<{ online: string[]; fal: boolean } | null>(null);
 
   const { items, balance: polledBalance, setBalance, prepend } = useGenerations("?limit=12");
   const balance = polledBalance ?? initialBalance;
@@ -111,6 +113,19 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
     const r = await fetch("/api/presets");
     if (r.ok) setPresets((await r.json()).presets);
   }
+
+  // Estado del servidor local (GPU en casa): se revisa cada minuto.
+  useEffect(() => {
+    const check = () =>
+      fetch("/api/servidor")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => d && setServer(d))
+        .catch(() => {});
+    check();
+    const t = setInterval(check, 60_000);
+    return () => clearInterval(t);
+  }, []);
+  const offline = (m: ModelDef) => !!server && needsLocal(m, server.fal) && !server.online.includes(m.id);
 
   // Enlaces desde la galería: /estudio?animar=<id> o ?personaje=<id>.
   useEffect(() => {
@@ -134,6 +149,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
   const cost = free ? 0 : creditCost(model, opts);
   const notEnough = !free && cost > balance;
   const pending = pendingFields(prompt);
+  const modelOffline = offline(model);
 
   function pickDuration(d: number) {
     // Veo solo hace 1080p en clips de 8 s: al bajar la duración se pasa a 720p.
@@ -382,7 +398,14 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold">{m.name}</span>
-                  {m.badge && <span className="text-xs text-brand-2">{m.badge}</span>}
+                  <span className="flex items-center gap-2 text-xs">
+                    {server && m.localCapable && (server.online.includes(m.id) || needsLocal(m, server.fal)) && (
+                      <span className={server.online.includes(m.id) ? "text-emerald-400" : "text-mute"}>
+                        ● {server.online.includes(m.id) ? "Servidor en línea" : "Servidor apagado"}
+                      </span>
+                    )}
+                    {m.badge && <span className="text-brand-2">{m.badge}</span>}
+                  </span>
                 </div>
                 <p className="mt-0.5 text-xs text-mute">{m.tagline}</p>
               </button>
@@ -531,6 +554,11 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
           )}
         </div>
 
+        {modelOffline && (
+          <p className="rounded-xl bg-amber-500/10 p-3 text-sm text-amber-200">
+            {model.name} corre en nuestro servidor y ahora está apagado. Elige otro modelo o intenta más tarde.
+          </p>
+        )}
         {error && <p className="rounded-xl bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
 
         {notEnough ? (
@@ -540,7 +568,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
         ) : (
           <button
             onClick={generate}
-            disabled={submitting || !!invalid || prompt.trim().length < 3 || pending.length > 0}
+            disabled={submitting || !!invalid || prompt.trim().length < 3 || pending.length > 0 || modelOffline}
             className="btn-primary w-full !py-3"
           >
             {submitting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}

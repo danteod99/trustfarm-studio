@@ -5,6 +5,7 @@ import {
   MAX_PROMPT,
   creditCost,
   getModel,
+  needsLocal,
   validOptions,
   type Aspect,
   type Resolution,
@@ -121,6 +122,12 @@ export async function startGeneration(userId: string, free: boolean, input: Star
     return { ok: false, error: `Tienes ${MAX_ACTIVE_JOBS} generaciones en curso. Espera a que termine una.`, status: 429 };
   }
 
+  // Sin FAL_KEY (o modelo solo local) no hay respaldo: se avisa antes de cobrar.
+  const useLocal = !!model.localCapable && (await workerOnline(model.id));
+  if (!useLocal && needsLocal(model, !!process.env.FAL_KEY)) {
+    return { ok: false, error: `${model.name} corre en nuestro servidor y ahora está apagado. Usa otro modelo.`, status: 503 };
+  }
+
   const cost = free ? 0 : creditCost(model, opts);
   const { data: row, error: insErr } = await db
     .from("ai_generations")
@@ -148,7 +155,7 @@ export async function startGeneration(userId: string, free: boolean, input: Star
     await db.from("ai_generations").update({ charged: true }).eq("id", row.id);
   }
 
-  if (model.localCapable && (await workerOnline(model.id))) {
+  if (useLocal) {
     try {
       // El servidor local toma el trabajo de la cola (ai_claim_job). Solo es reclamable
       // cuando provider_ref.local = true, que se marca después de cobrar.
@@ -281,6 +288,13 @@ export async function failGeneration(id: string, error: string): Promise<void> {
       console.error(`[gen ${id}] reembolso falló:`, e);
     }
   }
+}
+
+/** Modelos que algún servidor local encendido puede generar ahora. */
+export async function onlineModels(): Promise<string[]> {
+  const since = new Date(Date.now() - WORKER_HEARTBEAT_MS).toISOString();
+  const { data } = await supabaseAdmin().from("ai_workers").select("models").gte("last_seen", since);
+  return Array.from(new Set((data ?? []).flatMap((w) => (w.models as string[]) ?? [])));
 }
 
 /** ¿Hay un servidor local encendido que sepa generar este modelo? */

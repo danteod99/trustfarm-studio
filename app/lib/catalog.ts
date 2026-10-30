@@ -10,7 +10,7 @@
 //   Qwen-Image (fal) ~$0.02/img · Wan 2.2 A14B (fal) ~$0.40 por clip 720p de 5 s
 
 export type Kind = "image" | "video";
-export type Provider = "gemini-image" | "veo" | "fal";
+export type Provider = "gemini-image" | "veo" | "fal" | "local";
 export type Aspect = "16:9" | "9:16" | "1:1";
 export type Resolution = "480p" | "720p" | "1080p";
 
@@ -33,6 +33,11 @@ export interface ModelDef {
   badge?: string;
   /** Lo genera el servidor local (GPU en casa) cuando está en línea; si no, fal.ai. */
   localCapable?: boolean;
+}
+
+/** Sin respaldo en la nube: solo se puede usar con el servidor local encendido. */
+export function needsLocal(m: ModelDef, falConfigured: boolean): boolean {
+  return m.provider === "local" || (!!m.localCapable && !falConfigured);
 }
 
 export const MODELS: ModelDef[] = [
@@ -64,8 +69,21 @@ export const MODELS: ModelDef[] = [
     kind: "image",
     provider: "fal",
     name: "Qwen-Image",
-    tagline: "Open source, el más económico. Bueno para volumen.",
+    tagline: "Open source, el más económico. Bueno para volumen y texto en la imagen.",
     providerModel: "fal-ai/qwen-image",
+    aspects: ["1:1", "9:16", "16:9"],
+    credits: 1,
+    acceptsImage: false,
+    badge: "Económico",
+    localCapable: true,
+  },
+  {
+    id: "z-image",
+    kind: "image",
+    provider: "local",
+    name: "Z-Image Turbo",
+    tagline: "Open source, fotos realistas en segundos. Corre en nuestro servidor.",
+    providerModel: "z_image_turbo",
     aspects: ["1:1", "9:16", "16:9"],
     credits: 1,
     acceptsImage: false,

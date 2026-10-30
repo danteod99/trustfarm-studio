@@ -196,12 +196,13 @@ def procesar(job: dict):
         "PREFIX": f"studio/{job['id']}",
     }
 
+    # Cada modelo puede traer sus tamaños en config.json (p. ej. Wan 2.2 5B: 1280x704).
     if job["kind"] == "video":
-        w, h = VIDEO_SIZE[p.get("resolution", "720p")][aspecto]
+        w, h = (modelo.get("video_size") or VIDEO_SIZE)[p.get("resolution", "720p")][aspecto]
         fps = int(modelo.get("fps", 16))
         valores.update({"WIDTH": w, "HEIGHT": h, "FPS": fps, "FRAMES": fps * int(p.get("duration", 5)) + 1})
     else:
-        w, h = IMAGE_SIZE[aspecto]
+        w, h = (modelo.get("image_size") or IMAGE_SIZE)[aspecto]
         valores.update({"WIDTH": w, "HEIGHT": h})
 
     if p.get("inputPath"):
