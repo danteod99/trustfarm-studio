@@ -14,6 +14,7 @@
 
 html,
 body {
+  overflow-x: clip;
   background: var(--color-bg);
   color: var(--color-ink);
 }
@@ -38,4 +39,31 @@ body {
 }
 @utility chip-on {
   @apply border-brand bg-brand/15 text-ink;
+}
+
+/* Etiqueta de sección (como "QUÉ INCLUYE" en trustmind.online) */
+@utility eyebrow {
+  @apply text-xs font-semibold uppercase tracking-[0.18em] text-mute;
+}
+
+/* Cinta de ejemplos: se duplica el contenido y se desplaza la mitad. */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@utility animate-marquee {
+  animation: marquee 60s linear infinite;
+}
+
+/* Tarjetas flotantes del hero */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@utility animate-float {
+  animation: float 7s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee, .animate-float { animation: none; }
 }
