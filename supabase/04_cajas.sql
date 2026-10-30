@@ -101,3 +101,26 @@ end;
 $$;
 revoke all on function caja_desvincular(uuid) from public, anon, authenticated;
 grant execute on function caja_desvincular(uuid) to service_role;
+
+-- Red de seguridad: cualquier borrado de una fila de "cajas" marca sus registros como 'desvinculada'.
+-- Existe porque "cajas" también se borra fuera de caja_desvincular: por el "on delete cascade" al
+-- borrar una cuenta en auth.users, o con un DELETE manual en el Table Editor. Sin esto el registro
+-- quedaría 'vinculada' con caja_id null y la caja no volvería a 'sin_vincular'.
+-- caja_desvincular sigue siendo la vía normal (su UPDATE no estorba). Mantener SIMPLE: si este
+-- trigger fallara, bloquearía el borrado de usuarios en todo el proyecto compartido.
+create or replace function caja_registros_al_borrar_caja() returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update caja_registros set estado = 'desvinculada' where caja_id = old.id and estado = 'vinculada';
+  return old;
+end
+$$;
+revoke all on function caja_registros_al_borrar_caja() from public, anon, authenticated;
+
+drop trigger if exists cajas_marcar_desvinculada on cajas;
+create trigger cajas_marcar_desvinculada
+  before delete on cajas
+  for each row execute function caja_registros_al_borrar_caja();
