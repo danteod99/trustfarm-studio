@@ -4,19 +4,30 @@ import { crearCloudflare } from '../cloudflare'
 import { supabaseStore } from './store-supabase'
 import { clienteStoreSupabase } from './store-cliente-supabase'
 import { slugAleatorio, type ClienteDeps } from './cliente-servicio'
+import { derivarPublica } from './pase'
 import type { ServicioDeps } from './servicio'
 
 export const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export const ERROR_NO_CONFIGURADO = { error: 'El servicio de cajas no está configurado.' }
 
-/** Devuelve las dependencias o null si falta alguna variable (sin nombrarla). */
+/**
+ * Devuelve las dependencias o null si falta alguna variable (sin nombrarla en la respuesta).
+ * La clave pública del pase se DERIVA de PASE_PRIVATE_KEY: así nunca queda desparejada
+ * (PASE_PUBLIC_KEY ya no se usa; si alguien la define, se ignora).
+ */
 export function depsReales(): ServicioDeps | null {
   const e = process.env
   const token = e.CF_API_TOKEN, accountId = e.CF_ACCOUNT_ID, zoneId = e.CF_ZONE_ID, dominio = e.DOMINIO_CAJAS
-  const paseKeyPublica = e.PASE_PUBLIC_KEY
-  if (!token || !accountId || !zoneId || !dominio || !paseKeyPublica) return null
+  if (!token || !accountId || !zoneId || !dominio) return null
   if (!e.NEXT_PUBLIC_SUPABASE_URL || !e.SUPABASE_SERVICE_ROLE_KEY) return null
+  let paseKeyPublica: string
+  try {
+    paseKeyPublica = derivarPublica(e.PASE_PRIVATE_KEY ?? '')
+  } catch {
+    console.error('[cajas] PASE_PRIVATE_KEY inválida')
+    return null
+  }
   return {
     store: supabaseStore(),
     now: () => new Date(),

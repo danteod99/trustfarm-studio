@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createPublicKey, generateKeyPairSync, verify } from 'node:crypto'
 import { readFileSync } from 'node:fs'
-import { firmarPase, PASE_VIDA_SEG } from '../app/lib/cajas/pase.ts'
+import { derivarPublica, firmarPase, PASE_VIDA_SEG } from '../app/lib/cajas/pase.ts'
 
 const vector = JSON.parse(readFileSync(new URL('./fixtures/pase-vector.json', import.meta.url), 'utf8'))
 const now = new Date(vector.now)
@@ -76,4 +76,47 @@ test('entradas vacías lanzan sin incluir la clave privada', () => {
 test('clave privada inválida lanza sin filtrar la clave', () => {
   const mala = 'AAAA-clave-mala-secreta'
   assert.throws(() => firmar({ privateKeyB64: mala }), (e: Error) => !e.message.includes(mala))
+})
+
+// ---- La central deriva la pública de la privada (ya no hay PASE_PUBLIC_KEY) ----
+
+const pkcs8 = (k: { export(o: { format: 'der'; type: 'pkcs8' }): Buffer }) => k.export({ format: 'der', type: 'pkcs8' }).toString('base64')
+// Mensaje propio y genérico (no el de Node, que podría arrastrar detalles de la clave)
+const GENERICO = /^La clave privada del pase no es válida\.$/
+
+test('derivarPublica: de la privada del vector sale exactamente la pública del vector', () => {
+  assert.equal(derivarPublica(vector.privateKeyB64), vector.publicKeyB64)
+})
+
+test('derivarPublica: con un par nuevo coincide con la pública generada', () => {
+  const par = generateKeyPairSync('ed25519')
+  const pub = par.publicKey.export({ format: 'der', type: 'spki' }).toString('base64')
+  assert.equal(derivarPublica(pkcs8(par.privateKey)), pub)
+})
+
+test('un pase firmado con la privada verifica con la pública derivada', () => {
+  assert.ok(verificarFirma(firmar(), derivarPublica(vector.privateKeyB64)))
+  const par = generateKeyPairSync('ed25519')
+  const priv = pkcs8(par.privateKey)
+  assert.ok(verificarFirma(firmar({ privateKeyB64: priv }), derivarPublica(priv)))
+})
+
+test('derivarPublica: clave RSA o P-256 lanza un error genérico sin la clave', () => {
+  const rsa = pkcs8(generateKeyPairSync('rsa', { modulusLength: 2048 }).privateKey)
+  const p256 = pkcs8(generateKeyPairSync('ec', { namedCurve: 'P-256' }).privateKey)
+  for (const k of [rsa, p256]) {
+    assert.throws(() => derivarPublica(k), (e: Error) => GENERICO.test(e.message) && !e.message.includes(k.slice(0, 40)))
+  }
+})
+
+test('derivarPublica: vacío, no string o basura lanza el error genérico', () => {
+  for (const v of ['', undefined, null, 123, {}, 'AAAA-clave-mala-secreta']) {
+    assert.throws(() => derivarPublica(v as unknown as string), (e: Error) => e instanceof Error && GENERICO.test(e.message))
+  }
+})
+
+test('derivarPublica: una privada recortada (mal pegada) o la pública en su lugar lanza sin mencionarla', () => {
+  for (const mal of [vector.privateKeyB64.slice(4), vector.privateKeyB64.slice(0, -8), vector.publicKeyB64]) {
+    assert.throws(() => derivarPublica(mal), (e: Error) => GENERICO.test(e.message))
+  }
 })

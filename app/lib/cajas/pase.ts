@@ -1,4 +1,23 @@
-import { createPrivateKey, randomBytes, sign } from 'node:crypto'
+import { createPrivateKey, createPublicKey, randomBytes, sign } from 'node:crypto'
+
+/**
+ * Clave pública del pase (SPKI DER en base64) derivada de la privada (PKCS8 DER en base64).
+ * Así la pareja nunca puede quedar mal configurada. Solo acepta Ed25519 (lo que verifica la caja).
+ */
+export function derivarPublica(privateKeyB64: string): string {
+  // No se propaga el error original: podría arrastrar material de la clave
+  const invalida = () => new Error('La clave privada del pase no es válida.')
+  if (typeof privateKeyB64 !== 'string' || privateKeyB64.trim() === '') throw invalida()
+  let pub: Buffer
+  try {
+    const priv = createPrivateKey({ key: Buffer.from(privateKeyB64.trim(), 'base64'), format: 'der', type: 'pkcs8' })
+    if (priv.asymmetricKeyType !== 'ed25519') throw invalida()
+    pub = createPublicKey(priv).export({ type: 'spki', format: 'der' })
+  } catch {
+    throw invalida()
+  }
+  return pub.toString('base64')
+}
 
 /** Vida del pase en segundos (contrato con la caja). */
 export const PASE_VIDA_SEG = 60
