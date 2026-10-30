@@ -3,9 +3,9 @@
 import { supabaseAdmin } from '../supabase/admin'
 import type { CajaCliente, ClienteStore } from './cliente-servicio'
 
-const COLS = 'id, owner_id, nombre, slug, tunnel_id, last_seen'
-type Fila = { id: string; owner_id: string; nombre: string; slug: string; tunnel_id: string; last_seen: string | null }
-const mapear = (f: Fila): CajaCliente => ({ id: f.id, ownerId: f.owner_id, nombre: f.nombre, slug: f.slug, tunnelId: f.tunnel_id, lastSeen: f.last_seen ?? null })
+const COLS = 'id, owner_id, nombre, slug, tunnel_id, last_seen, version, created_at'
+type Fila = { id: string; owner_id: string; nombre: string; slug: string; tunnel_id: string; last_seen: string | null; version?: string | null; created_at?: string | null }
+const mapear = (f: Fila): CajaCliente => ({ id: f.id, ownerId: f.owner_id, nombre: f.nombre, slug: f.slug, tunnelId: f.tunnel_id, lastSeen: f.last_seen ?? null, version: f.version ?? null, creadaEn: f.created_at ?? null })
 
 export function clienteStoreSupabase(): ClienteStore {
   const db = supabaseAdmin()
@@ -65,8 +65,8 @@ export function clienteStoreSupabase(): ClienteStore {
       const { error } = await db.rpc('caja_desvincular', { p_caja: cajaId })
       if (error) throw new Error('No se pudo desvincular la caja.')
     },
-    async listarTodasLasCajas() {
-      const { data, error } = await db.from('cajas').select(COLS).order('created_at', { ascending: false })
+    async listarTodasLasCajas(desde, limite) {
+      const { data, error } = await db.from('cajas').select(COLS).order('created_at', { ascending: false }).range(desde, desde + limite - 1)
       if (error) throw new Error('No se pudo leer las cajas.')
       return (data as Fila[]).map(mapear)
     },

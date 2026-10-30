@@ -44,7 +44,9 @@ export function crearClienteMem(ahora: { t: Date }) {
       if (m.desvincularFalla) throw new Error('boom')
       m.cajas = m.cajas.filter(c => c.id !== id)
     },
-    async listarTodasLasCajas() { return [...m.cajas] },
+    async listarTodasLasCajas(desde, limite) {
+      return [...m.cajas].sort((a, b) => (b.creadaEn ?? '').localeCompare(a.creadaEn ?? '')).slice(desde, desde + limite)
+    },
   }
   let t = 0
   let s = 0

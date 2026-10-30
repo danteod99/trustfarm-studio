@@ -4,7 +4,7 @@ import { randomInt } from 'node:crypto'
 import { normalizarCodigo } from './codigo.ts'
 import { firmarPase } from './pase.ts'
 
-export interface CajaCliente { id: string; ownerId: string; nombre: string; slug: string; tunnelId: string; lastSeen: string | null }
+export interface CajaCliente { id: string; ownerId: string; nombre: string; slug: string; tunnelId: string; lastSeen: string | null; version?: string | null; creadaEn?: string | null }
 
 export type ResultadoVincular =
   | { ok: true; cajaId: string }
@@ -23,8 +23,8 @@ export interface ClienteStore {
   obtenerCaja(cajaId: string): Promise<CajaCliente | null>
   renombrarCaja(cajaId: string, nombre: string): Promise<void>
   desvincularCaja(cajaId: string): Promise<void>
-  /** Para el panel de administración. */
-  listarTodasLasCajas(): Promise<CajaCliente[]>
+  /** Para el panel de administración: más recientes primero, `limite` filas desde la posición `desde`. */
+  listarTodasLasCajas(desde: number, limite: number): Promise<CajaCliente[]>
 }
 
 export interface ClienteDeps {
@@ -116,8 +116,8 @@ export async function vincularCaja(deps: ClienteDeps, { userId, codigo }: { user
   return { status: 500, body: { error: ERR_VINCULAR } }
 }
 
-const direccion = (c: CajaCliente, deps: ClienteDeps) => `${c.slug}.${deps.env.dominio}`
-function encendida(c: CajaCliente, deps: ClienteDeps): boolean {
+export const direccion = (c: CajaCliente, deps: ClienteDeps) => `${c.slug}.${deps.env.dominio}`
+export function encendida(c: CajaCliente, deps: ClienteDeps): boolean {
   if (!c.lastSeen) return false
   const t = new Date(c.lastSeen).getTime()
   return Number.isFinite(t) && deps.now().getTime() - t <= ENCENDIDA_MS
