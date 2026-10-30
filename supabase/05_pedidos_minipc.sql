@@ -22,6 +22,7 @@ create table if not exists pedidos_minipc (
   -- Los pedidos son registro de dinero: si se borra la cuenta, el pedido permanece con user_id en null.
   user_id               uuid references auth.users(id) on delete set null,
   -- NULL cuando el plan de la sesión es desconocido (el pedido queda en 'revisar').
+  -- Los ids deben coincidir con PLANES en app/lib/minipc.ts (una prueba lo comprueba); si se añade un plan, ampliar este CHECK en una migración nueva.
   plan_id               text check (plan_id is null or plan_id in ('basico', 'pro', 'negocio')),
   -- Único: si Stripe reintenta el webhook, el insert falla con 23505 y se trata como duplicado.
   stripe_session_id     text not null unique,
@@ -42,6 +43,7 @@ create table if not exists pedidos_minipc (
 comment on table pedidos_minipc is 'empleado-ia/minipc';
 create index if not exists pedidos_minipc_creado_idx on pedidos_minipc (creado desc);
 create index if not exists pedidos_minipc_estado_idx on pedidos_minipc (estado);
+create index if not exists pedidos_minipc_user_idx on pedidos_minipc (user_id);
 
 alter table pedidos_minipc enable row level security;
 
