@@ -4,7 +4,7 @@ export const metadata = { title: "Política de reembolsos" };
 
 export default function Reembolsos() {
   return (
-    <LegalPage title="Política de reembolsos" updated="29 de octubre de 2026">
+    <LegalPage title="Política de reembolsos" updated="30 de octubre de 2026">
       <h2>Generaciones fallidas</h2>
       <p>
         Si una generación no se completa por un error técnico, por tiempo de espera o por el filtro de seguridad del modelo,
@@ -21,6 +21,19 @@ export default function Reembolsos() {
         Puedes cancelar el plan cuando quieras desde Créditos → Gestionar plan; no se cobrarán más meses. Puedes pedir el
         reembolso del último cobro dentro de los 14 días si no has usado ninguno de los créditos de ese mes. Los meses ya
         usados no son reembolsables.
+      </p>
+      <h2>Equipos mini PC</h2>
+      <div className="mt-4 rounded-lg border border-brand/40 bg-panel p-3 text-ink">
+        <strong>Texto provisional: pendiente de revisión legal</strong>
+      </div>
+      <p>
+        Esta sección es solo para la compra de equipos TRUST Assistant (mini PC). La política de reembolso de los paquetes
+        de créditos descrita arriba no cambia.
+      </p>
+      <p>
+        El plazo y las condiciones de devolución del equipo los define el dueño de TRUST y se publicarán aquí. Mientras
+        tanto, los reembolsos y devoluciones de equipos se coordinan caso por caso con soporte, escribiéndonos por WhatsApp
+        o al email de contacto.
       </p>
       <h2>Cómo solicitarlo</h2>
       <p>Escríbenos desde el email de tu cuenta indicando la fecha de compra. Respondemos en un máximo de 3 días hábiles.</p>
