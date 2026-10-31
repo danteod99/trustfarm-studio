@@ -11,9 +11,12 @@ export interface RegistroCaja {
   estado: EstadoRegistro
   expiraEn: string
   cajaId: string | null
+  /** Código de asociación vigente o vencido (8 caracteres normalizados); null si no hay. */
+  codigo: string | null
 }
 
-export interface CajaDatos { id: string; slug: string; tunnelId: string; ownerId: string }
+/** `ownerId` null = caja PREPARADA: existe con su túnel y su dirección, pero todavía no es de ninguna cuenta. */
+export interface CajaDatos { id: string; slug: string; tunnelId: string; ownerId: string | null }
 
 export interface CajasStore {
   contarIntentos(clave: string, desdeIso: string): Promise<number>
@@ -22,6 +25,11 @@ export interface CajasStore {
   buscarRegistro(id: string): Promise<RegistroCaja | null>
   obtenerCaja(id: string): Promise<CajaDatos | null>
   obtenerEmailDueno(ownerId: string): Promise<string | null>
+  /** Consume la llave de activación (una sola vez) y deja a la caja con su secreto permanente; reactivar conserva al dueño. */
+  activar(o: { llaveHash: string; secretoHash: string; codigo: string; expiraEn: string; version: string; ip: string }):
+    Promise<{ registroId: string; cajaId: string } | 'llave_invalida' | 'codigo_duplicado'>
+  /** Renueva el código de una caja SIN dueño; false si no aplica. */
+  nuevoCodigo(registroId: string, codigo: string, expiraEn: string): Promise<boolean | 'codigo_duplicado'>
   tocarCaja(cajaId: string, version: string, ahoraIso: string): Promise<void>
   /** Solo registros `pendiente` vencidos antes de `antesIso`. */
   borrarRegistrosVencidos(antesIso: string): Promise<void>
@@ -119,7 +127,7 @@ export async function resolverCaja(
   deps: ServicioDeps,
   { registroId, bearer }: { registroId: string; bearer: string | null | undefined },
 ): Promise<
-  | { ok: true; caja: CajaDatos; registroId: string; ownerEmail: string | null }
+  | { ok: true; caja: CajaDatos & { ownerId: string }; registroId: string; ownerEmail: string | null }
   | { ok: false; status: 401 | 409; error: string }
 > {
   const registro = await autenticar(deps.store, registroId, bearer)
@@ -127,7 +135,10 @@ export async function resolverCaja(
   const c = await calcularEstado(deps, registro)
   if (c.estado === 'desvinculada') return { ok: false, status: 401, error: 'No autorizado.' }
   if (c.estado !== 'vinculada') return { ok: false, status: 409, error: 'Esta caja todavía no está vinculada.' }
-  return { ok: true, caja: c.caja, registroId: registro.id, ownerEmail: await deps.store.obtenerEmailDueno(c.caja.ownerId) }
+  // Caja preparada (con dirección pero sin cuenta dueña): puede funcionar, pero el Estudio exige una cuenta con créditos.
+  const owner = c.caja.ownerId
+  if (owner === null) return { ok: false, status: 409, error: 'Asocia tu caja a tu cuenta para usar el Estudio.' }
+  return { ok: true, caja: { ...c.caja, ownerId: owner }, registroId: registro.id, ownerEmail: await deps.store.obtenerEmailDueno(owner) }
 }
 
 export async function estadoCaja(
@@ -146,14 +157,21 @@ export async function estadoCaja(
     return { status: 429, body: { error: DEMASIADOS_INTENTOS } }
   }
 
-  const ownerEmail = await deps.store.obtenerEmailDueno(c.caja.ownerId)
   const body: Record<string, unknown> = {
-    estado: 'vinculada',
+    estado: c.caja.ownerId === null ? 'preparada' : 'vinculada',
     caja_id: c.caja.id,
     direccion: `${c.caja.slug}.${deps.env.dominio}`,
     pase_publica: deps.env.paseKeyPublica,
-    owner_id: c.caja.ownerId,
-    owner_email: ownerEmail,
+  }
+  if (c.caja.ownerId === null) {
+    // Sin dueño: se informa el código de asociación solo mientras está vigente (si venció, la caja pide uno nuevo).
+    if (registro.codigo && new Date(registro.expiraEn).getTime() > deps.now().getTime()) {
+      body.codigo = formatearCodigo(registro.codigo)
+      body.vence_en = registro.expiraEn
+    }
+  } else {
+    body.owner_id = c.caja.ownerId
+    body.owner_email = await deps.store.obtenerEmailDueno(c.caja.ownerId)
   }
   if (conToken) {
     try {
@@ -176,5 +194,86 @@ export async function latidoCaja(
   if (c.estado !== 'vinculada') return { status: 200, body: { estado: 'desvinculada' } }
 
   await deps.store.tocarCaja(c.caja.id, version, deps.now().toISOString())
-  return { status: 200, body: { estado: 'vinculada' } }
+  return { status: 200, body: { estado: c.caja.ownerId === null ? 'preparada' : 'vinculada' } }
+}
+
+// ───────── Caja de fábrica: activar con la llave y pedir/renovar el código de asociación ─────────
+
+const ERR_LLAVE = 'La llave de activación no es válida o ya venció.'
+const FORMA_LLAVE = /^[A-Za-z0-9_-]{20,128}$/
+const MAX_ACTIVACIONES_POR_HORA = 10
+const MAX_CODIGOS_POR_HORA = 30
+
+/** "ABCD2345" → "ABCD-2345". */
+const formatearCodigo = (normalizado: string) => `${normalizado.slice(0, 4)}-${normalizado.slice(4)}`
+
+/**
+ * La caja, recién preparada, presenta su llave de un solo uso y recibe su secreto permanente. Sin sesión: lo frenan los límites
+ * por IP y por llave, y toda llave mala (mala forma, inexistente, usada o vencida) recibe exactamente la misma respuesta.
+ */
+export async function activarCaja(
+  deps: ServicioDeps,
+  { llave, version, ip }: { llave: unknown; version: string; ip: string },
+): Promise<Respuesta> {
+  const { store } = deps
+  const ahora = deps.now()
+  if (!(await limitarIntentos(store, `activar:${ip}`, MAX_ACTIVACIONES_POR_HORA, HORA, ahora))) {
+    return { status: 429, body: { error: DEMASIADOS_INTENTOS } }
+  }
+  const limpia = typeof llave === 'string' ? llave.trim() : ''
+  if (!FORMA_LLAVE.test(limpia)) return { status: 400, body: { error: ERR_LLAVE } }
+  const llaveHash = hashSecreto(limpia)
+  if (!(await limitarIntentos(store, `activar-llave:${llaveHash}`, MAX_ACTIVACIONES_POR_HORA, HORA, ahora))) {
+    return { status: 429, body: { error: DEMASIADOS_INTENTOS } }
+  }
+
+  const secreto = generarSecreto()
+  const secretoHash = hashSecreto(secreto)
+  const expiraEn = new Date(ahora.getTime() + VIDA_CODIGO_MS).toISOString()
+  for (let i = 0; i < MAX_REINTENTOS_CODIGO; i++) {
+    const normalizado = normalizarCodigo(generarCodigo())
+    if (!normalizado) continue
+    const r = await store.activar({ llaveHash, secretoHash, codigo: normalizado, expiraEn, version: version.slice(0, 40), ip })
+    if (r === 'codigo_duplicado') continue
+    if (r === 'llave_invalida') return { status: 400, body: { error: ERR_LLAVE } }
+    const caja = await store.obtenerCaja(r.cajaId)
+    if (!caja) return { status: 500, body: { error: 'No se pudo activar la caja. Inténtalo de nuevo.' } }
+    return {
+      status: 200,
+      body: {
+        registro_id: r.registroId, secreto, caja_id: caja.id, direccion: `${caja.slug}.${deps.env.dominio}`,
+        codigo: formatearCodigo(normalizado), expira_en: expiraEn,
+      },
+    }
+  }
+  return { status: 500, body: { error: 'No se pudo activar la caja. Inténtalo de nuevo.' } }
+}
+
+/** La caja sin dueño pide su código de asociación: devuelve el vigente o, si venció, uno nuevo (15 min). */
+export async function codigoCaja(
+  deps: ServicioDeps,
+  { registroId, bearer }: { registroId: string; bearer: string | null | undefined },
+): Promise<Respuesta> {
+  const registro = await autenticar(deps.store, registroId, bearer)
+  if (!registro) return NO_AUTORIZADO()
+  const c = await calcularEstado(deps, registro)
+  if (c.estado !== 'vinculada') return NO_AUTORIZADO()
+  if (c.caja.ownerId !== null) return { status: 409, body: { error: 'Esta caja ya está asociada a una cuenta.' } }
+  if (!(await limitarIntentos(deps.store, `codigo:${registro.id}`, MAX_CODIGOS_POR_HORA, HORA, deps.now()))) {
+    return { status: 429, body: { error: DEMASIADOS_INTENTOS } }
+  }
+
+  if (registro.codigo && new Date(registro.expiraEn).getTime() > deps.now().getTime()) {
+    return { status: 200, body: { codigo: formatearCodigo(registro.codigo), expira_en: registro.expiraEn } }
+  }
+  const expiraEn = new Date(deps.now().getTime() + VIDA_CODIGO_MS).toISOString()
+  for (let i = 0; i < MAX_REINTENTOS_CODIGO; i++) {
+    const normalizado = normalizarCodigo(generarCodigo())
+    if (!normalizado) continue
+    const r = await deps.store.nuevoCodigo(registro.id, normalizado, expiraEn)
+    if (r === 'codigo_duplicado') continue
+    if (r === false) return { status: 409, body: { error: 'Esta caja ya está asociada a una cuenta.' } }
+    return { status: 200, body: { codigo: formatearCodigo(normalizado), expira_en: expiraEn } }
+  }
+  return { status: 500, body: { error: 'No se pudo crear el código. Inténtalo de nuevo.' } }
 }
