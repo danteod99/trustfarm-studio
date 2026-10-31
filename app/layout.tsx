@@ -4,6 +4,7 @@ import "./globals.css";
 import { BRAND, SITE_URL } from "@/app/lib/brand";
 import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
+import PageBackdrop from "@/app/components/PageBackdrop";
 
 // Wordmark "TRUST": Michroma ≈ Eurostile Extended, la misma fuente del logo de trustmind.online.
 const michroma = Michroma({ variable: "--font-michroma", weight: "400", subsets: ["latin"], display: "swap" });
@@ -27,7 +28,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${michroma.variable} ${firma.variable} min-h-screen antialiased`}>
         <Header />
-        <main>{children}</main>
+        <main className="relative isolate">
+          <PageBackdrop />
+          {children}
+        </main>
         <Footer />
       </body>
     </html>

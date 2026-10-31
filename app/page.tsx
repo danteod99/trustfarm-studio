@@ -20,6 +20,11 @@ import ParticleGlobe from "@/app/components/ParticleGlobe";
 import Reveal from "@/app/components/Reveal";
 import Media from "@/app/components/Media";
 import SoundReel from "@/app/components/SoundReel";
+import LightRays from "@/app/components/fx/LightRays";
+import StarBorder from "@/app/components/fx/StarBorder";
+import ElectricBorder from "@/app/components/fx/ElectricBorder";
+import DecryptedText from "@/app/components/fx/DecryptedText";
+import { IDEAS } from "@/app/lib/ideas";
 
 function exampleCost(id: string) {
   const m = MODELS.find((x) => x.id === id)!;
@@ -71,7 +76,9 @@ const FORMATS: { t: string; d: string; item: Showcase }[] = [
 function SectionHead({ eyebrow, title, sub }: { eyebrow: string; title: string; sub?: string }) {
   return (
     <Reveal className="mb-10">
-      <p className="eyebrow">{eyebrow}</p>
+      <p className="eyebrow">
+        <DecryptedText text={eyebrow} animateOn="view" sequential speed={35} encryptedClassName="text-brand-2" />
+      </p>
       <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">{title}</h2>
       {sub && <p className="mt-3 max-w-2xl text-mute">{sub}</p>}
     </Reveal>
@@ -92,6 +99,9 @@ export default function Home() {
     <div className="overflow-x-clip">
       {/* Hero */}
       <section className="relative">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[760px] opacity-70">
+          <LightRays raysOrigin="top-center" raysColor="#22d3ee" raysSpeed={0.8} lightSpread={0.9} rayLength={1.4} followMouse mouseInfluence={0.08} noiseAmount={0.05} distortion={0.04} />
+        </div>
         <div className="pointer-events-none absolute right-[-12%] top-[-10%] h-[720px] w-[720px] opacity-70 max-lg:right-[-40%] max-lg:opacity-40">
           <ParticleGlobe />
         </div>
@@ -108,11 +118,13 @@ export default function Home() {
               estudio para tus anuncios, redes y canales. Pagas solo por lo que generas.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/entrar?modo=registro" className="btn-primary !px-6 !py-3 text-base">
-                Empezar a crear <ArrowRight size={17} />
-              </Link>
-              <Link href="#ejemplos" className="btn-ghost !px-6 !py-3 text-base">
-                Ver ejemplos
+              <StarBorder as="a" href="/entrar?modo=registro" color="#22d3ee" backgroundColor="#3b82f6" textColor="#ffffff" radius={12} className="!text-base !font-semibold">
+                <span className="flex items-center gap-2 px-2">
+                  Empezar a crear <ArrowRight size={17} />
+                </span>
+              </StarBorder>
+              <Link href="/ideas" className="btn-ghost !px-6 !py-3 text-base">
+                Ver ideas
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-mute">
@@ -153,6 +165,38 @@ export default function Home() {
           ))}
         </div>
         <p className="mt-4 text-center text-xs text-mute">Todo lo que ves en esta página se generó con {BRAND.name}.</p>
+      </section>
+
+      {/* Ideas */}
+      <section className="mx-auto mt-24 max-w-6xl px-4">
+        <SectionHead
+          eyebrow="Ideas"
+          title={`${IDEAS.length} ideas listas para generar`}
+          sub="Máquinas que generan dinero, brainrot, comida, inmobiliaria, influencers… Tocas una y el estudio se abre con todo listo."
+        />
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {IDEAS.filter((i) => ["maquina-cascos", "brainrot-pollo", "ceviche", "depa-vista-mar"].includes(i.id)).map((i, k) => (
+            <Reveal key={i.id} delay={k * 90}>
+              <Link href={`/estudio?idea=${i.id}`} className="group relative block aspect-[9/16] overflow-hidden rounded-2xl border border-line">
+                {i.video ? (
+                  <video src={i.video} poster={i.image} autoPlay muted loop playsInline preload="metadata" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+                ) : (
+                  <Image src={i.image} alt={i.title} fill sizes="(max-width: 768px) 45vw, 270px" className="object-cover transition duration-700 group-hover:scale-105" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-2">{i.category}</p>
+                  <p className="mt-0.5 font-semibold text-white">{i.title}</p>
+                </div>
+              </Link>
+            </Reveal>
+          ))}
+        </div>
+        <div className="mt-6 text-center">
+          <Link href="/ideas" className="btn-ghost !px-6 !py-3">
+            Ver todas las ideas <ArrowRight size={16} />
+          </Link>
+        </div>
       </section>
 
       {/* Formatos */}
@@ -321,8 +365,9 @@ export default function Home() {
           title="Planes y precios"
           sub="Plan mensual con más créditos o paquetes sueltos. En dólares, los créditos no vencen."
         />
-        <Reveal>
-          <div className="card mb-6 grid items-center gap-6 border-brand/60 bg-gradient-to-br from-brand/15 to-transparent p-6 sm:grid-cols-[1fr_auto] sm:p-8">
+        <Reveal className="mb-6">
+          <ElectricBorder color="#22d3ee" speed={0.8} chaos={0.4} thickness={2} borderRadius={16}>
+          <div className="card grid items-center gap-6 border-transparent bg-gradient-to-br from-brand/15 to-panel p-6 sm:grid-cols-[1fr_auto] sm:p-8">
             <div>
               <p className="eyebrow !text-brand-2">{PLAN.name} · el que más rinde</p>
               <p className="mt-2 text-4xl font-extrabold">
@@ -338,6 +383,7 @@ export default function Home() {
               Suscribirme <ArrowRight size={17} />
             </Link>
           </div>
+          </ElectricBorder>
         </Reveal>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {PACKS.map((p, i) => (

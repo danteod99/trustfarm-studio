@@ -32,7 +32,8 @@ export async function middleware(request: NextRequest) {
   if (!data.user && PRIVATE.some((p) => path === p || path.startsWith(p + "/"))) {
     const url = request.nextUrl.clone();
     url.pathname = "/entrar";
-    url.search = `?next=${encodeURIComponent(path)}`;
+    // Conserva la query (p. ej. /estudio?idea=…) para volver al mismo lugar después del login.
+    url.search = `?next=${encodeURIComponent(path + request.nextUrl.search)}`;
     return NextResponse.redirect(url);
   }
   return response;

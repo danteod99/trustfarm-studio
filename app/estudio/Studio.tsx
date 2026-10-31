@@ -17,6 +17,7 @@ import {
   type Resolution,
 } from "@/app/lib/catalog";
 import { MOTIONS, TEMPLATES, pendingFields, type TemplateGroup, type TemplateStep } from "@/app/lib/templates";
+import { getIdea } from "@/app/lib/ideas";
 import GenerationCard, { type PublicGeneration } from "@/app/components/GenerationCard";
 import { useGenerations } from "@/app/components/useGenerations";
 
@@ -132,6 +133,19 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
   useEffect(() => {
     loadPresets();
     const q = new URLSearchParams(window.location.search);
+    // /estudio?idea=<id> (desde /ideas): precarga modelo, formato y prompt.
+    const idea = getIdea(q.get("idea") || "");
+    if (idea) {
+      selectModel(idea.model, {
+        aspect: idea.aspect,
+        ...(idea.duration ? { duration: idea.duration } : {}),
+        ...(idea.resolution ? { resolution: idea.resolution } : {}),
+      });
+      setPrompt(idea.prompt);
+      setMotion(idea.motion ?? null);
+      setStepTip(`Idea: ${idea.title}. ${idea.hook} Cambia lo que quieras antes de generar.`);
+      window.history.replaceState(null, "", "/estudio");
+    }
     const id = q.get("animar") || q.get("personaje");
     if (!id) return;
     fetch(`/api/generations/${id}`)
@@ -280,10 +294,18 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
   return (
     <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[400px_1fr]">
       {/* Panel de control */}
-      <section ref={panelRef} className="card h-fit scroll-mt-24 space-y-5 p-5 lg:sticky lg:top-24">
+      <section
+        ref={panelRef}
+        className="card h-fit scroll-mt-24 space-y-5 border-brand/30 bg-panel/90 p-5 shadow-[0_0_60px_-18px_rgba(34,211,238,0.45)] backdrop-blur lg:sticky lg:top-24"
+      >
         {/* Formatos */}
         <div>
-          <label className={label}>Formatos</label>
+          <label className={`${label} flex items-center justify-between`}>
+            Formatos
+            <Link href="/ideas" className="font-normal normal-case tracking-normal text-brand-2 hover:underline">
+              ¿Sin ideas? Ver {"ideas"} →
+            </Link>
+          </label>
           <div className="grid grid-cols-3 gap-2">
             {TEMPLATES.filter((t) => t.featured).map((t) => (
               <button

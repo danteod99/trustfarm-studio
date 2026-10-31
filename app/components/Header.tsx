@@ -2,7 +2,7 @@ import Link from "next/link";
 import Logo from "@/app/components/Logo";
 import { getUser, isAdminEmail } from "@/app/lib/auth";
 import { getBalance } from "@/app/lib/credits";
-import { Coins } from "lucide-react";
+import { Coins, Lightbulb } from "lucide-react";
 
 export default async function Header() {
   const user = await getUser();
@@ -12,6 +12,9 @@ export default async function Header() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
         <Logo />
         <nav className="flex items-center gap-1 text-sm sm:gap-2">
+          <Link href="/ideas" className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-mute hover:text-ink">
+            <Lightbulb size={15} className="text-brand-2" /> Ideas
+          </Link>
           {user ? (
             <>
               <Link href="/estudio" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink sm:block">
