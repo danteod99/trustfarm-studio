@@ -5,7 +5,7 @@ import { TOPE_DIARIO_POR_DEFECTO, inicioDiaLima } from './estudio-tope.ts'
 export const TAM_PAGINA_ADMIN = 100
 
 export interface CajaAdmin {
-  id: string; nombre: string; owner_id: string; direccion: string
+  id: string; nombre: string; owner_id: string | null; direccion: string
   estado: 'encendida' | 'apagada'; ultima_senal: string | null; version: string | null; vinculada_en: string | null
   /** Tope diario del Estudio y lo gastado hoy (día de Lima). */
   tope_diario: number; gastado_hoy: number

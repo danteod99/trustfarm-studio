@@ -3,9 +3,9 @@
 import { supabaseAdmin } from '../supabase/admin'
 import type { CajaCliente, ClienteStore } from './cliente-servicio'
 
-const COLS = 'id, owner_id, nombre, slug, tunnel_id, last_seen, version, created_at, tope_diario'
-type Fila = { id: string; owner_id: string; nombre: string; slug: string; tunnel_id: string; last_seen: string | null; version?: string | null; created_at?: string | null; tope_diario?: number | null }
-const mapear = (f: Fila): CajaCliente => ({ id: f.id, ownerId: f.owner_id, nombre: f.nombre, slug: f.slug, tunnelId: f.tunnel_id, lastSeen: f.last_seen ?? null, version: f.version ?? null, creadaEn: f.created_at ?? null, topeDiario: f.tope_diario ?? undefined })
+const COLS = 'id, owner_id, nombre, slug, tunnel_id, last_seen, version, created_at, tope_diario, etiqueta'
+type Fila = { id: string; owner_id: string | null; etiqueta?: string | null; nombre: string; slug: string; tunnel_id: string; last_seen: string | null; version?: string | null; created_at?: string | null; tope_diario?: number | null }
+const mapear = (f: Fila): CajaCliente => ({ id: f.id, ownerId: f.owner_id, nombre: f.nombre, slug: f.slug, tunnelId: f.tunnel_id, lastSeen: f.last_seen ?? null, version: f.version ?? null, creadaEn: f.created_at ?? null, topeDiario: f.tope_diario ?? undefined, etiqueta: f.etiqueta ?? null })
 
 export function clienteStoreSupabase(): ClienteStore {
   const db = supabaseAdmin()
@@ -79,10 +79,67 @@ export function clienteStoreSupabase(): ClienteStore {
       for (const f of (data ?? []) as Array<{ caja_id: string; total: number }>) total[f.caja_id] = Number(f.total) || 0
       return total
     },
+    // ── Caja de fábrica ──
+    async contarPreparadasSinDueno() {
+      const { count, error } = await db.from('cajas').select('id', { count: 'exact', head: true }).is('owner_id', null)
+      if (error) throw new Error('No se pudo contar las cajas.')
+      return count ?? 0
+    },
+    async contarCreacionesAdmin(adminId, desdeIso) {
+      const { count, error } = await db.from('caja_intentos').select('id', { count: 'exact', head: true }).eq('clave', `preparar:${adminId}`).gte('creado', desdeIso)
+      if (error) throw new Error('No se pudo contar los intentos.')
+      return count ?? 0
+    },
+    async registrarCreacionAdmin(adminId) {
+      const { error } = await db.from('caja_intentos').insert({ clave: `preparar:${adminId}` })
+      if (error) throw new Error('No se pudo registrar el intento.')
+    },
+    async preparar(o) {
+      const { data, error } = await db.rpc('caja_preparar', {
+        p_slug: o.slug, p_tunnel_id: o.tunnelId, p_etiqueta: o.etiqueta, p_admin: o.adminId, p_llave_hash: o.llaveHash, p_vence: o.venceEn,
+      })
+      if (!error && typeof data === 'string') return { ok: true, cajaId: data }
+      const msg = error?.message ?? ''
+      if (msg.includes('slug_repetido')) return { ok: false, motivo: 'slug_repetido' }
+      if (msg.includes('limite_preparadas')) return { ok: false, motivo: 'limite_preparadas' }
+      return { ok: false, motivo: 'error' }
+    },
+    async nuevaLlave(cajaId, llaveHash, venceEn) {
+      const { error } = await db.rpc('caja_nueva_llave', { p_caja: cajaId, p_llave_hash: llaveHash, p_vence: venceEn })
+      if (!error) return true
+      if ((error.message ?? '').includes('caja_inexistente')) return false
+      throw new Error('No se pudo generar la llave.')
+    },
+    async buscarCajaPreparadaPorCodigo(codigo) {
+      const { data, error } = await db.from('caja_registros').select('caja_id').eq('codigo', codigo).not('caja_id', 'is', null).gt('expira_en', new Date().toISOString()).maybeSingle()
+      if (error) throw new Error('No se pudo leer el registro.')
+      if (!data?.caja_id) return null
+      const { data: caja, error: e2 } = await db.from('cajas').select('id').eq('id', data.caja_id).is('owner_id', null).maybeSingle()
+      if (e2) throw new Error('No se pudo leer la caja.')
+      return caja ? { cajaId: caja.id as string } : null
+    },
+    async reclamar(o) {
+      const { data, error } = await db.rpc('caja_reclamar', { p_codigo: o.codigo, p_owner: o.ownerId, p_nombre: o.nombre })
+      if (!error && typeof data === 'string') return { ok: true, cajaId: data }
+      return { ok: false, motivo: (error?.message ?? '').includes('codigo_invalido') ? 'codigo_invalido' : 'error' }
+    },
+    async liberarCaja(cajaId) {
+      const { error } = await db.rpc('caja_liberar', { p_caja: cajaId })
+      if (error) throw new Error('No se pudo quitar la caja.')
+    },
     async listarTodasLasCajas(desde, limite) {
       const { data, error } = await db.from('cajas').select(COLS).order('created_at', { ascending: false }).range(desde, desde + limite - 1)
       if (error) throw new Error('No se pudo leer las cajas.')
-      return (data as Fila[]).map(mapear)
+      const cajas = (data as Fila[]).map(mapear)
+      // «Activada» = ya tiene su registro (la caja usó su llave o el flujo antiguo); una consulta para toda la página.
+      const ids = cajas.map((c) => c.id)
+      if (ids.length) {
+        const { data: regs, error: e2 } = await db.from('caja_registros').select('caja_id').in('caja_id', ids)
+        if (e2) throw new Error('No se pudo leer los registros.')
+        const activas = new Set((regs ?? []).map((r) => r.caja_id as string))
+        for (const c of cajas) c.activada = activas.has(c.id)
+      }
+      return cajas
     },
   }
 }

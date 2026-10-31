@@ -1,4 +1,5 @@
 // Almacén y Cloudflare simulados en memoria para las pruebas del lado cliente (no es una prueba).
+import { hashSecreto } from '../app/lib/cajas/secreto.ts'
 import type { CajaCliente, ClienteDeps, ClienteStore, ResultadoVincular } from '../app/lib/cajas/cliente-servicio.ts'
 
 export function crearClienteMem(ahora: { t: Date }) {
@@ -20,6 +21,14 @@ export function crearClienteMem(ahora: { t: Date }) {
     // Estudio: gasto de hoy por caja y registro de las consultas (para comprobar desde cuándo se pide)
     gasto: {} as Record<string, number>,
     gastoConsultas: [] as { ids: string[]; desdeIso: string }[],
+    // Caja de fábrica: llaves de activación (solo hash), creaciones por administrador y respuestas forzadas de `preparar`
+    activaciones: [] as { cajaId: string; llaveHash: string; venceEn: string; usadaEn?: string }[],
+    creaciones: [] as { adminId: string; creado: string }[],
+    prepararForzado: [] as Array<{ ok: false; motivo: 'slug_repetido' | 'limite_preparadas' | 'error' }>,
+    // Códigos de asociación de cajas preparadas (normalizados) -> caja
+    codigosPreparadas: new Map<string, string>(),
+    reclamarForzado: [] as Array<{ ok: false; motivo: 'codigo_invalido' | 'error' }>,
+    liberadas: [] as string[],
   }
   let n = 0
   const store: ClienteStore = {
@@ -49,6 +58,45 @@ export function crearClienteMem(ahora: { t: Date }) {
     },
     async fijarTope(id, tope) { const c = m.cajas.find(x => x.id === id); if (!c) return false; c.topeDiario = tope; return true },
     async gastoHoyPorCajas(ids, desdeIso) { m.gastoConsultas.push({ ids: [...ids], desdeIso }); return Object.fromEntries(ids.map(i => [i, m.gasto[i] ?? 0])) },
+    async contarPreparadasSinDueno() { return m.cajas.filter((c) => c.ownerId === null).length },
+    async contarCreacionesAdmin(adminId, desde) { return m.creaciones.filter((x) => x.adminId === adminId && x.creado >= desde).length },
+    async registrarCreacionAdmin(adminId) { m.creaciones.push({ adminId, creado: ahora.t.toISOString() }) },
+    async preparar(o) {
+      const forzado = m.prepararForzado.shift()
+      if (forzado) return forzado
+      const id = `00000000-0000-4000-8000-${String(++n).padStart(12, '0')}`
+      m.cajas.push({ id, ownerId: null, nombre: 'Mi caja', slug: o.slug, tunnelId: o.tunnelId, lastSeen: null, etiqueta: o.etiqueta, activada: false })
+      m.activaciones.push({ cajaId: id, llaveHash: o.llaveHash, venceEn: o.venceEn })
+      return { ok: true, cajaId: id }
+    },
+    async nuevaLlave(cajaId, llaveHash, venceEn) {
+      if (!m.cajas.some((c) => c.id === cajaId)) return false
+      m.activaciones = m.activaciones.filter((a) => !(a.cajaId === cajaId && !a.usadaEn))
+      m.activaciones.push({ cajaId, llaveHash, venceEn })
+      return true
+    },
+    async buscarCajaPreparadaPorCodigo(codigo) {
+      const cajaId = m.codigosPreparadas.get(codigo)
+      const c = cajaId ? m.cajas.find((x) => x.id === cajaId) : undefined
+      return c && c.ownerId === null ? { cajaId: c.id } : null
+    },
+    async reclamar(o) {
+      const forzado = m.reclamarForzado.shift()
+      if (forzado) return forzado
+      const cajaId = m.codigosPreparadas.get(o.codigo)
+      const c = cajaId ? m.cajas.find((x) => x.id === cajaId) : undefined
+      if (!c || c.ownerId !== null) return { ok: false, motivo: 'codigo_invalido' }
+      c.ownerId = o.ownerId
+      c.nombre = o.nombre
+      m.codigosPreparadas.delete(o.codigo)
+      return { ok: true, cajaId: c.id }
+    },
+    async liberarCaja(id) {
+      m.eventos.push('liberar')
+      const c = m.cajas.find((x) => x.id === id)
+      if (c) c.ownerId = null
+      m.liberadas.push(id)
+    },
     async listarTodasLasCajas(desde, limite) {
       return [...m.cajas].sort((a, b) => (b.creadaEn ?? '').localeCompare(a.creadaEn ?? '')).slice(desde, desde + limite)
     },

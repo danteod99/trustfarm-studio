@@ -4,7 +4,7 @@ import { randomInt } from 'node:crypto'
 import { normalizarCodigo } from './codigo.ts'
 import { firmarPase } from './pase.ts'
 
-export interface CajaCliente { id: string; ownerId: string; nombre: string; slug: string; tunnelId: string; lastSeen: string | null; version?: string | null; creadaEn?: string | null; topeDiario?: number }
+export interface CajaCliente { id: string; ownerId: string | null; nombre: string; slug: string; tunnelId: string; lastSeen: string | null; version?: string | null; creadaEn?: string | null; topeDiario?: number; etiqueta?: string | null; activada?: boolean }
 
 export type ResultadoVincular =
   | { ok: true; cajaId: string }
@@ -29,6 +29,21 @@ export interface ClienteStore {
   fijarTope(cajaId: string, tope: number): Promise<boolean>
   /** Créditos gastados hoy por cada caja (sin contar generaciones fallidas), desde `desdeIso`. */
   gastoHoyPorCajas(ids: string[], desdeIso: string): Promise<Record<string, number>>
+  // ── Caja de fábrica (cajas preparadas sin dueño) ──
+  contarPreparadasSinDueno(): Promise<number>
+  contarCreacionesAdmin(adminId: string, desdeIso: string): Promise<number>
+  registrarCreacionAdmin(adminId: string): Promise<void>
+  /** Crea la caja SIN dueño y su llave de activación (solo el hash). */
+  preparar(o: { slug: string; tunnelId: string; etiqueta: string; adminId: string; llaveHash: string; venceEn: string }):
+    Promise<{ ok: true; cajaId: string } | { ok: false; motivo: 'slug_repetido' | 'limite_preparadas' | 'error' }>
+  /** Llave nueva (invalida las que no se usaron); false si la caja no existe. */
+  nuevaLlave(cajaId: string, llaveHash: string, venceEn: string): Promise<boolean>
+  /** Una caja SIN dueño cuyo código de asociación (normalizado) está vigente. */
+  buscarCajaPreparadaPorCodigo(codigoNormalizado: string): Promise<{ cajaId: string } | null>
+  /** Asigna la caja preparada a la cuenta (atómico). */
+  reclamar(o: { codigo: string; ownerId: string; nombre: string }): Promise<{ ok: true; cajaId: string } | { ok: false; motivo: 'codigo_invalido' | 'error' }>
+  /** El dueño la quita de su cuenta: queda sin dueño y conserva dirección y túnel. */
+  liberarCaja(cajaId: string): Promise<void>
 }
 
 export interface ClienteDeps {
