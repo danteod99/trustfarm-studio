@@ -102,11 +102,26 @@ export async function vincularCaja(deps: ClienteDeps, { userId, codigo }: { user
 
   const normalizado = typeof codigo === 'string' ? normalizarCodigo(codigo) : null
   if (!normalizado) return fallo()
-  if (!(await store.buscarRegistroVinculable(normalizado))) return fallo()
+  // Caja de fábrica: ya existe (con su túnel y su dirección) y solo hay que asignarla. Si no, es el flujo antiguo.
+  const preparada = await store.buscarCajaPreparadaPorCodigo(normalizado)
+  if (!preparada && !(await store.buscarRegistroVinculable(normalizado))) return fallo()
 
   if ((await store.contarCajas(userId)) >= MAX_CAJAS_POR_CUENTA) return { status: 409, body: { error: ERR_MAX_CAJAS } }
   const desdeHora = new Date(deps.now().getTime() - HORA_MS).toISOString()
   if ((await store.contarExitosVincular(userId, desdeHora)) >= MAX_EXITOS_HORA) return { status: 429, body: { error: ERR_LIMITE } }
+
+  if (preparada) {
+    let r: Awaited<ReturnType<typeof store.reclamar>>
+    try {
+      r = await store.reclamar({ codigo: normalizado, ownerId: userId, nombre: NOMBRE_INICIAL })
+    } catch {
+      r = { ok: false, motivo: 'error' }
+    }
+    if (!r.ok) return r.motivo === 'codigo_invalido' ? fallo() : { status: 500, body: { error: ERR_VINCULAR } }
+    try { await store.registrarExitoVincular(userId) } catch { /* la caja ya está asignada */ }
+    const c = await store.obtenerCaja(r.cajaId)
+    return { status: 200, body: { caja: { id: r.cajaId, nombre: NOMBRE_INICIAL, direccion: c ? direccion(c, deps) : '' } } }
+  }
 
   for (let i = 0; i < MAX_INTENTOS_SLUG; i++) {
     const slug = deps.nuevoSlug()
@@ -187,6 +202,16 @@ export async function quitarCaja(deps: ClienteDeps, { userId, esAdmin, cajaId }:
     c = await cajaPropia(deps, userId, cajaId)
   }
   if (!c) return NO_ENCONTRADA()
+  if (!esAdmin) {
+    // El dueño solo la «quita» de su cuenta: la caja queda sin dueño y CONSERVA su dirección y su túnel.
+    try {
+      await deps.store.liberarCaja(c.id)
+    } catch {
+      return { status: 500, body: { error: 'No se pudo quitar la caja. Inténtalo de nuevo.' } }
+    }
+    return { status: 200, body: { ok: true } }
+  }
+  // Un administrador la elimina del todo: la fila, el túnel y el DNS.
   try {
     await deps.store.desvincularCaja(c.id)
   } catch {

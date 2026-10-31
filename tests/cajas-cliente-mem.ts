@@ -29,6 +29,7 @@ export function crearClienteMem(ahora: { t: Date }) {
     codigosPreparadas: new Map<string, string>(),
     reclamarForzado: [] as Array<{ ok: false; motivo: 'codigo_invalido' | 'error' }>,
     liberadas: [] as string[],
+    liberarFalla: false,
   }
   let n = 0
   const store: ClienteStore = {
@@ -93,6 +94,7 @@ export function crearClienteMem(ahora: { t: Date }) {
     },
     async liberarCaja(id) {
       m.eventos.push('liberar')
+      if (m.liberarFalla) throw new Error('boom')
       const c = m.cajas.find((x) => x.id === id)
       if (c) c.ownerId = null
       m.liberadas.push(id)
