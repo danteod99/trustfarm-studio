@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 type CookieToSet = { name: string; value: string; options?: Record<string, unknown> };
 
-const PRIVATE = ["/estudio", "/galeria", "/creditos", "/admin", "/cajas"];
+const PRIVATE = ["/estudio", "/galeria", "/creditos", "/admin", "/cajas", "/flujos"];
 
 // Refresca la sesión de Supabase y manda a /entrar a quien abra una página privada sin sesión.
 export async function middleware(request: NextRequest) {
