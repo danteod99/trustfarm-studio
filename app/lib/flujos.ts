@@ -33,7 +33,9 @@ export interface Loop {
   step: FlowStep | null;
   per_run: number;
   hour: number;
+  minute?: number; // undefined antes de correr 07_programar_una_vez.sql
   days: number[];
+  once?: boolean;
   active: boolean;
   next_run_at: string;
   last_run_at: string | null;
@@ -136,17 +138,23 @@ export async function advanceActiveRuns(limit = 30, userId?: string): Promise<nu
   return data?.length ?? 0;
 }
 
-/** Corre los loops que ya tocan. Cada loop se reclama de forma atómica (dos ticks no lo duplican). */
+/**
+ * Corre las programaciones que ya tocan. Cada una se reclama de forma atómica (dos ticks no la duplican):
+ * las que se repiten pasan a su próxima fecha y las de una sola vez se apagan.
+ */
 export async function runDueLoops(now = new Date()): Promise<number> {
   const { data } = await db().from("ai_loops").select("*").eq("active", true).lte("next_run_at", now.toISOString()).limit(20);
   let ran = 0;
   for (const loop of (data ?? []) as Loop[]) {
-    const next = nextRunAt(loop.hour, loop.days, now).toISOString();
+    const claim = loop.once
+      ? { active: false, last_run_at: now.toISOString() }
+      : { next_run_at: nextRunAt(loop.hour, loop.days, now, loop.minute ?? 0).toISOString(), last_run_at: now.toISOString() };
     const { data: claimed } = await db()
       .from("ai_loops")
-      .update({ next_run_at: next, last_run_at: now.toISOString() })
+      .update(claim)
       .eq("id", loop.id)
       .eq("next_run_at", loop.next_run_at)
+      .eq("active", true)
       .select("id");
     if (!claimed?.length) continue;
 
