@@ -15,7 +15,7 @@ interface Stats {
 interface CajaAdmin {
   id: string;
   nombre: string;
-  owner_id: string;
+  owner_id: string | null;
   direccion: string;
   estado: "encendida" | "apagada";
   ultima_senal: string | null;
@@ -23,7 +23,19 @@ interface CajaAdmin {
   vinculada_en: string | null;
   tope_diario: number;
   gastado_hoy: number;
+  etiqueta: string | null;
+  asignacion: "preparada" | "asignada";
+  activada: boolean;
 }
+
+/** Llave de activación recién creada: se muestra UNA vez (el servidor solo guarda su huella). */
+interface LlaveNueva {
+  titulo: string;
+  llave: string;
+  vence_en: string;
+}
+
+const dueno = (c: CajaAdmin) => (c.owner_id ? c.owner_id.slice(0, 8) : "Sin dueño");
 
 const fecha = (iso: string | null) => (iso ? new Date(iso).toLocaleString("es") : "—");
 
@@ -78,6 +90,11 @@ function CajasAdmin() {
   const [error, setError] = useState<string | null>(null);
   const [confirmar, setConfirmar] = useState<string | null>(null);
   const [quitando, setQuitando] = useState<string | null>(null);
+  const [etiqueta, setEtiqueta] = useState("");
+  const [creando, setCreando] = useState(false);
+  const [llaveNueva, setLlaveNueva] = useState<LlaveNueva | null>(null);
+  const [copiado, setCopiado] = useState(false);
+  const [regenerando, setRegenerando] = useState<string | null>(null);
 
   async function cargar(p: number) {
     setCargando(true);
@@ -101,6 +118,62 @@ function CajasAdmin() {
     cargar(0);
   }, []);
 
+  /** Comando que se ejecuta en la mini PC con `sudo`; la llave va dentro y no se vuelve a mostrar. */
+  const comando = (llave: string) =>
+    `sudo bash /home/empleado/empleado-ia-staging/deploy/install.sh --solo-app --central ${window.location.origin} --activar ${llave}`;
+
+  async function crear() {
+    setCreando(true);
+    setError(null);
+    setCopiado(false);
+    try {
+      const r = await fetch("/api/admin/cajas/preparar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ etiqueta }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) setError(d.error ?? "No se pudo crear la caja.");
+      else {
+        setLlaveNueva({ titulo: `${d.caja.etiqueta} · ${d.caja.direccion}`, llave: d.llave, vence_en: d.vence_en });
+        setEtiqueta("");
+        await cargar(0);
+      }
+    } catch {
+      setError("No se pudo conectar.");
+    }
+    setCreando(false);
+  }
+
+  async function regenerar(c: CajaAdmin) {
+    setRegenerando(c.id);
+    setError(null);
+    setCopiado(false);
+    try {
+      const r = await fetch("/api/admin/cajas/llave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caja_id: c.id }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) setError(d.error ?? "No se pudo generar la llave.");
+      else setLlaveNueva({ titulo: `${c.etiqueta ?? c.nombre} · ${c.direccion}`, llave: d.llave, vence_en: d.vence_en });
+    } catch {
+      setError("No se pudo conectar.");
+    }
+    setRegenerando(null);
+  }
+
+  async function copiar() {
+    if (!llaveNueva) return;
+    try {
+      await navigator.clipboard.writeText(comando(llaveNueva.llave));
+      setCopiado(true);
+    } catch {
+      setError("No se pudo copiar: selecciona el comando y cópialo a mano.");
+    }
+  }
+
   async function desvincular(id: string) {
     setQuitando(id);
     setError(null);
@@ -122,19 +195,30 @@ function CajasAdmin() {
   const acciones = (c: CajaAdmin) =>
     confirmar === c.id ? (
       <span className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-mute">¿Desvincular «{c.nombre}»?</span>
+        <span className="text-xs text-mute">¿Eliminar «{c.etiqueta ?? c.nombre}»? Se borra su túnel y su dirección.</span>
         <button className="btn-ghost !px-3 !py-1.5 !text-red-400" disabled={quitando === c.id} onClick={() => desvincular(c.id)}>
-          {quitando === c.id ? "Quitando…" : "Sí, desvincular"}
+          {quitando === c.id ? "Eliminando…" : "Sí, eliminar"}
         </button>
         <button className="btn-ghost !px-3 !py-1.5" disabled={quitando === c.id} onClick={() => setConfirmar(null)}>
           Cancelar
         </button>
       </span>
     ) : (
-      <button className="btn-ghost !px-3 !py-1.5" onClick={() => setConfirmar(c.id)}>
-        Desvincular
-      </button>
+      <span className="flex flex-wrap items-center gap-2">
+        <button className="btn-ghost !px-3 !py-1.5" disabled={regenerando === c.id} onClick={() => regenerar(c)}>
+          {regenerando === c.id ? "Generando…" : "Regenerar llave"}
+        </button>
+        <button className="btn-ghost !px-3 !py-1.5" onClick={() => setConfirmar(c.id)}>
+          Eliminar
+        </button>
+      </span>
     );
+
+  const asignacion = (c: CajaAdmin) => (
+    <span className={`rounded-full border border-line px-2 py-0.5 text-xs ${c.asignacion === "preparada" ? "text-amber-400" : "text-emerald-400"}`}>
+      {c.asignacion === "preparada" ? (c.activada ? "Preparada" : "Sin activar") : "Asignada"}
+    </span>
+  );
 
   const estado = (c: CajaAdmin) => (
     <span className="inline-flex items-center gap-2">
@@ -146,22 +230,58 @@ function CajasAdmin() {
   return (
     <section className="card p-5">
       <h2 className="font-semibold">Cajas</h2>
+
+      <form
+        className="mt-3 flex flex-wrap items-end gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (etiqueta.trim()) void crear();
+        }}
+      >
+        <label className="grow text-sm">
+          <span className="text-mute">Etiqueta de la caja nueva (para ti: p. ej. el nombre del cliente)</span>
+          <input className="input mt-1 w-full" maxLength={80} value={etiqueta} onChange={(e) => setEtiqueta(e.target.value)} placeholder="Cliente Bodega López" />
+        </label>
+        <button className="btn-primary" disabled={creando || !etiqueta.trim()}>
+          {creando ? "Creando…" : "Crear caja"}
+        </button>
+      </form>
+
+      {llaveNueva && (
+        <div role="status" className="mt-3 rounded-xl border border-line bg-panel-2 p-3 text-sm">
+          <p className="font-medium">Llave de activación de {llaveNueva.titulo}</p>
+          <p className="mt-1 text-amber-400">Guárdala ahora: no se vuelve a mostrar. Sirve una sola vez y vence el {fecha(llaveNueva.vence_en)}.</p>
+          <p className="mt-2 text-mute">Ejecuta esto en la mini PC, con la sesión que usa sudo:</p>
+          <pre className="mt-1 overflow-x-auto rounded-lg bg-black/40 p-2 text-xs">{comando(llaveNueva.llave)}</pre>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button className="btn-ghost !px-3 !py-1.5" onClick={copiar}>
+              {copiado ? "Copiado" : "Copiar comando"}
+            </button>
+            <button className="btn-ghost !px-3 !py-1.5" onClick={() => setLlaveNueva(null)}>
+              Ya la guardé
+            </button>
+          </div>
+        </div>
+      )}
+
       {error && (
         <p role="alert" className="mt-2 text-sm text-red-400">
           {error}
         </p>
       )}
-      {!cajas.length && !cargando && !error && <p className="mt-2 text-sm text-mute">No hay cajas vinculadas.</p>}
+      {!cajas.length && !cargando && !error && <p className="mt-2 text-sm text-mute">Todavía no hay cajas. Crea la primera arriba.</p>}
 
       {/* Móvil: tarjetas apiladas */}
       <ul className="mt-3 space-y-3 md:hidden">
         {cajas.map((c) => (
           <li key={c.id} className="rounded-xl border border-line p-3 text-sm">
-            <p className="font-medium">{c.nombre}</p>
+            <p className="font-medium">
+              {c.etiqueta ?? c.nombre} {asignacion(c)}
+            </p>
             <p className="break-all text-xs text-mute">{c.direccion}</p>
             <p className="mt-2">{estado(c)}</p>
             <p className="text-xs text-mute">
-              Dueño {c.owner_id.slice(0, 8)} · versión {c.version ?? "—"}
+              Dueño {dueno(c)} · versión {c.version ?? "—"}
             </p>
             <p className="text-xs text-mute">Última señal: {fecha(c.ultima_senal)}</p>
             <p className="text-xs text-mute">Vinculada: {fecha(c.vinculada_en)}</p>
@@ -178,7 +298,8 @@ function CajasAdmin() {
         <table className="w-full text-sm">
           <thead className="text-left text-mute">
             <tr>
-              <th className="py-2">Nombre</th>
+              <th className="py-2">Caja</th>
+              <th>Asignación</th>
               <th>Dueño</th>
               <th>Dirección</th>
               <th>Estado</th>
@@ -191,8 +312,9 @@ function CajasAdmin() {
           <tbody>
             {cajas.map((c) => (
               <tr key={c.id} className="border-t border-line">
-                <td className="py-2 pr-3">{c.nombre}</td>
-                <td className="pr-3 font-mono text-xs">{c.owner_id.slice(0, 8)}</td>
+                <td className="py-2 pr-3">{c.etiqueta ?? c.nombre}</td>
+                <td className="pr-3">{asignacion(c)}</td>
+                <td className="pr-3 font-mono text-xs">{dueno(c)}</td>
                 <td className="pr-3 text-xs">{c.direccion}</td>
                 <td className="pr-3">{estado(c)}</td>
                 <td className="pr-3 text-xs">{fecha(c.ultima_senal)}</td>

@@ -9,6 +9,8 @@ export interface CajaAdmin {
   estado: 'encendida' | 'apagada'; ultima_senal: string | null; version: string | null; vinculada_en: string | null
   /** Tope diario del Estudio y lo gastado hoy (día de Lima). */
   tope_diario: number; gastado_hoy: number
+  /** Caja de fábrica: etiqueta interna, si tiene dueño y si la caja ya se activó con su llave. */
+  etiqueta: string | null; asignacion: 'preparada' | 'asignada'; activada: boolean
 }
 
 /** Pide `limite + 1` filas para saber si hay otra página. Nunca expone tunnel_id. */
@@ -24,6 +26,7 @@ export async function paginaAdminCajas(deps: ClienteDeps, pagina: number): Promi
       estado: encendida(c, deps) ? 'encendida' : 'apagada', ultima_senal: c.lastSeen,
       version: c.version ?? null, vinculada_en: c.creadaEn ?? null,
       tope_diario: c.topeDiario ?? TOPE_DIARIO_POR_DEFECTO, gastado_hoy: gasto[c.id] ?? 0,
+      etiqueta: c.etiqueta ?? null, asignacion: c.ownerId === null ? 'preparada' : 'asignada', activada: c.activada ?? false,
     })),
   }
 }

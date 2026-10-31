@@ -46,7 +46,7 @@ test('paginaAdminCajas: justo 100 no marca hay_mas; página vacía', async () =>
 test('paginaAdminCajas: forma de salida sin tunnel_id y página inválida cae a 0', async () => {
   const { deps } = conCajas(1)
   const p = await paginaAdminCajas(deps, -3)
-  assert.deepEqual(Object.keys(p.cajas[0]).sort(), ['direccion', 'estado', 'gastado_hoy', 'id', 'nombre', 'owner_id', 'tope_diario', 'ultima_senal', 'version', 'vinculada_en'])
+  assert.deepEqual(Object.keys(p.cajas[0]).sort(), ['activada', 'asignacion', 'direccion', 'estado', 'etiqueta', 'gastado_hoy', 'id', 'nombre', 'owner_id', 'tope_diario', 'ultima_senal', 'version', 'vinculada_en'])
   assert.equal(p.cajas[0].direccion, 's0.cajas.test')
   assert.equal(p.cajas[0].estado, 'apagada')
   assert.ok(!JSON.stringify(p).includes('TUNEL-SECRETO'))
@@ -98,4 +98,27 @@ test('fijarTopeAdmin: una caja que no existe → 404', async () => {
     assert.equal(r.status, 404)
     assert.equal(r.error, 'No encontré esa caja.')
   }
+})
+
+test('paginaAdminCajas: muestra las cajas SIN dueño como «preparada», con su etiqueta, y si ya fueron activadas', async () => {
+  const { m, deps } = conCajas(1)
+  m.cajas.push({
+    id: '00000000-0000-4000-8000-0000000000bb', ownerId: null, nombre: 'Mi caja', slug: 'prep0001', tunnelId: 'TUNEL-SECRETO-prep',
+    lastSeen: null, version: null, creadaEn: new Date(T0.getTime() + 60_000).toISOString(), etiqueta: 'Cliente Bodega López', activada: false,
+  })
+  m.cajas.push({
+    id: '00000000-0000-4000-8000-0000000000cc', ownerId: null, nombre: 'Mi caja', slug: 'prep0002', tunnelId: 'TUNEL-SECRETO-prep2',
+    lastSeen: T0.toISOString(), version: '1.0', creadaEn: new Date(T0.getTime() + 120_000).toISOString(), etiqueta: 'Otra', activada: true,
+  })
+  const p = await paginaAdminCajas(deps, 0)
+  const porSlug = Object.fromEntries(p.cajas.map((c) => [c.direccion.split('.')[0], c]))
+  assert.equal(porSlug.s0.asignacion, 'asignada')
+  assert.equal(porSlug.s0.owner_id, OWNER)
+  assert.equal(porSlug.s0.etiqueta, null)
+  assert.equal(porSlug.prep0001.asignacion, 'preparada')
+  assert.equal(porSlug.prep0001.owner_id, null)
+  assert.equal(porSlug.prep0001.etiqueta, 'Cliente Bodega López')
+  assert.equal(porSlug.prep0001.activada, false)
+  assert.equal(porSlug.prep0002.activada, true)
+  assert.ok(!JSON.stringify(p).includes('TUNEL-SECRETO'))
 })
