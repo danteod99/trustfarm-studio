@@ -301,8 +301,9 @@ test('renombrarMiCaja: recorta, rechaza vacío y >60, aísla por dueño', async 
 })
 
 // ---- quitarCaja
-test('quitarCaja: dueño => LIBERA la caja (queda sin dueño) y NO borra el túnel; borrar del todo es de administradores', async () => {
+test('quitarCaja: dueño de una caja DE FÁBRICA => LIBERA la caja (queda sin dueño) y NO borra el túnel; borrar del todo es de administradores', async () => {
   const { m, deps, id } = conCaja()
+  m.cajas[0].creadaPor = 'admin-1'
   m.cajas[0].tunnelId = '11111111-1111-4111-8111-000000000001'
   m.tunelesVivos.add(m.cajas[0].tunnelId)
   const r = await quitarCaja(deps, { userId: U1, esAdmin: false, cajaId: id })
@@ -311,6 +312,17 @@ test('quitarCaja: dueño => LIBERA la caja (queda sin dueño) y NO borra el tún
   assert.equal(m.cajas.length, 1)
   assert.equal(m.cajas[0].ownerId, null)
   assert.equal(m.tunelesVivos.size, 1)
+})
+
+test('quitarCaja: dueño de una caja del flujo ANTIGUO (sin creada_por) => se borra con su túnel, como antes (no se acumulan túneles ni DNS)', async () => {
+  const { m, deps, id } = conCaja()
+  m.cajas[0].tunnelId = '11111111-1111-4111-8111-000000000002'
+  m.tunelesVivos.add(m.cajas[0].tunnelId)
+  const r = await quitarCaja(deps, { userId: U1, esAdmin: false, cajaId: id })
+  assert.deepEqual(r, { status: 200, body: { ok: true } })
+  assert.deepEqual(m.eventos, ['desvincular', 'borrar'])
+  assert.equal(m.cajas.length, 0)
+  assert.equal(m.tunelesVivos.size, 0)
 })
 
 test('quitarCaja: admin puede quitar la de otro', async () => {

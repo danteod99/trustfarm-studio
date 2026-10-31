@@ -4,7 +4,7 @@ import { randomInt } from 'node:crypto'
 import { normalizarCodigo } from './codigo.ts'
 import { firmarPase } from './pase.ts'
 
-export interface CajaCliente { id: string; ownerId: string | null; nombre: string; slug: string; tunnelId: string; lastSeen: string | null; version?: string | null; creadaEn?: string | null; topeDiario?: number; etiqueta?: string | null; activada?: boolean }
+export interface CajaCliente { id: string; ownerId: string | null; nombre: string; slug: string; tunnelId: string; lastSeen: string | null; version?: string | null; creadaEn?: string | null; topeDiario?: number; etiqueta?: string | null; activada?: boolean; /** Administrador que la creó en fábrica (null/ausente = flujo antiguo de vincular con código). */ creadaPor?: string | null }
 
 export type ResultadoVincular =
   | { ok: true; cajaId: string }
@@ -202,8 +202,9 @@ export async function quitarCaja(deps: ClienteDeps, { userId, esAdmin, cajaId }:
     c = await cajaPropia(deps, userId, cajaId)
   }
   if (!c) return NO_ENCONTRADA()
-  if (!esAdmin) {
-    // El dueño solo la «quita» de su cuenta: la caja queda sin dueño y CONSERVA su dirección y su túnel.
+  if (!esAdmin && c.creadaPor) {
+    // Caja de fábrica: el dueño solo la «quita» de su cuenta; queda sin dueño y CONSERVA su dirección y su túnel.
+    // (Las del flujo antiguo se borran del todo más abajo: si no, cualquier cuenta podría acumular túneles y DNS sin límite.)
     try {
       await deps.store.liberarCaja(c.id)
     } catch {

@@ -3,9 +3,9 @@
 import { supabaseAdmin } from '../supabase/admin'
 import type { CajaCliente, ClienteStore } from './cliente-servicio'
 
-const COLS = 'id, owner_id, nombre, slug, tunnel_id, last_seen, version, created_at, tope_diario, etiqueta'
-type Fila = { id: string; owner_id: string | null; etiqueta?: string | null; nombre: string; slug: string; tunnel_id: string; last_seen: string | null; version?: string | null; created_at?: string | null; tope_diario?: number | null }
-const mapear = (f: Fila): CajaCliente => ({ id: f.id, ownerId: f.owner_id, nombre: f.nombre, slug: f.slug, tunnelId: f.tunnel_id, lastSeen: f.last_seen ?? null, version: f.version ?? null, creadaEn: f.created_at ?? null, topeDiario: f.tope_diario ?? undefined, etiqueta: f.etiqueta ?? null })
+const COLS = 'id, owner_id, nombre, slug, tunnel_id, last_seen, version, created_at, tope_diario, etiqueta, creada_por'
+type Fila = { id: string; owner_id: string | null; etiqueta?: string | null; nombre: string; slug: string; tunnel_id: string; last_seen: string | null; version?: string | null; created_at?: string | null; tope_diario?: number | null; creada_por?: string | null }
+const mapear = (f: Fila): CajaCliente => ({ id: f.id, ownerId: f.owner_id, nombre: f.nombre, slug: f.slug, tunnelId: f.tunnel_id, lastSeen: f.last_seen ?? null, version: f.version ?? null, creadaEn: f.created_at ?? null, topeDiario: f.tope_diario ?? undefined, etiqueta: f.etiqueta ?? null, creadaPor: f.creada_por ?? null })
 
 export function clienteStoreSupabase(): ClienteStore {
   const db = supabaseAdmin()
@@ -81,7 +81,7 @@ export function clienteStoreSupabase(): ClienteStore {
     },
     // ── Caja de fábrica ──
     async contarPreparadasSinDueno() {
-      const { count, error } = await db.from('cajas').select('id', { count: 'exact', head: true }).is('owner_id', null)
+      const { count, error } = await db.from('cajas').select('id', { count: 'exact', head: true }).is('owner_id', null).not('creada_por', 'is', null)
       if (error) throw new Error('No se pudo contar las cajas.')
       return count ?? 0
     },

@@ -65,7 +65,7 @@ test('prepararCaja: los intentos que fallan también cuentan para el límite (no
 
 test('prepararCaja: con 100 cajas sin dueño → 429 y no crea ningún túnel', async () => {
   const { m, deps } = nuevo()
-  for (let i = 0; i < 100; i++) m.cajas.push({ id: `c${i}`, ownerId: null, nombre: 'x', slug: `s${i}`, tunnelId: `t${i}`, lastSeen: null })
+  for (let i = 0; i < 100; i++) m.cajas.push({ id: `c${i}`, ownerId: null, nombre: 'x', slug: `s${i}`, tunnelId: `t${i}`, lastSeen: null, creadaPor: ADMIN })
   const r = await prepararCaja(deps, { adminId: ADMIN, etiqueta: 'una más' })
   assert.equal(r.status, 429)
   assert.equal(m.tunelesCreados.length, 0)

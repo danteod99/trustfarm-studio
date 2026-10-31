@@ -59,7 +59,7 @@ export function crearClienteMem(ahora: { t: Date }) {
     },
     async fijarTope(id, tope) { const c = m.cajas.find(x => x.id === id); if (!c) return false; c.topeDiario = tope; return true },
     async gastoHoyPorCajas(ids, desdeIso) { m.gastoConsultas.push({ ids: [...ids], desdeIso }); return Object.fromEntries(ids.map(i => [i, m.gasto[i] ?? 0])) },
-    async contarPreparadasSinDueno() { return m.cajas.filter((c) => c.ownerId === null).length },
+    async contarPreparadasSinDueno() { return m.cajas.filter((c) => c.ownerId === null && c.creadaPor).length },
     async contarCreacionesAdmin(adminId, desde) { return m.creaciones.filter((x) => x.adminId === adminId && x.creado >= desde).length },
     async registrarCreacionAdmin(adminId) { m.creaciones.push({ adminId, creado: ahora.t.toISOString() }) },
     async preparar(o) {

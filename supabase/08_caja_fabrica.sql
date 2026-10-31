@@ -61,7 +61,7 @@ declare
   v_caja uuid;
 begin
   perform pg_advisory_xact_lock(hashtext('caja_preparar'));
-  if (select count(*) from cajas where owner_id is null) >= 100 then
+  if (select count(*) from cajas where owner_id is null and creada_por is not null) >= 100 then
     raise exception 'limite_preparadas';
   end if;
   begin
@@ -84,7 +84,9 @@ security definer
 set search_path = public
 as $$
 begin
-  if not exists (select 1 from cajas where id = p_caja) then
+  -- Candado de la caja: dos peticiones a la vez (dos pestañas) no dejan dos llaves vigentes.
+  perform 1 from cajas where id = p_caja for update;
+  if not found then
     raise exception 'caja_inexistente';
   end if;
   delete from caja_activaciones where caja_id = p_caja and usada_en is null;

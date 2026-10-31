@@ -14,7 +14,7 @@ function conPreparada() {
   const ahora = { t: new Date(T0) }
   const r = crearClienteMem(ahora)
   const id = '00000000-0000-4000-8000-0000000000aa'
-  r.m.cajas.push({ id, ownerId: null, nombre: 'Mi caja', slug: 'prep0001', tunnelId: 'tun-prep', lastSeen: T0.toISOString(), etiqueta: 'Cliente Bodega López' })
+  r.m.cajas.push({ id, ownerId: null, nombre: 'Mi caja', slug: 'prep0001', tunnelId: 'tun-prep', lastSeen: T0.toISOString(), etiqueta: 'Cliente Bodega López', creadaPor: 'admin-1' })
   r.m.codigosPreparadas.set('ABCD2345', id)
   return { ...r, ahora, id }
 }

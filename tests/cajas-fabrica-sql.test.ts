@@ -79,6 +79,7 @@ test('caja_preparar: tope de 100 cajas sin dueño bajo candado, slug repetido y 
   assert.match(f, /pg_advisory_xact_lock/)
   assert.match(f, /owner_id is null/)
   assert.match(f, />= 100/)
+  assert.match(f, /owner_id is null and creada_por is not null/) // las cajas del flujo antiguo liberadas no cuentan para el tope
   assert.match(f, /raise exception 'limite_preparadas'/)
   assert.match(f, /raise exception 'slug_repetido'/)
   assert.match(f, /insert into caja_activaciones/)
