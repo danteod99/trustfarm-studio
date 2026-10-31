@@ -5,7 +5,7 @@ export const metadata = { title: "Política de privacidad" };
 
 export default function Privacidad() {
   return (
-    <LegalPage title="Política de privacidad" updated="29 de octubre de 2026">
+    <LegalPage title="Política de privacidad" updated="31 de octubre de 2026">
       <h2>Qué datos guardamos</h2>
       <ul>
         <li>Tu email y datos de inicio de sesión.</li>
@@ -16,6 +16,12 @@ export default function Privacidad() {
       <p>
         Para generar el contenido enviamos tu descripción y tu imagen de referencia al proveedor del modelo elegido (Google
         o fal.ai). Usamos Supabase para almacenar datos y Stripe para pagos. No vendemos tus datos.
+      </p>
+      <h2>Cookies y píxel de Meta</h2>
+      <p>
+        En la página de la comunidad usamos el píxel de Meta y su API de conversiones para medir nuestros anuncios. Registran
+        acciones como visitar la página o pulsar el botón para unirte, junto con tu dirección IP, tu navegador y las cookies
+        de Meta.
       </p>
       <h2>Tus derechos</h2>
       <p>
