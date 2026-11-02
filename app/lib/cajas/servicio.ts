@@ -97,7 +97,7 @@ export async function registrarCaja(deps: ServicioDeps, { ip, version }: { ip: s
 }
 
 /** Autentica con el Bearer. Misma respuesta (null) si no existe, falta el Bearer o no coincide. */
-async function autenticar(store: CajasStore, registroId: string, bearer: string | null | undefined): Promise<RegistroCaja | null> {
+export async function autenticar(store: CajasStore, registroId: string, bearer: string | null | undefined): Promise<RegistroCaja | null> {
   const registro = await store.buscarRegistro(registroId)
   const hash = hashSecreto(typeof bearer === 'string' ? bearer : '')
   // Se compara siempre (aunque no exista) para no diferenciar los casos por tiempo.
