@@ -309,7 +309,7 @@ export default function Home() {
         />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {MODELS.map((m, i) => (
-            <Reveal key={m.id} delay={(i % 3) * 80}>
+            <Reveal key={m.publicId} delay={(i % 3) * 80}>
               <div className="card flex h-full flex-col p-5 transition hover:-translate-y-0.5 hover:border-brand/50">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold uppercase tracking-wider text-mute">
