@@ -47,6 +47,11 @@ export default function Terminos() {
         Los modelos son de terceros y pueden cambiar, tener demoras o dejar de estar disponibles. Si una generación falla
         por un motivo técnico o por un filtro de seguridad, los créditos se devuelven automáticamente.
       </p>
+      <h2>4.1 Respuestas de la inteligencia artificial</h2>
+      <p>
+        El vendedor y el asistente de la mini PC responden con inteligencia artificial y pueden equivocarse. Revisa la información importante
+        antes de usarla. El consumo de IA se descuenta de tus créditos según lo que use cada solicitud.
+      </p>
       <h2>5. Limitación de responsabilidad</h2>
       <p>
         El servicio se ofrece “tal cual”. En la medida que permita la ley, nuestra responsabilidad total se limita al monto

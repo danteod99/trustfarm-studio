@@ -8,10 +8,13 @@ interface Caja {
   direccion: string;
   estado: "encendida" | "apagada";
   ultima_senal: string | null;
+  ia_creditos_hoy?: number;
+  ia_creditos_mes?: number;
 }
 
 const FOCO = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 const REFRESCO_MS = 30_000;
+const SALDO_BAJO = 20;
 const ERR_RED = "No se pudo conectar. Revisa tu internet e inténtalo de nuevo.";
 
 function haceCuanto(iso: string | null): string {
@@ -176,6 +179,9 @@ function TarjetaCaja({ caja, alCambiar }: { caja: Caja; alCambiar: () => void })
         </div>
       )}
       {!encendida && !confirmando && <p className="mt-2 text-xs text-mute">Enciende tu caja para poder abrirla.</p>}
+      {typeof caja.ia_creditos_mes === "number" && (
+        <p className="mt-2 text-xs text-mute">IA: {caja.ia_creditos_hoy ?? 0} créditos hoy · {caja.ia_creditos_mes} este mes</p>
+      )}
       {error && (
         <p role="alert" className="mt-3 text-sm text-red-400">
           {error}
@@ -193,6 +199,8 @@ export default function Cajas() {
   const [errorVincular, setErrorVincular] = useState<string | null>(null);
   const [exito, setExito] = useState(false);
   const [delQr, setDelQr] = useState<string | null>(null);
+  const [saldo, setSaldo] = useState<number | null>(null);
+  const [restantes, setRestantes] = useState<number | null>(null);
   const enVuelo = useRef(false);
 
   const cargar = useCallback(async () => {
@@ -205,6 +213,8 @@ export default function Cajas() {
       } else {
         const d = await r.json();
         setCajas(Array.isArray(d?.cajas) ? d.cajas : []);
+        setSaldo(typeof d?.saldo === "number" ? d.saldo : null);
+        setRestantes(typeof d?.ia_respuestas_restantes === "number" ? d.ia_respuestas_restantes : null);
         setErrorLista(null);
       }
     } catch {
@@ -261,6 +271,22 @@ export default function Cajas() {
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
       <h1 className="text-2xl font-bold">Mis cajas</h1>
+
+      {saldo !== null && (
+        <section className={`card p-4 text-sm ${saldo < SALDO_BAJO ? "border-amber-400" : ""}`}>
+          <p>
+            Tu saldo: <b>{saldo} créditos</b>
+            {restantes !== null && <span className="text-mute"> · te alcanza para unas {restantes} respuestas de tu vendedor</span>}
+          </p>
+          {saldo < SALDO_BAJO && (
+            <p className="mt-1 text-amber-400">
+              Te quedan pocos créditos. Sin saldo, tu vendedor deja de responder con IA.{" "}
+              <a className="underline" href="/creditos">Recargar</a>
+            </p>
+          )}
+          <p className="mt-1 text-xs text-mute">El vendedor funciona con inteligencia artificial y puede equivocarse: revisa lo importante.</p>
+        </section>
+      )}
 
       {delQr && !exito && (
         <section className="card border-brand p-5">

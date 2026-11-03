@@ -28,6 +28,11 @@ interface CajaAdmin {
   asignacion: "preparada" | "asignada";
   activada: boolean;
   email_asignado: string | null;
+  ia_creditos_mes: number;
+  ia_costo_mes_usd: number;
+  ia_alertas: string[];
+  ia_bloqueada: boolean;
+  tope_diario_ia: number;
 }
 
 /** Llave de activación recién creada: se muestra UNA vez (el servidor solo guarda su huella). */
@@ -81,6 +86,50 @@ function TopeCaja({ c, onGuardado }: { c: CajaAdmin; onGuardado: (id: string, to
       </button>
       {error && <span className="text-red-400">{error}</span>}
     </span>
+  );
+}
+
+/** IA de una caja: cobrado frente a costo real, alertas, tope diario de chats y bloqueo. */
+function IaCaja({ c, onCambio }: { c: CajaAdmin; onCambio: (id: string, cambios: Partial<CajaAdmin>) => void }) {
+  const [tope, setTope] = useState(String(c.tope_diario_ia));
+  const [ocupado, setOcupado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function enviar(cambios: { bloqueada?: boolean; tope_diario_ia?: number }) {
+    setOcupado(true);
+    setError(null);
+    try {
+      const r = await fetch("/api/admin/cajas/ia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caja_id: c.id, ...cambios }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) setError(d.error ?? "No se pudo guardar.");
+      else onCambio(c.id, { ...(cambios.bloqueada !== undefined ? { ia_bloqueada: cambios.bloqueada } : {}), ...(cambios.tope_diario_ia !== undefined ? { tope_diario_ia: cambios.tope_diario_ia } : {}) });
+    } catch {
+      setError("No se pudo conectar.");
+    }
+    setOcupado(false);
+  }
+
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+      <span className="text-mute">IA este mes: {c.ia_creditos_mes} créditos · costo ${c.ia_costo_mes_usd}</span>
+      {c.ia_alertas.map((a) => (
+        <span key={a} role="alert" className="rounded-full border border-amber-400 px-2 py-0.5 text-amber-400">{a}</span>
+      ))}
+      {c.ia_bloqueada && <span className="rounded-full border border-red-400 px-2 py-0.5 text-red-400">IA bloqueada</span>}
+      <span className="text-mute">Tope chats:</span>
+      <input className="input !w-20 !py-1" type="number" min={0} max={10000} aria-label={`Tope diario de chats de ${c.nombre}`} value={tope} onChange={(e) => setTope(e.target.value)} />
+      <button className="btn-ghost !px-3 !py-1.5" disabled={ocupado || tope.trim() === "" || Number(tope) === c.tope_diario_ia} onClick={() => enviar({ tope_diario_ia: Number(tope) })}>
+        Guardar
+      </button>
+      <button className="btn-ghost !px-3 !py-1.5" disabled={ocupado} onClick={() => enviar({ bloqueada: !c.ia_bloqueada })}>
+        {c.ia_bloqueada ? "Desbloquear IA" : "Bloquear IA"}
+      </button>
+      {error && <span className="text-red-400">{error}</span>}
+    </div>
   );
 }
 
@@ -274,6 +323,8 @@ function CajasAdmin() {
     setQuitando(null);
   }
 
+  const iaCambio = (id: string, cambios: Partial<CajaAdmin>) => setCajas((prev) => prev.map((x) => (x.id === id ? { ...x, ...cambios } : x)));
+
   const topeGuardado = (id: string, tope: number) => setCajas((prev) => prev.map((x) => (x.id === id ? { ...x, tope_diario: tope } : x)));
 
   const acciones = (c: CajaAdmin) =>
@@ -382,6 +433,7 @@ function CajasAdmin() {
             <div className="mt-2">
               <TopeCaja key={`${c.id}-${c.tope_diario}`} c={c} onGuardado={topeGuardado} />
             </div>
+            <IaCaja key={`ia-${c.id}-${c.tope_diario_ia}`} c={c} onCambio={iaCambio} />
             <div className="mt-2">{acciones(c)}</div>
           </li>
         ))}
@@ -409,6 +461,7 @@ function CajasAdmin() {
                 <td className="py-2 pr-3">
                   {c.etiqueta ?? c.nombre}
                   {c.email_asignado && <span className="block text-xs text-mute">{c.email_asignado}</span>}
+                  <IaCaja key={`ia-${c.id}-${c.tope_diario_ia}`} c={c} onCambio={iaCambio} />
                 </td>
                 <td className="pr-3">{asignacion(c)}</td>
                 <td className="pr-3 font-mono text-xs">{dueno(c)}</td>

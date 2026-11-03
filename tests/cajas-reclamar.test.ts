@@ -109,7 +109,7 @@ test('quitar por el dueño: la caja se LIBERA (queda sin dueño) y NO se toca Cl
   assert.equal(c.tunnelId, 'tun-prep')
   assert.ok(m.tunelesVivos.has('tun-prep'))
   // ya no es suya: no la ve, ni la abre
-  assert.deepEqual((await listarMisCajas(deps, { userId: U1 })).body, { cajas: [] })
+  assert.deepEqual((await listarMisCajas(deps, { userId: U1 })).body, { saldo: 0, ia_respuestas_restantes: null, cajas: [] })
   assert.equal((await abrirCaja(deps, { userId: U1, cajaId: id })).status, 404)
 })
 

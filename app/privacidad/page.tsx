@@ -17,6 +17,12 @@ export default function Privacidad() {
         Para generar el contenido enviamos tu descripción y tu imagen de referencia a nuestros servidores y a los proveedores
         de procesamiento de IA en la nube con los que trabajamos. Usamos Supabase para almacenar datos y Stripe para pagos. No vendemos tus datos.
       </p>
+      <h2>Mini PC con vendedor de IA</h2>
+      <p>
+        Si usas la IA incluida con tus créditos, los mensajes de tus chats pasan por nuestros servidores hacia Anthropic, solo para generar
+        la respuesta. No guardamos esas conversaciones: de cada solicitud registramos únicamente la caja, el modelo y cuánto se consumió, para
+        poder cobrarla. Las conversaciones se guardan en tu propia mini PC.
+      </p>
       <h2>Cookies y píxel de Meta</h2>
       <p>
         En la página de la comunidad usamos el píxel de Meta y su API de conversiones para medir nuestros anuncios. Registran
