@@ -105,6 +105,10 @@ export async function atenderMensajes(d: DepsIA, e: { llave: string | null; ip: 
     // Mismo estado para que el SDK de la caja reintente, pero sin el texto original: puede traer datos de la cuenta
     const status = (err as { status?: unknown }).status
     if (typeof status !== 'number') return fallo(502, 'api_error', 'La IA no respondió. Inténtalo de nuevo.')
+    // Solo el estado: el texto y el cuerpo pueden traer datos de la cuenta o de la conversación
+    console.error('[ia] Anthropic rechazó una solicitud de la caja', x.cajaId, status)
+    // La llave del negocio vencida o sin permiso no es culpa de la caja: un 401 aquí parecería que la caja no está autorizada
+    if (status === 401 || status === 403 || status === 404) return fallo(502, 'api_error', 'La IA no está disponible en este momento.')
     return fallo(status, status === 429 ? 'rate_limit_error' : 'api_error', 'La IA no pudo responder. Inténtalo de nuevo.')
   }
 

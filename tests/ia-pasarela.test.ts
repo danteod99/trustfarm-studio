@@ -169,6 +169,16 @@ test('Anthropic con 429 o 500: mismo estado a la caja, sin cobrar y sin copiar s
   assert.equal((await red.pedir()).status, 502)
 })
 
+test('llave del negocio vencida o sin permiso: 502 a la caja, no 401: el problema no es de la caja', async () => {
+  for (const status of [401, 403, 404]) {
+    const { e, pedir } = entorno()
+    e.fallo = { status, message: 'invalid x-api-key' }
+    const r = await pedir()
+    assert.equal(r.status, 502, String(status))
+    assert.equal(tipo(r), 'api_error')
+  }
+})
+
 test('foco: Anthropic respondió pero el cobro falló: la caja recibe su respuesta y el registro no lleva la conversación', async (t) => {
   const { e, pedir } = entorno()
   e.registrarFalla = true
