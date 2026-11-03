@@ -35,6 +35,9 @@ export function crearClienteMem(ahora: { t: Date }, opts: { vinculoAbierto?: boo
     conRegistro: new Set<string>(),
     asignarFalla: false,
     vincularAsignadaLlamadas: 0,
+    // Cuentas registradas (buscador del panel de administración)
+    cuentas: [] as { id: string; email: string; con_google: boolean }[],
+    busquedas: [] as string[],
   }
   let n = 0
   const store: ClienteStore = {
@@ -61,6 +64,8 @@ export function crearClienteMem(ahora: { t: Date }, opts: { vinculoAbierto?: boo
       if (c) c.emailAsignado = email
     },
     async contarCajasConEmail(email) { return m.cajas.filter((c) => c.emailAsignado === email).length },
+    async buscarCuentas(texto) { m.busquedas.push(texto); return m.cuentas.filter((c) => c.email.includes(texto.toLowerCase())) },
+    async cuentaPorId(id) { const c = m.cuentas.find((x) => x.id === id); return c ? { email: c.email } : null },
     async vincular(o) {
       m.vincularLlamadas++
       const forzado = m.forzarVincular.shift()

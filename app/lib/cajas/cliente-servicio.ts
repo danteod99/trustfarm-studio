@@ -24,6 +24,10 @@ export interface ClienteStore {
     Promise<{ ok: true; cajaId: string } | { ok: false; motivo: 'codigo_invalido' | 'sin_caja_asignada' | 'error' }>
   asignarEmail(cajaId: string, email: string): Promise<void>
   contarCajasConEmail(email: string): Promise<number>
+  /** Cuentas registradas cuyo correo contiene el texto (máximo 8). */
+  buscarCuentas(texto: string): Promise<{ id: string; email: string; con_google: boolean }[]>
+  /** El correo con que se vinculará esa cuenta (el de Google si lo tiene); null si la cuenta no existe. */
+  cuentaPorId(id: string): Promise<{ email: string } | null>
   vincular(o: { codigo: string; ownerId: string; nombre: string; slug: string; tunnelId: string }): Promise<ResultadoVincular>
   listarCajas(ownerId: string): Promise<CajaCliente[]>
   obtenerCaja(cajaId: string): Promise<CajaCliente | null>

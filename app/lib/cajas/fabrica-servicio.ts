@@ -17,6 +17,7 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 const ERR_ETIQUETA = `Escribe una etiqueta de 1 a ${MAX_ETIQUETA} caracteres (por ejemplo, el nombre del cliente).`
 const ERR_CORREO = 'Ese correo no parece válido. Revísalo o déjalo vacío.'
 const ERR_MAX_POR_CORREO = `Ese correo ya tiene el máximo de cajas asignadas (${MAX_CAJAS_POR_CUENTA}).`
+const ERR_SIN_CUENTA = 'Elige una cuenta registrada en trustfarm.online.'
 const ERR_RITMO = 'Creaste demasiadas cajas en la última hora. Espera un rato e inténtalo de nuevo.'
 const ERR_CUPO = `Ya hay ${MAX_PREPARADAS_SIN_DUENO} cajas sin dueño. Asigna o elimina alguna antes de crear otra.`
 const ERR_TUNEL = 'No se pudo preparar el túnel de la caja. Inténtalo de nuevo.'
@@ -83,6 +84,23 @@ export async function prepararCaja(deps: ClienteDeps, { adminId, etiqueta, email
     return { status: 500, body: { error: ERR_CREAR } }
   }
   return { status: 500, body: { error: ERR_CREAR } }
+}
+
+const MIN_BUSQUEDA = 2
+const MAX_BUSQUEDA = 100
+
+/** Buscador del panel: cuentas registradas cuyo correo contiene el texto. */
+export async function buscarCuentas(deps: ClienteDeps, { texto }: { texto: unknown }): Promise<Respuesta> {
+  const limpio = typeof texto === 'string' ? texto.trim().slice(0, MAX_BUSQUEDA) : ''
+  if (limpio.length < MIN_BUSQUEDA) return { status: 200, body: { cuentas: [] } }
+  return { status: 200, body: { cuentas: await deps.store.buscarCuentas(limpio) } }
+}
+
+/** Crea la caja para una cuenta que ya existe: así nunca se asigna a un correo sin cuenta o mal escrito. */
+export async function prepararCajaParaCuenta(deps: ClienteDeps, { adminId, etiqueta, usuarioId }: { adminId: string; etiqueta: unknown; usuarioId: unknown }): Promise<Respuesta> {
+  const cuenta = typeof usuarioId === 'string' && UUID_REGEX.test(usuarioId) ? await deps.store.cuentaPorId(usuarioId) : null
+  if (!cuenta) return { status: 400, body: { error: ERR_SIN_CUENTA } }
+  return prepararCaja(deps, { adminId, etiqueta, email: cuenta.email })
 }
 
 export async function regenerarLlave(deps: ClienteDeps, { cajaId }: { cajaId: string }): Promise<Respuesta> {

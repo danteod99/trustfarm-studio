@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { correoCaja, registrarCaja } from '../app/lib/cajas/servicio.ts'
 import { vincularCaja } from '../app/lib/cajas/cliente-servicio.ts'
-import { prepararCaja } from '../app/lib/cajas/fabrica-servicio.ts'
+import { buscarCuentas, prepararCaja, prepararCajaParaCuenta } from '../app/lib/cajas/fabrica-servicio.ts'
 import { correoDeGoogle, enmascararCorreo, normalizarCorreo } from '../app/lib/cajas/correo.ts'
 import { crearDeps } from './cajas-mem.ts'
 import { crearClienteMem } from './cajas-cliente-mem.ts'
@@ -252,6 +252,37 @@ test('caja preparada sin correo asignado: se sigue reclamando con su código, co
   const r = await vincularCaja(deps, { userId: U1, email: 'quien@gmail.com', codigo: 'PREP2345' })
   assert.equal(r.status, 200)
   assert.equal(m.cajas[0].ownerId, U1)
+})
+
+// ---- buscador de cuentas registradas (administración)
+test('buscarCuentas: con menos de 2 letras no consulta; devuelve las cuentas que coinciden', async () => {
+  const { m, deps } = crearClienteMem({ t: new Date(T0) }, { vinculoAbierto: false })
+  m.cuentas.push({ id: U1, email: CORREO, con_google: true })
+  for (const corto of ['', ' ', 'c', undefined, null, 5]) {
+    const r = await buscarCuentas(deps, { texto: corto })
+    assert.deepEqual(r, { status: 200, body: { cuentas: [] } })
+  }
+  assert.equal(m.busquedas.length, 0)
+  const r = await buscarCuentas(deps, { texto: '  Client ' })
+  assert.deepEqual(r, { status: 200, body: { cuentas: [{ id: U1, email: CORREO, con_google: true }] } })
+  assert.deepEqual(m.busquedas, ['Client'])
+  await buscarCuentas(deps, { texto: 'x'.repeat(500) })
+  assert.equal(m.busquedas[1].length, 100, 'recorta textos larguísimos')
+})
+
+test('prepararCajaParaCuenta: solo con una cuenta que existe; toma su correo, no uno escrito a mano', async () => {
+  const { m, deps } = crearClienteMem({ t: new Date(T0) }, { vinculoAbierto: false })
+  for (const malo of [undefined, '', 'no-es-uuid', 42, U2]) {
+    const r = await prepararCajaParaCuenta(deps, { adminId: 'a1', etiqueta: 'X', usuarioId: malo })
+    assert.equal(r.status, 400, String(malo))
+    assert.match((r.body as { error: string }).error, /cuenta registrada/i)
+  }
+  assert.equal(m.tunelesCreados.length, 0)
+  m.cuentas.push({ id: U1, email: 'Juan.Perez@Gmail.com', con_google: true })
+  const r = await prepararCajaParaCuenta(deps, { adminId: 'a1', etiqueta: 'Bodega', usuarioId: U1 })
+  assert.equal(r.status, 200)
+  assert.equal((r.body as { caja: { email: string } }).caja.email, 'juanperez@gmail.com')
+  assert.equal(m.cajas[0].emailAsignado, 'juanperez@gmail.com')
 })
 
 // ---- crear la caja con su correo (administración)

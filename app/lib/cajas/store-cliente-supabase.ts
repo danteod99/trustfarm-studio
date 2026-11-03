@@ -2,6 +2,7 @@
 // Nunca se propagan mensajes crudos de Supabase.
 import { supabaseAdmin } from '../supabase/admin'
 import type { CajaCliente, ClienteStore } from './cliente-servicio'
+import { correoDeGoogle } from './correo'
 
 const COLS = 'id, owner_id, nombre, slug, tunnel_id, last_seen, version, created_at, tope_diario, etiqueta, creada_por, email_asignado'
 type Fila = { id: string; owner_id: string | null; etiqueta?: string | null; nombre: string; slug: string; tunnel_id: string; last_seen: string | null; version?: string | null; created_at?: string | null; tope_diario?: number | null; creada_por?: string | null; email_asignado?: string | null }
@@ -49,6 +50,16 @@ export function clienteStoreSupabase(): ClienteStore {
     async asignarEmail(cajaId, email) {
       const { error } = await db.from('cajas').update({ email_asignado: email }).eq('id', cajaId)
       if (error) throw new Error('No se pudo guardar el correo.')
+    },
+    async buscarCuentas(texto) {
+      const { data, error } = await db.rpc('caja_buscar_cuentas', { p_texto: texto })
+      if (error) throw new Error('No se pudo buscar la cuenta.')
+      return (data ?? []) as { id: string; email: string; con_google: boolean }[]
+    },
+    async cuentaPorId(id) {
+      const { data, error } = await db.auth.admin.getUserById(id)
+      if (error || !data.user?.email) return null
+      return { email: correoDeGoogle(data.user) ?? data.user.email }
     },
     async contarCajasConEmail(email) {
       const { count, error } = await db.from('cajas').select('id', { count: 'exact', head: true }).eq('email_asignado', email)

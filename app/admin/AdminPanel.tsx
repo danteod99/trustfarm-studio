@@ -84,6 +84,84 @@ function TopeCaja({ c, onGuardado }: { c: CajaAdmin; onGuardado: (id: string, to
   );
 }
 
+interface CuentaEncontrada {
+  id: string;
+  email: string;
+  con_google: boolean;
+}
+
+/** Busca entre las cuentas registradas mientras se escribe: así nunca se asigna una caja a un correo sin cuenta. */
+function BuscadorCuenta({ cuenta, alElegir }: { cuenta: CuentaEncontrada | null; alElegir: (c: CuentaEncontrada | null) => void }) {
+  const [texto, setTexto] = useState("");
+  const [resultados, setResultados] = useState<CuentaEncontrada[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const q = texto.trim();
+    if (q.length < 2) {
+      setResultados(null);
+      setError(null);
+      return;
+    }
+    let vigente = true;
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/admin/cajas/cuentas?q=${encodeURIComponent(q)}`, { cache: "no-store" });
+        const d = await r.json().catch(() => ({}));
+        if (!vigente) return;
+        if (!r.ok) setError(d.error ?? "No se pudo buscar.");
+        else {
+          setResultados(Array.isArray(d.cuentas) ? d.cuentas : []);
+          setError(null);
+        }
+      } catch {
+        if (vigente) setError("No se pudo conectar.");
+      }
+    }, 250);
+    return () => {
+      vigente = false;
+      clearTimeout(t);
+    };
+  }, [texto]);
+
+  if (cuenta) {
+    return (
+      <div className="grow text-sm">
+        <span className="text-mute">Cuenta del cliente (solo ella podrá vincularla)</span>
+        <p className="mt-1 flex flex-wrap items-center gap-2">
+          <b className="break-all">{cuenta.email}</b>
+          <button type="button" className="btn-ghost !px-3 !py-1.5" onClick={() => { alElegir(null); setTexto(""); }}>
+            Cambiar
+          </button>
+        </p>
+        {!cuenta.con_google && <p className="mt-1 text-xs text-amber-400">Esta cuenta aún no ha entrado con Google. Para vincular la caja tendrá que usar «Continuar con Google» con este correo.</p>}
+      </div>
+    );
+  }
+  return (
+    <div className="relative grow text-sm">
+      <label>
+        <span className="text-mute">Cuenta del cliente (busca por su correo)</span>
+        <input className="input mt-1 w-full" autoComplete="off" maxLength={100} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="cliente@gmail.com" />
+      </label>
+      {error && <p role="alert" className="mt-1 text-xs text-red-400">{error}</p>}
+      {resultados && !error && (
+        <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border border-line bg-panel-2 shadow-lg">
+          {resultados.map((c) => (
+            <li key={c.id}>
+              <button type="button" className="block w-full break-all px-3 py-2 text-left hover:bg-black/20" onClick={() => alElegir(c)}>
+                {c.email}
+                {!c.con_google && <span className="ml-2 text-xs text-amber-400">sin Google</span>}
+              </button>
+            </li>
+          ))}
+          {!resultados.length && <li className="px-3 py-2 text-xs text-mute">Ninguna cuenta con ese correo. El cliente debe registrarse primero en trustfarm.online.</li>}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function CajasAdmin() {
   const [cajas, setCajas] = useState<CajaAdmin[]>([]);
   const [pagina, setPagina] = useState(0);
@@ -93,7 +171,7 @@ function CajasAdmin() {
   const [confirmar, setConfirmar] = useState<string | null>(null);
   const [quitando, setQuitando] = useState<string | null>(null);
   const [etiqueta, setEtiqueta] = useState("");
-  const [correo, setCorreo] = useState("");
+  const [cuenta, setCuenta] = useState<CuentaEncontrada | null>(null);
   const [creada, setCreada] = useState<string | null>(null);
   const [creando, setCreando] = useState(false);
   const [llaveNueva, setLlaveNueva] = useState<LlaveNueva | null>(null);
@@ -135,14 +213,14 @@ function CajasAdmin() {
       const r = await fetch("/api/admin/cajas/preparar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ etiqueta, email: correo }),
+        body: JSON.stringify({ etiqueta, usuario_id: cuenta?.id }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) setError(d.error ?? "No se pudo crear la caja.");
       else {
         setCreada(`${d.caja.etiqueta} · ${d.caja.direccion} quedó asignada a ${d.caja.email}. Instala la mini PC con el ISO y entrégala: el cliente escribe ese correo en la pantalla, escanea el QR y entra con Google.`);
         setEtiqueta("");
-        setCorreo("");
+        setCuenta(null);
         await cargar(0);
       }
     } catch {
@@ -243,18 +321,15 @@ function CajasAdmin() {
         className="mt-3 flex flex-wrap items-end gap-2"
         onSubmit={(e) => {
           e.preventDefault();
-          if (etiqueta.trim() && correo.trim()) void crear();
+          if (etiqueta.trim() && cuenta) void crear();
         }}
       >
         <label className="grow text-sm">
           <span className="text-mute">Etiqueta de la caja nueva (para ti: p. ej. el nombre del cliente)</span>
           <input className="input mt-1 w-full" maxLength={80} value={etiqueta} onChange={(e) => setEtiqueta(e.target.value)} placeholder="Cliente Bodega López" />
         </label>
-        <label className="grow text-sm">
-          <span className="text-mute">Correo de Google del cliente (solo esa cuenta podrá vincularla)</span>
-          <input className="input mt-1 w-full" type="email" maxLength={254} autoComplete="off" value={correo} onChange={(e) => setCorreo(e.target.value)} placeholder="cliente@gmail.com" />
-        </label>
-        <button className="btn-primary" disabled={creando || !etiqueta.trim() || !correo.trim()}>
+        <BuscadorCuenta cuenta={cuenta} alElegir={setCuenta} />
+        <button className="btn-primary" disabled={creando || !etiqueta.trim() || !cuenta}>
           {creando ? "Creando…" : "Crear caja"}
         </button>
       </form>
