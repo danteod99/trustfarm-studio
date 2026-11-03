@@ -5,7 +5,7 @@ import { MOTIONS } from "@/app/lib/templates";
 export async function GET() {
   return Response.json({
     models: MODELS.filter((m) => !m.adminOnly).map((m) => ({
-      id: m.id,
+      id: m.publicId,
       kind: m.kind,
       name: m.name,
       description: m.tagline,

@@ -5,6 +5,7 @@ import {
   MAX_PROMPT,
   creditCost,
   getModel,
+  publicModelId,
   validOptions,
   type Aspect,
   type ModelDef,
@@ -385,12 +386,12 @@ export function publicGeneration(g: Generation, url?: string) {
   return {
     id: g.id,
     kind: g.kind,
-    model: g.model,
+    model: publicModelId(g.model),
     prompt: g.prompt,
     params: g.params,
     status: g.status === "finalizing" || g.status === "queued" ? "running" : g.status,
     cost: g.cost_credits,
-    error: g.status === "failed" ? g.error : null,
+    error: g.status === "failed" ? clientError(g.error) : null,
     url: url ?? null,
     createdAt: g.created_at,
   };
@@ -409,6 +410,19 @@ async function update(id: string, patch: Record<string, unknown>) {
     .from("ai_generations")
     .update({ ...patch, updated_at: new Date().toISOString() })
     .eq("id", id);
+}
+
+/**
+ * El cliente nunca ve qué IA hay detrás: los errores que nombran al proveedor (Google, Veo, fal, RunPod…)
+ * se cambian por un mensaje genérico. El original queda en la base para el admin.
+ */
+export function clientError(msg: string | null): string | null {
+  if (!msg) return msg;
+  if (/filtro de seguridad/i.test(msg)) return "Rechazado por el filtro de seguridad. Te devolvimos los créditos.";
+  if (/límite de uso/i.test(msg)) return "Hay mucha demanda en este momento. Intenta en unos minutos.";
+  if (/google|gemini|veo|fal\b|runpod|comfy|qwen|wan\b|ltx|z-image|nano banana|http \d|no configurada/i.test(msg))
+    return "Error del proveedor de IA. Te devolvimos los créditos.";
+  return msg;
 }
 
 function publicError(e: unknown): string {

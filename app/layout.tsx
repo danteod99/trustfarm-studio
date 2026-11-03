@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: `${BRAND.name} — Genera imágenes y videos con IA`,
   description:
-    "Crea imágenes y videos con IA en español: Veo 3.1, Nano Banana, Wan 2.2 y más. Paga solo por lo que generas con créditos prepagados.",
+    "Crea imágenes y videos con IA en español: fotos realistas, videos con voz y clips para redes. Paga solo por lo que generas con créditos prepagados.",
   openGraph: { title: BRAND.name, description: BRAND.tagline, url: SITE_URL, siteName: BRAND.name, locale: "es_419" },
 };
 

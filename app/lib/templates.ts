@@ -190,7 +190,7 @@ export const TEMPLATES: TemplateGroup[] = [
         duration: 8,
         prompt:
           "[Lugar], [hora del día]. El personaje [acción] mientras [otro personaje o detalle]. Diálogo: «[línea corta]». Cámara [movimiento]. Sin subtítulos.",
-        tip: "Veo Lite cuesta menos: úsalo para las escenas de relleno y Fast para el gancho y el final.",
+        tip: "Trust Cine Lite cuesta menos: úsalo para las escenas de relleno y Trust Cine para el gancho y el final.",
       },
       {
         id: "cliffhanger",

@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/app/lib/supabase/admin";
-import { publicGeneration, signedUrls, type Generation } from "@/app/lib/generations";
+import { clientError, publicGeneration, signedUrls, type Generation } from "@/app/lib/generations";
+import { publicModelId } from "@/app/lib/catalog";
 import type { FlowRun } from "@/app/lib/flujos";
 
 /** Lo que ve el usuario de una corrida: pasos con su generación (y enlace cuando está lista). */
@@ -14,12 +15,12 @@ export async function publicRun(run: FlowRun) {
     name: run.name,
     status: run.status,
     step: run.step,
-    error: run.error,
+    error: clientError(run.error),
     loop_id: run.loop_id,
     created_at: run.created_at,
     steps: run.steps.map((s, i) => {
       const g = gens.find((x) => x.id === run.generations[i]);
-      return { title: s.title, model: s.model, generation: g ? publicGeneration(g, urls[g.id]) : null };
+      return { title: s.title, model: publicModelId(s.model), generation: g ? publicGeneration(g, urls[g.id]) : null };
     }),
   };
 }

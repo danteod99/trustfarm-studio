@@ -14,8 +14,8 @@ export default function Privacidad() {
       </ul>
       <h2>Con quién se comparten</h2>
       <p>
-        Para generar el contenido enviamos tu descripción y tu imagen de referencia al proveedor del modelo elegido (Google
-        o fal.ai). Usamos Supabase para almacenar datos y Stripe para pagos. No vendemos tus datos.
+        Para generar el contenido enviamos tu descripción y tu imagen de referencia a nuestros servidores y a los proveedores
+        de procesamiento de IA en la nube con los que trabajamos. Usamos Supabase para almacenar datos y Stripe para pagos. No vendemos tus datos.
       </p>
       <h2>Cookies y píxel de Meta</h2>
       <p>

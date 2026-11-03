@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { MODELS } from "@/app/lib/catalog";
 import PedidosMinipc from "@/app/admin/PedidosMinipc";
+import Clientes from "@/app/admin/Clientes";
 
 interface Stats {
   revenueUsd: number;
@@ -404,6 +405,13 @@ export default function AdminPanel() {
         ))}
       </section>
 
+      <Clientes
+        onRegalar={(e) => {
+          setEmail(e);
+          document.getElementById("regalar")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}
+      />
+
       <section className="card p-5">
         <h2 className="font-semibold">Uso por modelo (30 días)</h2>
         <table className="mt-3 w-full text-sm">
@@ -421,7 +429,9 @@ export default function AdminPanel() {
               const s = stats?.byModel[m.id];
               return (
                 <tr key={m.id} className="border-t border-line">
-                  <td className="py-2">{m.name}</td>
+                  <td className="py-2">
+                    {m.name} <span className="text-xs text-mute">· {m.engine}</span>
+                  </td>
                   <td>{s?.total ?? 0}</td>
                   <td>{m.localCapable ? s?.local ?? 0 : "—"}</td>
                   <td>{s?.failed ?? 0}</td>
@@ -454,7 +464,7 @@ export default function AdminPanel() {
 
       <CajasAdmin />
 
-      <section className="card p-5">
+      <section id="regalar" className="card p-5">
         <h2 className="font-semibold">Regalar créditos</h2>
         <p className="mt-1 text-sm text-mute">Para pagos por transferencia/Yape, promociones o compensaciones.</p>
         <form onSubmit={grant} className="mt-4 grid gap-3 sm:grid-cols-[1fr_140px_1fr_auto]">

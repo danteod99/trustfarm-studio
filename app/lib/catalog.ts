@@ -16,9 +16,14 @@ export type Resolution = "480p" | "720p" | "1080p";
 
 export interface ModelDef {
   id: string;
+  /** Id que ven los clientes (web, URLs y API): nunca revela qué IA hay detrás. */
+  publicId: string;
   kind: Kind;
   provider: Provider;
+  /** Nombre de marca que ven los clientes. */
   name: string;
+  /** Modelo real detrás (solo para el admin). */
+  engine: string;
   tagline: string;
   /** ID del modelo en el proveedor. Para fal: { t2v, i2v } o el endpoint de imagen. */
   providerModel: string;
@@ -57,9 +62,11 @@ export function available(m: ModelDef, c: Capacity): boolean {
 export const MODELS: ModelDef[] = [
   {
     id: "nano-banana-2",
+    publicId: "foto-plus",
     kind: "image",
     provider: "gemini-image",
-    name: "Nano Banana 2",
+    name: "Trust Foto Plus",
+    engine: "Nano Banana 2",
     tagline: "Rápido y fotorrealista. Ideal para anuncios y producto.",
     providerModel: "gemini-3.1-flash-image",
     aspects: ["1:1", "9:16", "16:9"],
@@ -68,10 +75,12 @@ export const MODELS: ModelDef[] = [
   },
   {
     id: "nano-banana-pro",
+    publicId: "foto-ultra",
     kind: "image",
     provider: "gemini-image",
-    name: "Nano Banana Pro",
-    tagline: "Máxima calidad de Google, texto legible dentro de la imagen.",
+    name: "Trust Foto Ultra",
+    engine: "Nano Banana Pro",
+    tagline: "Nuestra máxima calidad, con texto legible dentro de la imagen.",
     providerModel: "gemini-3-pro-image",
     aspects: ["1:1", "9:16", "16:9"],
     credits: 4,
@@ -80,10 +89,12 @@ export const MODELS: ModelDef[] = [
   },
   {
     id: "qwen-image",
+    publicId: "foto",
     kind: "image",
     provider: "fal",
-    name: "Qwen-Image",
-    tagline: "Open source, el más económico. Bueno para volumen y texto en la imagen.",
+    name: "Trust Foto",
+    engine: "Qwen-Image (fal)",
+    tagline: "El más económico. Bueno para volumen y texto en la imagen.",
     providerModel: "fal-ai/qwen-image",
     aspects: ["1:1", "9:16", "16:9"],
     credits: 1,
@@ -94,10 +105,12 @@ export const MODELS: ModelDef[] = [
   },
   {
     id: "z-image",
+    publicId: "foto-flash",
     kind: "image",
     provider: "local",
-    name: "Z-Image Turbo",
-    tagline: "Open source, fotos realistas en segundos. Corre en nuestro servidor.",
+    name: "Trust Foto Flash",
+    engine: "Z-Image Turbo",
+    tagline: "Fotos realistas en segundos al menor costo.",
     providerModel: "z_image_turbo",
     aspects: ["1:1", "9:16", "16:9"],
     credits: 1,
@@ -108,10 +121,12 @@ export const MODELS: ModelDef[] = [
   },
   {
     id: "veo-lite",
+    publicId: "cine-lite",
     kind: "video",
     provider: "veo",
-    name: "Veo 3.1 Lite",
-    tagline: "Video con audio de Google al menor costo.",
+    name: "Trust Cine Lite",
+    engine: "Veo 3.1 Lite",
+    tagline: "Video con audio al menor costo.",
     providerModel: "veo-3.1-lite-generate-preview",
     aspects: ["9:16", "16:9"],
     durations: [4, 6, 8],
@@ -122,9 +137,11 @@ export const MODELS: ModelDef[] = [
   },
   {
     id: "veo-fast",
+    publicId: "cine",
     kind: "video",
     provider: "veo",
-    name: "Veo 3.1 Fast",
+    name: "Trust Cine",
+    engine: "Veo 3.1 Fast",
     tagline: "Mejor movimiento, diálogo y lip-sync en español.",
     providerModel: "veo-3.1-fast-generate-preview",
     aspects: ["9:16", "16:9"],
@@ -136,10 +153,12 @@ export const MODELS: ModelDef[] = [
   },
   {
     id: "wan-22",
+    publicId: "clip",
     kind: "video",
     provider: "fal",
-    name: "Wan 2.2",
-    tagline: "Open source. Clips de 5 s sin audio, perfecto para B-roll.",
+    name: "Trust Clip",
+    engine: "Wan 2.2 (fal)",
+    tagline: "Clips de 5 s sin audio, perfecto para B-roll.",
     providerModel: "fal-ai/wan/v2.2-a14b/text-to-video",
     providerModelImage: "fal-ai/wan/v2.2-a14b/image-to-video",
     aspects: ["9:16", "16:9", "1:1"],
@@ -156,10 +175,12 @@ export const MODELS: ModelDef[] = [
 MODELS.push(
   {
     id: "qwen-image-pro",
+    publicId: "foto-pro",
     kind: "image",
     provider: "runpod",
-    name: "Qwen-Image 2.1 Pro",
-    tagline: "El mejor modelo abierto, sin comprimir. Texto en la imagen y personajes con foto de referencia.",
+    name: "Trust Foto Pro",
+    engine: "Qwen-Image 2.1 Pro",
+    tagline: "Texto perfecto dentro de la imagen y personajes con foto de referencia.",
     providerModel: "qwen_image_2.1_bf16",
     aspects: ["1:1", "9:16", "16:9"],
     credits: 4,
@@ -169,10 +190,12 @@ MODELS.push(
   },
   {
     id: "wan-14b",
+    publicId: "clip-pro",
     kind: "video",
     provider: "runpod",
-    name: "Wan 2.2 14B",
-    tagline: "Video abierto de 14B, el que más LoRAs tiene. Sin audio.",
+    name: "Trust Clip Pro",
+    engine: "Wan 2.2 14B",
+    tagline: "Movimiento de alta calidad sin audio, ideal para B-roll y estilos.",
     providerModel: "wan2.2_14B",
     aspects: ["9:16", "16:9", "1:1"],
     durations: [5],
@@ -183,10 +206,12 @@ MODELS.push(
   },
   {
     id: "ltx-25",
+    publicId: "cine-voz",
     kind: "video",
     provider: "runpod",
-    name: "LTX-2.5",
-    tagline: "Video con audio y voces sincronizadas, 22B. Lo más parecido a Veo en abierto.",
+    name: "Trust Cine Voz",
+    engine: "LTX-2.5",
+    tagline: "Video con voces sincronizadas y sonido, a buen precio.",
     providerModel: "ltx-2.5-22b",
     aspects: ["9:16", "16:9", "1:1"],
     durations: [5, 8],
@@ -198,8 +223,14 @@ MODELS.push(
   }
 );
 
+/** Acepta el id interno o el público (lo que mandan la web, las URLs y la API). */
 export function getModel(id: string): ModelDef | undefined {
-  return MODELS.find((m) => m.id === id);
+  return MODELS.find((m) => m.id === id || m.publicId === id);
+}
+
+/** Id interno → id público, para todo lo que sale hacia el cliente. */
+export function publicModelId(id: string): string {
+  return getModel(id)?.publicId ?? id;
 }
 
 export interface GenOptions {
@@ -208,7 +239,7 @@ export interface GenOptions {
   resolution?: Resolution;
 }
 
-/** En Veo, 1080p solo existe para clips de 8 s. */
+/** En los modelos de Google (Veo), 1080p solo existe para clips de 8 s. */
 export function validOptions(m: ModelDef, o: GenOptions): string | null {
   if (!m.aspects.includes(o.aspect)) return "Formato no disponible para este modelo.";
   if (m.kind === "video") {

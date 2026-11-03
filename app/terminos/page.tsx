@@ -40,7 +40,7 @@ export default function Terminos() {
       <p>
         Puedes usar comercialmente lo que generes, sujeto a estos términos y a las políticas de los proveedores de los
         modelos. Eres responsable de cómo publicas y usas ese contenido. Algunos resultados incluyen marcas de agua
-        invisibles (por ejemplo, SynthID de Google) que identifican el contenido como generado por IA.
+        invisibles que identifican el contenido como generado por IA.
       </p>
       <h2>4. Disponibilidad</h2>
       <p>

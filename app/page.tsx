@@ -289,7 +289,7 @@ export default function Home() {
             <p className="eyebrow">Texto perfecto</p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight">Afiches y carteles con el texto bien escrito</h2>
             <p className="mt-3 text-mute">
-              Qwen-Image escribe en la imagen exactamente lo que le pides: el nombre de tu negocio, una promoción o un
+              Trust Foto Pro escribe en la imagen exactamente lo que le pides: el nombre de tu negocio, una promoción o un
               letrero dentro de la escena. Sin letras inventadas.
             </p>
             <div className="mt-6 inline-flex items-center gap-2 rounded-xl border border-line bg-panel-2 px-4 py-3 text-sm">
@@ -305,7 +305,7 @@ export default function Home() {
         <SectionHead
           eyebrow="Modelos"
           title="Los mejores modelos en un solo lugar"
-          sub="Google, Alibaba, Lightricks y más. Elige según lo que necesites: calidad máxima, voz, velocidad o el menor costo."
+          sub="Fotos, videos con voz y clips, todos en un solo lugar. Elige según lo que necesites: calidad máxima, voz, velocidad o el menor costo."
         />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {MODELS.map((m, i) => (
@@ -376,7 +376,7 @@ export default function Home() {
               </p>
               <p className="mt-2 text-mute">
                 {PLAN.credits} créditos cada mes <span className="text-brand-2">({PLAN.bonus})</span>: ≈ {Math.floor(PLAN.credits / 10)} videos con
-                voz o ≈ {PLAN.credits} imágenes Z-Image. Se acumulan, no vencen y cancelas cuando quieras.
+                voz o ≈ {PLAN.credits} imágenes Trust Foto Flash. Se acumulan, no vencen y cancelas cuando quieras.
               </p>
             </div>
             <Link href="/entrar?modo=registro&next=/creditos" className="btn-primary !px-8 !py-3 text-base">
@@ -401,8 +401,8 @@ export default function Home() {
                 </p>
                 <ul className="mt-5 flex-1 space-y-1.5 text-sm text-mute">
                   <li>≈ {Math.floor(p.credits / 10)} videos con voz de 5 s</li>
-                  <li>≈ {Math.floor(p.credits / 3)} imágenes Nano Banana 2</li>
-                  <li>≈ {p.credits} imágenes Z-Image Turbo</li>
+                  <li>≈ {Math.floor(p.credits / 3)} imágenes Trust Foto Plus</li>
+                  <li>≈ {p.credits} imágenes Trust Foto Flash</li>
                 </ul>
                 <Link href="/entrar?modo=registro&next=/creditos" className={`mt-6 ${p.popular ? "btn-primary" : "btn-ghost"}`}>
                   Comprar

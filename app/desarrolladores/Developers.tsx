@@ -16,7 +16,7 @@ const EXAMPLES: { title: string; code: string }[] = [
   -H "Authorization: Bearer $TRUST_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "model": "ltx-25",
+    "model": "cine-voz",
     "prompt": "Una joven en una cafetería de Lima dice: «Hoy les traigo el mejor café»",
     "aspect": "9:16",
     "duration": 5,
@@ -37,14 +37,14 @@ const EXAMPLES: { title: string; code: string }[] = [
     code: `curl -X POST ${BASE}/generations \\
   -H "Authorization: Bearer $TRUST_API_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{ "model": "ltx-25", "from_generation": "ID_DE_LA_IMAGEN", "prompt": "La cámara se acerca lento", "aspect": "9:16", "duration": 5, "resolution": "720p" }'`,
+  -d '{ "model": "cine-voz", "from_generation": "ID_DE_LA_IMAGEN", "prompt": "La cámara se acerca lento", "aspect": "9:16", "duration": 5, "resolution": "720p" }'`,
   },
   {
     title: "4. JavaScript (Node 18+)",
     code: `const H = { Authorization: \`Bearer \${process.env.TRUST_API_KEY}\`, "Content-Type": "application/json" };
 let { generation } = await (await fetch("${BASE}/generations", {
   method: "POST", headers: H,
-  body: JSON.stringify({ model: "z-image", prompt: "Foto de producto de un perfume negro", aspect: "9:16" }),
+  body: JSON.stringify({ model: "foto-flash", prompt: "Foto de producto de un perfume negro", aspect: "9:16" }),
 })).json();
 while (generation.status === "running") {
   await new Promise((r) => setTimeout(r, 10_000));
