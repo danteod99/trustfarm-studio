@@ -1,6 +1,7 @@
 import { getUser } from "@/app/lib/auth";
 import { depsClienteReales, ERROR_NO_CONFIGURADO } from "@/app/lib/cajas/deps";
 import { vincularCaja } from "@/app/lib/cajas/cliente-servicio";
+import { correoDeGoogle } from "@/app/lib/cajas/correo";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
     return json({ error: "Solicitud no válida." }, 400);
   }
   try {
-    const r = await vincularCaja(deps, { userId: user.id, email: user.email, codigo });
+    const r = await vincularCaja(deps, { userId: user.id, email: correoDeGoogle(user), codigo });
     return json(r.body, r.status);
   } catch {
     return json({ error: "No se pudo vincular la caja. Inténtalo de nuevo." }, 500);

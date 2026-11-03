@@ -139,7 +139,7 @@ function CajasAdmin() {
       const d = await r.json().catch(() => ({}));
       if (!r.ok) setError(d.error ?? "No se pudo crear la caja.");
       else {
-        setCreada(`${d.caja.etiqueta} · ${d.caja.direccion} quedó asignada a ${d.caja.email}. Instala la mini PC con el ISO y entrégala: el cliente escribe ese correo en la pantalla, escanea el QR y entra con esa cuenta.`);
+        setCreada(`${d.caja.etiqueta} · ${d.caja.direccion} quedó asignada a ${d.caja.email}. Instala la mini PC con el ISO y entrégala: el cliente escribe ese correo en la pantalla, escanea el QR y entra con Google.`);
         setEtiqueta("");
         setCorreo("");
         await cargar(0);
@@ -210,7 +210,7 @@ function CajasAdmin() {
       </span>
     ) : (
       <span className="flex flex-wrap items-center gap-2">
-        {!c.email_asignado && (
+        {!(c.email_asignado && c.asignacion === "preparada" && !c.activada) && (
           <button className="btn-ghost !px-3 !py-1.5" disabled={regenerando === c.id} onClick={() => regenerar(c)}>
             {regenerando === c.id ? "Generando…" : "Regenerar llave"}
           </button>
@@ -250,7 +250,7 @@ function CajasAdmin() {
           <input className="input mt-1 w-full" maxLength={80} value={etiqueta} onChange={(e) => setEtiqueta(e.target.value)} placeholder="Cliente Bodega López" />
         </label>
         <label className="grow text-sm">
-          <span className="text-mute">Correo de la cuenta del cliente (solo esa cuenta podrá vincularla)</span>
+          <span className="text-mute">Correo de Google del cliente (solo esa cuenta podrá vincularla)</span>
           <input className="input mt-1 w-full" type="email" maxLength={254} autoComplete="off" value={correo} onChange={(e) => setCorreo(e.target.value)} placeholder="cliente@gmail.com" />
         </label>
         <button className="btn-primary" disabled={creando || !etiqueta.trim() || !correo.trim()}>

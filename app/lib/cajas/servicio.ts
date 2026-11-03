@@ -268,7 +268,7 @@ export async function correoCaja(
   const { store } = deps
   const registro = await autenticar(store, registroId, bearer)
   if (!registro) return NO_AUTORIZADO()
-  const yaNoAplica = (): Respuesta => ({ status: 409, body: { error: 'Esta caja ya no está esperando un correo. Reiníciala e inténtalo de nuevo.' } })
+  const yaNoAplica = (): Respuesta => ({ status: 409, body: { error: 'Esta caja acaba de renovar su código. Inténtalo de nuevo en unos segundos.' } })
   if ((await calcularEstado(deps, registro)).estado !== 'pendiente') return yaNoAplica()
 
   const email = normalizarCorreo(correo)

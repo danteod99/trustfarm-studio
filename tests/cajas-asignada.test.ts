@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import { correoCaja, registrarCaja } from '../app/lib/cajas/servicio.ts'
 import { vincularCaja } from '../app/lib/cajas/cliente-servicio.ts'
 import { prepararCaja } from '../app/lib/cajas/fabrica-servicio.ts'
+import { correoDeGoogle, enmascararCorreo, normalizarCorreo } from '../app/lib/cajas/correo.ts'
 import { crearDeps } from './cajas-mem.ts'
 import { crearClienteMem } from './cajas-cliente-mem.ts'
 
@@ -192,7 +193,30 @@ test('vincular estricto: la sesión sin correo no puede vincular', async () => {
   m.emailsValidados.set(COD, CORREO)
   const r = await vincularCaja(deps, { userId: U1, email: null, codigo: COD })
   assert.equal(r.status, 403)
+  assert.match((r.body as { error: string }).error, /cuenta de Google/)
   assert.equal(m.vincularAsignadaLlamadas, 0)
+})
+
+// ---- quién es el dueño del correo
+test('correoDeGoogle: solo vale el correo que Google confirma, no el que se escribió al registrarse', () => {
+  const google = (email: unknown, email_verified: unknown = true) => ({ provider: 'google', identity_data: { email, email_verified } })
+  assert.equal(correoDeGoogle({ identities: [google('Cliente@Gmail.com')] }), CORREO)
+  assert.equal(correoDeGoogle({ identities: [{ provider: 'email', identity_data: { email: 'x@y.com' } }, google('dueno@empresa.pe')] }), 'dueno@empresa.pe')
+  // Se registró con contraseña usando un correo ajeno
+  assert.equal(correoDeGoogle({ identities: [{ provider: 'email', identity_data: { email: CORREO, email_verified: true } }] }), null)
+  assert.equal(correoDeGoogle({ identities: [google(CORREO, false)] }), null)
+  assert.equal(correoDeGoogle({ identities: [] }), null)
+  assert.equal(correoDeGoogle({ identities: null }), null)
+  assert.equal(correoDeGoogle({}), null)
+})
+
+test('normalizarCorreo: en Gmail los puntos y el +etiqueta no cuentan; en otros dominios sí se respetan', () => {
+  assert.equal(normalizarCorreo(' Juan.Perez@Gmail.com '), 'juanperez@gmail.com')
+  assert.equal(normalizarCorreo('juanperez+tienda@gmail.com'), 'juanperez@gmail.com')
+  assert.equal(normalizarCorreo('juan.perez@googlemail.com'), 'juanperez@gmail.com')
+  assert.equal(normalizarCorreo('+x@gmail.com'), null)
+  assert.equal(normalizarCorreo('Juan.Perez+a@Empresa.pe'), 'juan.perez+a@empresa.pe')
+  assert.equal(enmascararCorreo('juanperez@gmail.com'), 'ju***@gmail.com')
 })
 
 test('CAJAS_VINCULO_ABIERTO (pruebas del dueño): el flujo antiguo sigue creando túnel y caja', async () => {

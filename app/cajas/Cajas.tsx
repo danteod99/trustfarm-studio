@@ -192,6 +192,7 @@ export default function Cajas() {
   const [vinculando, setVinculando] = useState(false);
   const [errorVincular, setErrorVincular] = useState<string | null>(null);
   const [exito, setExito] = useState(false);
+  const [delQr, setDelQr] = useState<string | null>(null);
   const enVuelo = useRef(false);
 
   const cargar = useCallback(async () => {
@@ -247,22 +248,40 @@ export default function Cajas() {
     if (!vinculando) void enviarCodigo(codigo);
   }
 
-  // El QR de la mini PC trae /cajas?codigo=XXXX-XXXX: se vincula al entrar, una sola vez, y se limpia la dirección
-  const qrUsado = useRef(false);
+  // El QR de la mini PC trae /cajas?codigo=XXXX-XXXX. NUNCA vincula solo: un enlace recibido por mensaje podría unir tu caja
+  // a la mini PC de otra persona. Se pregunta y se confirma mirando la pantalla de la propia mini PC.
   useEffect(() => {
-    if (qrUsado.current) return;
-    qrUsado.current = true;
-    const delQr = new URLSearchParams(window.location.search).get("codigo");
-    if (!delQr) return;
+    const c = new URLSearchParams(window.location.search).get("codigo");
+    if (!c) return;
     window.history.replaceState(null, "", "/cajas");
-    setCodigo(delQr);
-    void enviarCodigo(delQr);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setCodigo(c);
+    setDelQr(c);
   }, []);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
       <h1 className="text-2xl font-bold">Mis cajas</h1>
+
+      {delQr && !exito && (
+        <section className="card border-brand p-5">
+          <h2 className="font-semibold">¿Vincular esta mini PC a tu cuenta?</h2>
+          <p className="mt-1 text-sm text-mute">Confirma solo si tienes tu mini PC enfrente y su pantalla muestra este código. Si te llegó un enlace por mensaje, no lo confirmes.</p>
+          <p className="mt-3 font-mono text-2xl font-bold tracking-wider">{delQr.toUpperCase()}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button className={`btn-primary ${FOCO}`} disabled={vinculando} onClick={() => void enviarCodigo(delQr)}>
+              {vinculando ? "Vinculando…" : "Sí, es mi mini PC"}
+            </button>
+            <button className={`btn-ghost ${FOCO}`} disabled={vinculando} onClick={() => { setDelQr(null); setCodigo(""); setErrorVincular(null); }}>
+              Cancelar
+            </button>
+          </div>
+          {errorVincular && (
+            <p role="alert" className="mt-3 text-sm text-red-400">
+              {errorVincular}
+            </p>
+          )}
+        </section>
+      )}
 
       {cajas === null && !errorLista && (
         <p className="text-sm text-mute" role="status">
@@ -282,7 +301,7 @@ export default function Cajas() {
       {cajas !== null && cajas.length === 0 && !errorLista && (
         <div className="card p-5 text-sm">
           <p className="font-semibold">Todavía no tienes cajas vinculadas.</p>
-          <p className="mt-1 text-mute">Enciende tu mini PC con una pantalla conectada, escribe en ella el correo de esta cuenta y escanea el QR que aparece.</p>
+          <p className="mt-1 text-mute">Enciende tu mini PC con una pantalla conectada, escribe en ella tu correo de Google y escanea el QR que aparece.</p>
         </div>
       )}
 
@@ -296,7 +315,7 @@ export default function Cajas() {
 
       <section className="card p-5">
         <h2 className="font-semibold">Agregar caja</h2>
-        <p className="mt-1 text-sm text-mute">Escribe el correo de esta cuenta en la pantalla de tu mini PC y escanea el QR, o escribe aquí el código que aparece junto a él.</p>
+        <p className="mt-1 text-sm text-mute">Escribe tu correo de Google en la pantalla de tu mini PC y escanea el QR, o escribe aquí el código que aparece junto a él.</p>
         <form onSubmit={vincular} className="mt-4 flex flex-col gap-3 sm:flex-row">
           <div className="flex-1">
             <label htmlFor="codigo-caja" className="mb-1 block text-xs text-mute">
@@ -318,7 +337,7 @@ export default function Cajas() {
             {vinculando ? "Vinculando…" : "Vincular"}
           </button>
         </form>
-        {errorVincular && (
+        {errorVincular && !delQr && (
           <p role="alert" className="mt-3 text-sm text-red-400">
             {errorVincular}
           </p>

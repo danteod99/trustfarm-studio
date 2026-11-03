@@ -83,6 +83,7 @@ const ERR_CODIGO = 'Ese código no es válido o ya venció.'
 const ERR_TUNEL = 'No se pudo preparar la conexión de tu caja. Inténtalo de nuevo.'
 const ERR_VINCULAR = 'No se pudo vincular la caja. Inténtalo de nuevo.'
 const ERR_SIN_CORREO = 'Primero escribe tu correo en la pantalla de la mini PC y luego vuelve a escanear el QR.'
+const ERR_SOLO_GOOGLE = 'Para vincular tu caja entra a trustfarm.online con tu cuenta de Google. Cierra sesión y usa «Continuar con Google».'
 const ERR_SIN_LIBRES = 'Tu cuenta no tiene cajas libres. Escríbenos si compraste otra mini PC.'
 const errOtraCuenta = (correo: string) => `Esta caja es de otra cuenta (${enmascararCorreo(correo)}). Cierra sesión y entra con ese correo.`
 const NO_ENCONTRADA = (): Respuesta => ({ status: 404, body: { error: 'No encontré esa caja.' } })
@@ -123,10 +124,11 @@ export async function vincularCaja(deps: ClienteDeps, { userId, email, codigo }:
     await store.registrarFalloVincular(userId)
     return { status: 403, body: { error } }
   }
-  if (preparada?.emailAsignado && preparada.emailAsignado !== correo) return rechazar(errOtraCuenta(preparada.emailAsignado))
+  if (preparada?.emailAsignado && preparada.emailAsignado !== correo) return rechazar(correo ? errOtraCuenta(preparada.emailAsignado) : ERR_SOLO_GOOGLE)
   const asignada = Boolean(correo && registro?.emailValidado === correo)
   if (registro && !asignada && !deps.env.vinculoAbierto) {
-    return rechazar(registro.emailValidado ? errOtraCuenta(registro.emailValidado) : ERR_SIN_CORREO)
+    if (!registro.emailValidado) return rechazar(ERR_SIN_CORREO)
+    return rechazar(correo ? errOtraCuenta(registro.emailValidado) : ERR_SOLO_GOOGLE)
   }
 
   if ((await store.contarCajas(userId)) >= MAX_CAJAS_POR_CUENTA) return { status: 409, body: { error: ERR_MAX_CAJAS } }
