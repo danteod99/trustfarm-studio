@@ -3,9 +3,9 @@
 import { supabaseAdmin } from '../supabase/admin'
 import type { CajaCliente, ClienteStore } from './cliente-servicio'
 
-const COLS = 'id, owner_id, nombre, slug, tunnel_id, last_seen, version, created_at, tope_diario, etiqueta, creada_por'
-type Fila = { id: string; owner_id: string | null; etiqueta?: string | null; nombre: string; slug: string; tunnel_id: string; last_seen: string | null; version?: string | null; created_at?: string | null; tope_diario?: number | null; creada_por?: string | null }
-const mapear = (f: Fila): CajaCliente => ({ id: f.id, ownerId: f.owner_id, nombre: f.nombre, slug: f.slug, tunnelId: f.tunnel_id, lastSeen: f.last_seen ?? null, version: f.version ?? null, creadaEn: f.created_at ?? null, topeDiario: f.tope_diario ?? undefined, etiqueta: f.etiqueta ?? null, creadaPor: f.creada_por ?? null })
+const COLS = 'id, owner_id, nombre, slug, tunnel_id, last_seen, version, created_at, tope_diario, etiqueta, creada_por, email_asignado'
+type Fila = { id: string; owner_id: string | null; etiqueta?: string | null; nombre: string; slug: string; tunnel_id: string; last_seen: string | null; version?: string | null; created_at?: string | null; tope_diario?: number | null; creada_por?: string | null; email_asignado?: string | null }
+const mapear = (f: Fila): CajaCliente => ({ id: f.id, ownerId: f.owner_id, nombre: f.nombre, slug: f.slug, tunnelId: f.tunnel_id, lastSeen: f.last_seen ?? null, version: f.version ?? null, creadaEn: f.created_at ?? null, topeDiario: f.tope_diario ?? undefined, etiqueta: f.etiqueta ?? null, creadaPor: f.creada_por ?? null, emailAsignado: f.email_asignado ?? null })
 
 export function clienteStoreSupabase(): ClienteStore {
   const db = supabaseAdmin()
@@ -34,9 +34,26 @@ export function clienteStoreSupabase(): ClienteStore {
       return count ?? 0
     },
     async buscarRegistroVinculable(codigo) {
-      const { data, error } = await db.from('caja_registros').select('id').eq('codigo', codigo).eq('estado', 'pendiente').is('caja_id', null).gt('expira_en', new Date().toISOString()).maybeSingle()
+      const { data, error } = await db.from('caja_registros').select('id, email_validado').eq('codigo', codigo).eq('estado', 'pendiente').is('caja_id', null).gt('expira_en', new Date().toISOString()).maybeSingle()
       if (error) throw new Error('No se pudo leer el registro.')
-      return data ? { id: data.id as string } : null
+      return data ? { id: data.id as string, emailValidado: (data.email_validado as string | null) ?? null } : null
+    },
+    async vincularAsignada(o) {
+      const { data, error } = await db.rpc('caja_vincular_asignada', { p_codigo: o.codigo, p_owner: o.ownerId, p_email: o.email, p_nombre: o.nombre })
+      if (!error && typeof data === 'string') return { ok: true, cajaId: data }
+      const msg = error?.message ?? ''
+      if (msg.includes('codigo_invalido')) return { ok: false, motivo: 'codigo_invalido' }
+      if (msg.includes('sin_caja_asignada')) return { ok: false, motivo: 'sin_caja_asignada' }
+      return { ok: false, motivo: 'error' }
+    },
+    async asignarEmail(cajaId, email) {
+      const { error } = await db.from('cajas').update({ email_asignado: email }).eq('id', cajaId)
+      if (error) throw new Error('No se pudo guardar el correo.')
+    },
+    async contarCajasConEmail(email) {
+      const { count, error } = await db.from('cajas').select('id', { count: 'exact', head: true }).eq('email_asignado', email)
+      if (error) throw new Error('No se pudo contar las cajas.')
+      return count ?? 0
     },
     async vincular(o) {
       const { data, error } = await db.rpc('caja_vincular', { p_codigo: o.codigo, p_owner: o.ownerId, p_nombre: o.nombre, p_slug: o.slug, p_tunnel_id: o.tunnelId })
@@ -114,9 +131,9 @@ export function clienteStoreSupabase(): ClienteStore {
       const { data, error } = await db.from('caja_registros').select('caja_id').eq('codigo', codigo).not('caja_id', 'is', null).gt('expira_en', new Date().toISOString()).maybeSingle()
       if (error) throw new Error('No se pudo leer el registro.')
       if (!data?.caja_id) return null
-      const { data: caja, error: e2 } = await db.from('cajas').select('id').eq('id', data.caja_id).is('owner_id', null).maybeSingle()
+      const { data: caja, error: e2 } = await db.from('cajas').select('id, email_asignado').eq('id', data.caja_id).is('owner_id', null).maybeSingle()
       if (e2) throw new Error('No se pudo leer la caja.')
-      return caja ? { cajaId: caja.id as string } : null
+      return caja ? { cajaId: caja.id as string, emailAsignado: (caja.email_asignado as string | null) ?? null } : null
     },
     async reclamar(o) {
       const { data, error } = await db.rpc('caja_reclamar', { p_codigo: o.codigo, p_owner: o.ownerId, p_nombre: o.nombre })

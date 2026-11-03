@@ -2,7 +2,7 @@
 import { hashSecreto } from '../app/lib/cajas/secreto.ts'
 import type { CajaCliente, ClienteDeps, ClienteStore, ResultadoVincular } from '../app/lib/cajas/cliente-servicio.ts'
 
-export function crearClienteMem(ahora: { t: Date }) {
+export function crearClienteMem(ahora: { t: Date }, opts: { vinculoAbierto?: boolean } = {}) {
   const m = {
     exitos: [] as { userId: string; creado: string }[],
     fallos: [] as { userId: string; creado: string }[],
@@ -30,6 +30,11 @@ export function crearClienteMem(ahora: { t: Date }) {
     reclamarForzado: [] as Array<{ ok: false; motivo: 'codigo_invalido' | 'error' }>,
     liberadas: [] as string[],
     liberarFalla: false,
+    // Caja asignada a una cuenta: correo validado en la mini PC por código, y cajas que ya tienen una mini PC unida
+    emailsValidados: new Map<string, string>(),
+    conRegistro: new Set<string>(),
+    asignarFalla: false,
+    vincularAsignadaLlamadas: 0,
   }
   let n = 0
   const store: ClienteStore = {
@@ -38,7 +43,24 @@ export function crearClienteMem(ahora: { t: Date }) {
     async contarCajas(o) { return m.cajas.filter(c => c.ownerId === o).length },
     async contarExitosVincular(userId, desde) { return m.exitos.filter(f => f.userId === userId && f.creado >= desde).length },
     async registrarExitoVincular(userId) { m.exitos.push({ userId, creado: ahora.t.toISOString() }) },
-    async buscarRegistroVinculable(c) { return m.vinculables.has(c) ? { id: 'reg-' + c } : null },
+    async buscarRegistroVinculable(c) { return m.vinculables.has(c) ? { id: 'reg-' + c, emailValidado: m.emailsValidados.get(c) ?? null } : null },
+    async vincularAsignada(o) {
+      m.vincularAsignadaLlamadas++
+      if (!m.vinculables.has(o.codigo) || m.emailsValidados.get(o.codigo) !== o.email) return { ok: false, motivo: 'codigo_invalido' }
+      const libre = m.cajas.filter((c) => c.ownerId === null && c.emailAsignado === o.email && !m.conRegistro.has(c.id)).sort((a, b) => (a.creadaEn ?? '').localeCompare(b.creadaEn ?? ''))[0]
+      if (!libre) return { ok: false, motivo: 'sin_caja_asignada' }
+      libre.ownerId = o.ownerId
+      libre.nombre = o.nombre
+      m.conRegistro.add(libre.id)
+      m.vinculables.delete(o.codigo)
+      return { ok: true, cajaId: libre.id }
+    },
+    async asignarEmail(cajaId, email) {
+      if (m.asignarFalla) throw new Error('boom')
+      const c = m.cajas.find((x) => x.id === cajaId)
+      if (c) c.emailAsignado = email
+    },
+    async contarCajasConEmail(email) { return m.cajas.filter((c) => c.emailAsignado === email).length },
     async vincular(o) {
       m.vincularLlamadas++
       const forzado = m.forzarVincular.shift()
@@ -79,7 +101,7 @@ export function crearClienteMem(ahora: { t: Date }) {
     async buscarCajaPreparadaPorCodigo(codigo) {
       const cajaId = m.codigosPreparadas.get(codigo)
       const c = cajaId ? m.cajas.find((x) => x.id === cajaId) : undefined
-      return c && c.ownerId === null ? { cajaId: c.id } : null
+      return c && c.ownerId === null ? { cajaId: c.id, emailAsignado: c.emailAsignado ?? null } : null
     },
     async reclamar(o) {
       const forzado = m.reclamarForzado.shift()
@@ -108,7 +130,7 @@ export function crearClienteMem(ahora: { t: Date }) {
   const deps: ClienteDeps = {
     store,
     now: () => ahora.t,
-    env: { dominio: 'cajas.test', paseKeyPrivada: '' },
+    env: { dominio: 'cajas.test', paseKeyPrivada: '', vinculoAbierto: opts.vinculoAbierto ?? true },
     cloudflare: {
       async crearTunel(slug) {
         m.eventos.push('crear')

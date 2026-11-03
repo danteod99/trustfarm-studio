@@ -26,6 +26,7 @@ interface CajaAdmin {
   etiqueta: string | null;
   asignacion: "preparada" | "asignada";
   activada: boolean;
+  email_asignado: string | null;
 }
 
 /** Llave de activación recién creada: se muestra UNA vez (el servidor solo guarda su huella). */
@@ -91,6 +92,8 @@ function CajasAdmin() {
   const [confirmar, setConfirmar] = useState<string | null>(null);
   const [quitando, setQuitando] = useState<string | null>(null);
   const [etiqueta, setEtiqueta] = useState("");
+  const [correo, setCorreo] = useState("");
+  const [creada, setCreada] = useState<string | null>(null);
   const [creando, setCreando] = useState(false);
   const [llaveNueva, setLlaveNueva] = useState<LlaveNueva | null>(null);
   const [copiado, setCopiado] = useState(false);
@@ -126,17 +129,19 @@ function CajasAdmin() {
     setCreando(true);
     setError(null);
     setCopiado(false);
+    setCreada(null);
     try {
       const r = await fetch("/api/admin/cajas/preparar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ etiqueta }),
+        body: JSON.stringify({ etiqueta, email: correo }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) setError(d.error ?? "No se pudo crear la caja.");
       else {
-        setLlaveNueva({ titulo: `${d.caja.etiqueta} · ${d.caja.direccion}`, llave: d.llave, vence_en: d.vence_en });
+        setCreada(`${d.caja.etiqueta} · ${d.caja.direccion} quedó asignada a ${d.caja.email}. Instala la mini PC con el ISO y entrégala: el cliente escribe ese correo en la pantalla, escanea el QR y entra con esa cuenta.`);
         setEtiqueta("");
+        setCorreo("");
         await cargar(0);
       }
     } catch {
@@ -205,9 +210,11 @@ function CajasAdmin() {
       </span>
     ) : (
       <span className="flex flex-wrap items-center gap-2">
-        <button className="btn-ghost !px-3 !py-1.5" disabled={regenerando === c.id} onClick={() => regenerar(c)}>
-          {regenerando === c.id ? "Generando…" : "Regenerar llave"}
-        </button>
+        {!c.email_asignado && (
+          <button className="btn-ghost !px-3 !py-1.5" disabled={regenerando === c.id} onClick={() => regenerar(c)}>
+            {regenerando === c.id ? "Generando…" : "Regenerar llave"}
+          </button>
+        )}
         <button className="btn-ghost !px-3 !py-1.5" onClick={() => setConfirmar(c.id)}>
           Eliminar
         </button>
@@ -216,7 +223,7 @@ function CajasAdmin() {
 
   const asignacion = (c: CajaAdmin) => (
     <span className={`rounded-full border border-line px-2 py-0.5 text-xs ${c.asignacion === "preparada" ? "text-amber-400" : "text-emerald-400"}`}>
-      {c.asignacion === "preparada" ? (c.activada ? "Preparada" : "Sin activar") : "Asignada"}
+      {c.asignacion === "preparada" ? (c.email_asignado ? "Esperando al cliente" : c.activada ? "Preparada" : "Sin activar") : "Asignada"}
     </span>
   );
 
@@ -235,17 +242,27 @@ function CajasAdmin() {
         className="mt-3 flex flex-wrap items-end gap-2"
         onSubmit={(e) => {
           e.preventDefault();
-          if (etiqueta.trim()) void crear();
+          if (etiqueta.trim() && correo.trim()) void crear();
         }}
       >
         <label className="grow text-sm">
           <span className="text-mute">Etiqueta de la caja nueva (para ti: p. ej. el nombre del cliente)</span>
           <input className="input mt-1 w-full" maxLength={80} value={etiqueta} onChange={(e) => setEtiqueta(e.target.value)} placeholder="Cliente Bodega López" />
         </label>
-        <button className="btn-primary" disabled={creando || !etiqueta.trim()}>
+        <label className="grow text-sm">
+          <span className="text-mute">Correo de la cuenta del cliente (solo esa cuenta podrá vincularla)</span>
+          <input className="input mt-1 w-full" type="email" maxLength={254} autoComplete="off" value={correo} onChange={(e) => setCorreo(e.target.value)} placeholder="cliente@gmail.com" />
+        </label>
+        <button className="btn-primary" disabled={creando || !etiqueta.trim() || !correo.trim()}>
           {creando ? "Creando…" : "Crear caja"}
         </button>
       </form>
+
+      {creada && (
+        <p role="status" className="mt-3 rounded-xl border border-line bg-panel-2 p-3 text-sm">
+          {creada}
+        </p>
+      )}
 
       {llaveNueva && (
         <div role="status" className="mt-3 rounded-xl border border-line bg-panel-2 p-3 text-sm">
@@ -283,6 +300,7 @@ function CajasAdmin() {
             <p className="text-xs text-mute">
               Dueño {dueno(c)} · versión {c.version ?? "—"}
             </p>
+            {c.email_asignado && <p className="break-all text-xs text-mute">Para {c.email_asignado}</p>}
             <p className="text-xs text-mute">Última señal: {fecha(c.ultima_senal)}</p>
             <p className="text-xs text-mute">Vinculada: {fecha(c.vinculada_en)}</p>
             <div className="mt-2">
@@ -312,7 +330,10 @@ function CajasAdmin() {
           <tbody>
             {cajas.map((c) => (
               <tr key={c.id} className="border-t border-line">
-                <td className="py-2 pr-3">{c.etiqueta ?? c.nombre}</td>
+                <td className="py-2 pr-3">
+                  {c.etiqueta ?? c.nombre}
+                  {c.email_asignado && <span className="block text-xs text-mute">{c.email_asignado}</span>}
+                </td>
                 <td className="pr-3">{asignacion(c)}</td>
                 <td className="pr-3 font-mono text-xs">{dueno(c)}</td>
                 <td className="pr-3 text-xs">{c.direccion}</td>

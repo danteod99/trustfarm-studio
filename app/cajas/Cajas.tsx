@@ -220,9 +220,7 @@ export default function Cajas() {
     return () => clearInterval(t);
   }, [cargar]);
 
-  async function vincular(e: React.FormEvent) {
-    e.preventDefault();
-    if (vinculando) return;
+  async function enviarCodigo(valor: string) {
     setVinculando(true);
     setErrorVincular(null);
     setExito(false);
@@ -230,7 +228,7 @@ export default function Cajas() {
       const r = await fetch("/api/cajas/vincular", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ codigo }),
+        body: JSON.stringify({ codigo: valor }),
       });
       if (!r.ok) setErrorVincular(await errorDe(r, "No se pudo vincular la caja. Inténtalo de nuevo."));
       else {
@@ -243,6 +241,24 @@ export default function Cajas() {
     }
     setVinculando(false);
   }
+
+  function vincular(e: React.FormEvent) {
+    e.preventDefault();
+    if (!vinculando) void enviarCodigo(codigo);
+  }
+
+  // El QR de la mini PC trae /cajas?codigo=XXXX-XXXX: se vincula al entrar, una sola vez, y se limpia la dirección
+  const qrUsado = useRef(false);
+  useEffect(() => {
+    if (qrUsado.current) return;
+    qrUsado.current = true;
+    const delQr = new URLSearchParams(window.location.search).get("codigo");
+    if (!delQr) return;
+    window.history.replaceState(null, "", "/cajas");
+    setCodigo(delQr);
+    void enviarCodigo(delQr);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
@@ -266,7 +282,7 @@ export default function Cajas() {
       {cajas !== null && cajas.length === 0 && !errorLista && (
         <div className="card p-5 text-sm">
           <p className="font-semibold">Todavía no tienes cajas vinculadas.</p>
-          <p className="mt-1 text-mute">Enciende tu caja con una pantalla conectada. La primera vez aparecerá un código de 8 caracteres. Escríbelo abajo para vincularla a tu cuenta.</p>
+          <p className="mt-1 text-mute">Enciende tu mini PC con una pantalla conectada, escribe en ella el correo de esta cuenta y escanea el QR que aparece.</p>
         </div>
       )}
 
@@ -280,7 +296,7 @@ export default function Cajas() {
 
       <section className="card p-5">
         <h2 className="font-semibold">Agregar caja</h2>
-        <p className="mt-1 text-sm text-mute">Enciende tu caja con una pantalla conectada. La primera vez aparecerá un código de 8 caracteres.</p>
+        <p className="mt-1 text-sm text-mute">Escribe el correo de esta cuenta en la pantalla de tu mini PC y escanea el QR, o escribe aquí el código que aparece junto a él.</p>
         <form onSubmit={vincular} className="mt-4 flex flex-col gap-3 sm:flex-row">
           <div className="flex-1">
             <label htmlFor="codigo-caja" className="mb-1 block text-xs text-mute">

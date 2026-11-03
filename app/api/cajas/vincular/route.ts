@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     return json({ error: "Solicitud no válida." }, 400);
   }
   try {
-    const r = await vincularCaja(deps, { userId: user.id, codigo });
+    const r = await vincularCaja(deps, { userId: user.id, email: user.email, codigo });
     return json(r.body, r.status);
   } catch {
     return json({ error: "No se pudo vincular la caja. Inténtalo de nuevo." }, 500);

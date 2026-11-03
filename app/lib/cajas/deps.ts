@@ -47,7 +47,7 @@ export function depsClienteReales(): ClienteDeps | null {
   return {
     store: clienteStoreSupabase(),
     now: () => new Date(),
-    env: { dominio, paseKeyPrivada },
+    env: { dominio, paseKeyPrivada, vinculoAbierto: e.CAJAS_VINCULO_ABIERTO === '1' },
     cloudflare: { crearTunel: slug => cf.crearTunel(slug), borrarTunel: (id, slug) => cf.borrarTunel(id, slug) },
     nuevoSlug: slugAleatorio,
   }

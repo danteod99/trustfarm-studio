@@ -2,9 +2,10 @@
 // Las dependencias entran inyectadas para poder probarlas con un almacén y Cloudflare simulados.
 import { randomInt } from 'node:crypto'
 import { normalizarCodigo } from './codigo.ts'
+import { enmascararCorreo, normalizarCorreo } from './correo.ts'
 import { firmarPase } from './pase.ts'
 
-export interface CajaCliente { id: string; ownerId: string | null; nombre: string; slug: string; tunnelId: string; lastSeen: string | null; version?: string | null; creadaEn?: string | null; topeDiario?: number; etiqueta?: string | null; activada?: boolean; /** Administrador que la creó en fábrica (null/ausente = flujo antiguo de vincular con código). */ creadaPor?: string | null }
+export interface CajaCliente { id: string; ownerId: string | null; nombre: string; slug: string; tunnelId: string; lastSeen: string | null; version?: string | null; creadaEn?: string | null; topeDiario?: number; etiqueta?: string | null; activada?: boolean; /** Administrador que la creó en fábrica (null/ausente = flujo antiguo de vincular con código). */ creadaPor?: string | null; /** Correo de la cuenta a la que va dirigida (null = sin asignar). */ emailAsignado?: string | null }
 
 export type ResultadoVincular =
   | { ok: true; cajaId: string }
@@ -17,7 +18,12 @@ export interface ClienteStore {
   registrarExitoVincular(userId: string): Promise<void>
   contarCajas(ownerId: string): Promise<number>
   /** SELECT barato: estado pendiente, caja_id null y no vencido. */
-  buscarRegistroVinculable(codigoNormalizado: string): Promise<{ id: string } | null>
+  buscarRegistroVinculable(codigoNormalizado: string): Promise<{ id: string; emailValidado: string | null } | null>
+  /** Une el registro (con ese correo validado) a la caja asignada más antigua y libre de ese correo (atómico). */
+  vincularAsignada(o: { codigo: string; ownerId: string; email: string; nombre: string }):
+    Promise<{ ok: true; cajaId: string } | { ok: false; motivo: 'codigo_invalido' | 'sin_caja_asignada' | 'error' }>
+  asignarEmail(cajaId: string, email: string): Promise<void>
+  contarCajasConEmail(email: string): Promise<number>
   vincular(o: { codigo: string; ownerId: string; nombre: string; slug: string; tunnelId: string }): Promise<ResultadoVincular>
   listarCajas(ownerId: string): Promise<CajaCliente[]>
   obtenerCaja(cajaId: string): Promise<CajaCliente | null>
@@ -39,7 +45,7 @@ export interface ClienteStore {
   /** Llave nueva (invalida las que no se usaron); false si la caja no existe. */
   nuevaLlave(cajaId: string, llaveHash: string, venceEn: string): Promise<boolean>
   /** Una caja SIN dueño cuyo código de asociación (normalizado) está vigente. */
-  buscarCajaPreparadaPorCodigo(codigoNormalizado: string): Promise<{ cajaId: string } | null>
+  buscarCajaPreparadaPorCodigo(codigoNormalizado: string): Promise<{ cajaId: string; emailAsignado: string | null } | null>
   /** Asigna la caja preparada a la cuenta (atómico). */
   reclamar(o: { codigo: string; ownerId: string; nombre: string }): Promise<{ ok: true; cajaId: string } | { ok: false; motivo: 'codigo_invalido' | 'error' }>
   /** El dueño la quita de su cuenta: queda sin dueño y conserva dirección y túnel. */
@@ -49,7 +55,8 @@ export interface ClienteStore {
 export interface ClienteDeps {
   store: ClienteStore
   now: () => Date
-  env: { dominio: string; paseKeyPrivada: string }
+  /** vinculoAbierto (CAJAS_VINCULO_ABIERTO=1, solo para pruebas del dueño): cualquier cuenta vincula con el código y se crea una caja nueva. */
+  env: { dominio: string; paseKeyPrivada: string; vinculoAbierto?: boolean }
   cloudflare: {
     crearTunel(slug: string): Promise<{ tunnelId: string; tunnelToken: string; hostname: string }>
     borrarTunel(tunnelId: string, slug: string): Promise<void>
@@ -75,6 +82,9 @@ const ERR_MAX_CAJAS = `Ya tienes el máximo de cajas vinculadas (${MAX_CAJAS_POR
 const ERR_CODIGO = 'Ese código no es válido o ya venció.'
 const ERR_TUNEL = 'No se pudo preparar la conexión de tu caja. Inténtalo de nuevo.'
 const ERR_VINCULAR = 'No se pudo vincular la caja. Inténtalo de nuevo.'
+const ERR_SIN_CORREO = 'Primero escribe tu correo en la pantalla de la mini PC y luego vuelve a escanear el QR.'
+const ERR_SIN_LIBRES = 'Tu cuenta no tiene cajas libres. Escríbenos si compraste otra mini PC.'
+const errOtraCuenta = (correo: string) => `Esta caja es de otra cuenta (${enmascararCorreo(correo)}). Cierra sesión y entra con ese correo.`
 const NO_ENCONTRADA = (): Respuesta => ({ status: 404, body: { error: 'No encontré esa caja.' } })
 
 const ALFABETO_SLUG = 'abcdefghijklmnopqrstuvwxyz0123456789'
@@ -89,7 +99,7 @@ async function limpiarTunel(deps: ClienteDeps, tunnelId: string, slug: string): 
   try { await deps.cloudflare.borrarTunel(tunnelId, slug) } catch { console.error('[cajas] túnel huérfano', tunnelId) }
 }
 
-export async function vincularCaja(deps: ClienteDeps, { userId, codigo }: { userId: string; codigo: unknown }): Promise<Respuesta> {
+export async function vincularCaja(deps: ClienteDeps, { userId, email, codigo }: { userId: string; email?: string | null; codigo: unknown }): Promise<Respuesta> {
   const { store } = deps
   const desde = new Date(deps.now().getTime() - VENTANA_FALLOS_MS).toISOString()
   if ((await store.contarFallosVincular(userId, desde)) >= MAX_FALLOS) {
@@ -102,9 +112,22 @@ export async function vincularCaja(deps: ClienteDeps, { userId, codigo }: { user
 
   const normalizado = typeof codigo === 'string' ? normalizarCodigo(codigo) : null
   if (!normalizado) return fallo()
-  // Caja de fábrica: ya existe (con su túnel y su dirección) y solo hay que asignarla. Si no, es el flujo antiguo.
+  // Caja de fábrica: ya existe (con su túnel y su dirección) y solo hay que asignarla. Si no, es una mini PC del ISO genérico.
   const preparada = await store.buscarCajaPreparadaPorCodigo(normalizado)
-  if (!preparada && !(await store.buscarRegistroVinculable(normalizado))) return fallo()
+  const registro = preparada ? null : await store.buscarRegistroVinculable(normalizado)
+  if (!preparada && !registro) return fallo()
+
+  // Vínculo estricto: solo la cuenta a la que se asignó la caja
+  const correo = normalizarCorreo(email)
+  const rechazar = async (error: string): Promise<Respuesta> => {
+    await store.registrarFalloVincular(userId)
+    return { status: 403, body: { error } }
+  }
+  if (preparada?.emailAsignado && preparada.emailAsignado !== correo) return rechazar(errOtraCuenta(preparada.emailAsignado))
+  const asignada = Boolean(correo && registro?.emailValidado === correo)
+  if (registro && !asignada && !deps.env.vinculoAbierto) {
+    return rechazar(registro.emailValidado ? errOtraCuenta(registro.emailValidado) : ERR_SIN_CORREO)
+  }
 
   if ((await store.contarCajas(userId)) >= MAX_CAJAS_POR_CUENTA) return { status: 409, body: { error: ERR_MAX_CAJAS } }
   const desdeHora = new Date(deps.now().getTime() - HORA_MS).toISOString()
@@ -119,6 +142,23 @@ export async function vincularCaja(deps: ClienteDeps, { userId, codigo }: { user
     }
     if (!r.ok) return r.motivo === 'codigo_invalido' ? fallo() : { status: 500, body: { error: ERR_VINCULAR } }
     try { await store.registrarExitoVincular(userId) } catch { /* la caja ya está asignada */ }
+    const c = await store.obtenerCaja(r.cajaId)
+    return { status: 200, body: { caja: { id: r.cajaId, nombre: NOMBRE_INICIAL, direccion: c ? direccion(c, deps) : '' } } }
+  }
+
+  if (asignada && correo) {
+    // La caja ya existe con su túnel y su dirección: no se crea nada en Cloudflare
+    let r: Awaited<ReturnType<typeof store.vincularAsignada>>
+    try {
+      r = await store.vincularAsignada({ codigo: normalizado, ownerId: userId, email: correo, nombre: NOMBRE_INICIAL })
+    } catch {
+      r = { ok: false, motivo: 'error' }
+    }
+    if (!r.ok) {
+      if (r.motivo === 'codigo_invalido') return fallo()
+      return r.motivo === 'sin_caja_asignada' ? { status: 409, body: { error: ERR_SIN_LIBRES } } : { status: 500, body: { error: ERR_VINCULAR } }
+    }
+    try { await store.registrarExitoVincular(userId) } catch { /* la caja ya está vinculada */ }
     const c = await store.obtenerCaja(r.cajaId)
     return { status: 200, body: { caja: { id: r.cajaId, nombre: NOMBRE_INICIAL, direccion: c ? direccion(c, deps) : '' } } }
   }

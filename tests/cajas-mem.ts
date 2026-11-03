@@ -1,7 +1,7 @@
 // Almacén en memoria simulado para las pruebas del servicio de cajas (no es una prueba).
 import type { CajasStore, ServicioDeps } from '../app/lib/cajas/servicio.ts'
 
-export interface Reg { id: string; codigo: string; secretoHash: string; expiraEn: string; version: string; ip: string; estado: string; cajaId: string | null }
+export interface Reg { id: string; codigo: string; secretoHash: string; expiraEn: string; version: string; ip: string; estado: string; cajaId: string | null; emailValidado?: string | null }
 export interface CajaMem { id: string; slug: string; tunnelId: string; ownerId: string | null }
 
 export function crearMem(reloj: () => Date = () => new Date()) {
@@ -19,6 +19,8 @@ export function crearMem(reloj: () => Date = () => new Date()) {
     // Caja de fábrica: llaves de activación (solo hash) y cuántas veces se llegó al almacén a activar
     activaciones: [] as { cajaId: string; llaveHash: string; venceEn: string; usadaEn?: string }[],
     activarLlamadas: 0,
+    // Cajas asignadas a un correo y libres (para validar el correo que se escribe en la mini PC)
+    correosConCaja: new Set<string>(),
   }
   const store: CajasStore = {
     async contarIntentos(clave, desdeIso) { return m.intentos.filter(i => i.clave === clave && i.creado >= desdeIso).length },
@@ -34,6 +36,13 @@ export function crearMem(reloj: () => Date = () => new Date()) {
     async buscarRegistro(id) {
       const r = m.registros.find(x => x.id === id)
       return r ? { id: r.id, secretoHash: r.secretoHash, estado: r.estado as 'pendiente' | 'vinculada' | 'desvinculada', expiraEn: r.expiraEn, cajaId: r.cajaId, codigo: r.codigo || null } : null
+    },
+    async hayCajaAsignada(email) { return m.correosConCaja.has(email) },
+    async fijarEmailValidado(registroId, email) {
+      const r = m.registros.find(x => x.id === registroId)
+      if (!r || r.estado !== 'pendiente' || r.cajaId) return false
+      r.emailValidado = email
+      return true
     },
     async obtenerCaja(id) { return m.cajas.find(c => c.id === id) ?? null },
     async activar(o) {

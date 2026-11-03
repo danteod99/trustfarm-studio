@@ -11,6 +11,8 @@ export interface CajaAdmin {
   tope_diario: number; gastado_hoy: number
   /** Caja de fábrica: etiqueta interna, si tiene dueño y si la caja ya se activó con su llave. */
   etiqueta: string | null; asignacion: 'preparada' | 'asignada'; activada: boolean
+  /** Correo de la cuenta a la que va dirigida (null = sin asignar). */
+  email_asignado: string | null
 }
 
 /** Pide `limite + 1` filas para saber si hay otra página. Nunca expone tunnel_id. */
@@ -27,6 +29,7 @@ export async function paginaAdminCajas(deps: ClienteDeps, pagina: number): Promi
       version: c.version ?? null, vinculada_en: c.creadaEn ?? null,
       tope_diario: c.topeDiario ?? TOPE_DIARIO_POR_DEFECTO, gastado_hoy: gasto[c.id] ?? 0,
       etiqueta: c.etiqueta ?? null, asignacion: c.ownerId === null ? 'preparada' : 'asignada', activada: c.activada ?? false,
+      email_asignado: c.emailAsignado ?? null,
     })),
   }
 }

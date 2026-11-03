@@ -10,14 +10,14 @@ export const maxDuration = 60;
 const NS = { "Cache-Control": "no-store" };
 const json = (body: object, status = 200) => Response.json(body, { status, headers: NS });
 
-// Admin: prepara una caja nueva (túnel, dirección y llave de activación). La llave solo se devuelve aquí, una vez.
+// Admin: prepara una caja nueva para una cuenta (túnel y dirección). Sin correo devuelve además su llave de activación, una vez.
 export async function POST(req: Request) {
   const user = await getUser();
   if (!user) return UNAUTHORIZED();
   if (!isAdminEmail(user.email)) return FORBIDDEN();
   const deps = depsClienteReales();
   if (!deps) return json(ERROR_NO_CONFIGURADO, 500);
-  let body: { etiqueta?: unknown } | null = null;
+  let body: { etiqueta?: unknown; email?: unknown } | null = null;
   try {
     body = await req.json();
   } catch {
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   }
   if (!body || typeof body !== "object") return json({ error: "Solicitud inválida." }, 400);
   try {
-    const r = await prepararCaja(deps, { adminId: user.id, etiqueta: body.etiqueta });
+    const r = await prepararCaja(deps, { adminId: user.id, etiqueta: body.etiqueta, email: body.email });
     return json(r.body, r.status);
   } catch {
     return json({ error: "No se pudo crear la caja. Inténtalo de nuevo." }, 500);

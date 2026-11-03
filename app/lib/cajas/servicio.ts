@@ -1,6 +1,7 @@
 // Lógica de las rutas que usa la caja instalada (sin sesión, autenticada con su llave).
 // Las dependencias entran inyectadas para poder probarlas con un almacén en memoria.
 import { generarCodigo, normalizarCodigo } from './codigo.ts'
+import { normalizarCorreo } from './correo.ts'
 import { generarSecreto, hashSecreto, iguales } from './secreto.ts'
 
 export type EstadoRegistro = 'pendiente' | 'vinculada' | 'desvinculada'
@@ -31,6 +32,10 @@ export interface CajasStore {
   /** Renueva el código de una caja SIN dueño; false si no aplica. */
   nuevoCodigo(registroId: string, codigo: string, expiraEn: string): Promise<boolean | 'codigo_duplicado'>
   tocarCaja(cajaId: string, version: string, ahoraIso: string): Promise<void>
+  /** ¿Hay una caja asignada a ese correo, sin dueño y sin mini PC unida? */
+  hayCajaAsignada(email: string): Promise<boolean>
+  /** Anota en el registro (pendiente y sin caja) el correo validado; false si ya no aplica. */
+  fijarEmailValidado(registroId: string, email: string): Promise<boolean>
   /** Solo registros `pendiente` vencidos antes de `antesIso`. */
   borrarRegistrosVencidos(antesIso: string): Promise<void>
   borrarIntentosViejos(antesIso: string): Promise<void>
@@ -247,6 +252,39 @@ export async function activarCaja(
     }
   }
   return { status: 500, body: { error: 'No se pudo activar la caja. Inténtalo de nuevo.' } }
+}
+
+const MAX_CORREOS_POR_REGISTRO = 5
+const MAX_CORREOS_POR_IP = 30
+
+/**
+ * La mini PC recién instalada valida el correo que escribió el cliente: debe tener una caja asignada libre.
+ * Solo entonces la pantalla muestra el QR, y solo esa cuenta podrá vincularla (ver vincularCaja).
+ */
+export async function correoCaja(
+  deps: ServicioDeps,
+  { registroId, bearer, ip, correo }: { registroId: string; bearer: string | null | undefined; ip: string; correo: unknown },
+): Promise<Respuesta> {
+  const { store } = deps
+  const registro = await autenticar(store, registroId, bearer)
+  if (!registro) return NO_AUTORIZADO()
+  const yaNoAplica = (): Respuesta => ({ status: 409, body: { error: 'Esta caja ya no está esperando un correo. Reiníciala e inténtalo de nuevo.' } })
+  if ((await calcularEstado(deps, registro)).estado !== 'pendiente') return yaNoAplica()
+
+  const email = normalizarCorreo(correo)
+  if (!email) return { status: 400, body: { error: 'Escribe un correo válido.' } }
+
+  const ahora = deps.now()
+  // Limitan cuántos correos se pueden probar: la respuesta dice si un correo tiene una caja asignada
+  if (!(await limitarIntentos(store, `correo:${registro.id}`, MAX_CORREOS_POR_REGISTRO, HORA, ahora))
+    || !(await limitarIntentos(store, `correo-ip:${ip}`, MAX_CORREOS_POR_IP, HORA, ahora))) {
+    return { status: 429, body: { error: DEMASIADOS_INTENTOS } }
+  }
+  if (!(await store.hayCajaAsignada(email))) {
+    return { status: 404, body: { error: 'No hay una caja asignada a ese correo. Revisa que sea el correo que diste al comprar.' } }
+  }
+  if (!(await store.fijarEmailValidado(registro.id, email))) return yaNoAplica()
+  return { status: 200, body: { ok: true, correo: email } }
 }
 
 /** La caja sin dueño pide su código de asociación: devuelve el vigente o, si venció, uno nuevo (15 min). */

@@ -1,7 +1,8 @@
 // «Crear caja» y «Regenerar llave» (solo administradores): la caja se prepara ANTES de enviarla, con su túnel y su dirección,
 // y una llave de activación de un solo uso. Las dependencias entran inyectadas (almacén y Cloudflare simulables en las pruebas).
+import { normalizarCorreo } from './correo.ts'
 import { generarSecreto, hashSecreto } from './secreto.ts'
-import type { ClienteDeps, Respuesta } from './cliente-servicio.ts'
+import { MAX_CAJAS_POR_CUENTA, type ClienteDeps, type Respuesta } from './cliente-servicio.ts'
 
 export const MAX_CREACIONES_POR_HORA = 20
 export const MAX_PREPARADAS_SIN_DUENO = 100
@@ -14,6 +15,8 @@ const MAX_ETIQUETA = 80
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const ERR_ETIQUETA = `Escribe una etiqueta de 1 a ${MAX_ETIQUETA} caracteres (por ejemplo, el nombre del cliente).`
+const ERR_CORREO = 'Ese correo no parece válido. Revísalo o déjalo vacío.'
+const ERR_MAX_POR_CORREO = `Ese correo ya tiene el máximo de cajas asignadas (${MAX_CAJAS_POR_CUENTA}).`
 const ERR_RITMO = 'Creaste demasiadas cajas en la última hora. Espera un rato e inténtalo de nuevo.'
 const ERR_CUPO = `Ya hay ${MAX_PREPARADAS_SIN_DUENO} cajas sin dueño. Asigna o elimina alguna antes de crear otra.`
 const ERR_TUNEL = 'No se pudo preparar el túnel de la caja. Inténtalo de nuevo.'
@@ -26,10 +29,15 @@ async function limpiarTunel(deps: ClienteDeps, tunnelId: string, slug: string): 
 
 const vencimiento = (deps: ClienteDeps) => new Date(deps.now().getTime() + VIDA_LLAVE_DIAS * DIA_MS).toISOString()
 
-export async function prepararCaja(deps: ClienteDeps, { adminId, etiqueta }: { adminId: string; etiqueta: unknown }): Promise<Respuesta> {
+export async function prepararCaja(deps: ClienteDeps, { adminId, etiqueta, email }: { adminId: string; etiqueta: unknown; email?: unknown }): Promise<Respuesta> {
   const { store } = deps
   const limpia = typeof etiqueta === 'string' ? etiqueta.trim() : ''
   if (limpia.length < 1 || limpia.length > MAX_ETIQUETA) return { status: 400, body: { error: ERR_ETIQUETA } }
+  // Correo de la cuenta a la que va dirigida; vacío = caja sin asignar (caja de fábrica con llave)
+  const sinCorreo = email === undefined || email === null || (typeof email === 'string' && email.trim() === '')
+  const correo = sinCorreo ? null : normalizarCorreo(email)
+  if (!sinCorreo && !correo) return { status: 400, body: { error: ERR_CORREO } }
+  if (correo && (await store.contarCajasConEmail(correo)) >= MAX_CAJAS_POR_CUENTA) return { status: 409, body: { error: ERR_MAX_POR_CORREO } }
 
   const desde = new Date(deps.now().getTime() - HORA_MS).toISOString()
   if ((await store.contarCreacionesAdmin(adminId, desde)) >= MAX_CREACIONES_POR_HORA) return { status: 429, body: { error: ERR_RITMO } }
@@ -55,7 +63,19 @@ export async function prepararCaja(deps: ClienteDeps, { adminId, etiqueta }: { a
       r = { ok: false, motivo: 'error' }
     }
     if (r.ok) {
-      return { status: 200, body: { caja: { id: r.cajaId, etiqueta: limpia, direccion: `${slug}.${deps.env.dominio}` }, llave, vence_en: venceEn } }
+      if (correo) {
+        try {
+          await store.asignarEmail(r.cajaId, correo)
+        } catch {
+          // Sin el correo sería una caja suelta que nadie puede vincular: se deshace
+          try { await store.desvincularCaja(r.cajaId) } catch { console.error('[cajas] caja sin correo', r.cajaId) }
+          await limpiarTunel(deps, tunel.tunnelId, slug)
+          return { status: 500, body: { error: ERR_CREAR } }
+        }
+      }
+      const caja = { id: r.cajaId, etiqueta: limpia, direccion: `${slug}.${deps.env.dominio}`, email: correo }
+      // Con correo no hace falta llave ni comando: la mini PC del ISO se vincula sola con esa cuenta
+      return { status: 200, body: correo ? { caja } : { caja, llave, vence_en: venceEn } }
     }
     await limpiarTunel(deps, tunel.tunnelId, slug)
     if (r.motivo === 'slug_repetido') continue
