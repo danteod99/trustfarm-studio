@@ -7,10 +7,11 @@ import {
   CalendarClock,
   Check,
   Clapperboard,
+  Coins,
   Copy,
   FolderTree,
-  MessageCircle,
   Minus,
+  Repeat,
   Scissors,
   ShieldCheck,
   Sparkles,
@@ -18,9 +19,8 @@ import {
   Tractor,
   UserRound,
   Users,
-  Wand2,
 } from "lucide-react";
-import { PACKS, creditCost, getModel } from "@/app/lib/catalog";
+import { PACKS, PLAN, creditCost, getModel } from "@/app/lib/catalog";
 import { BRAND } from "@/app/lib/brand";
 import { getUser } from "@/app/lib/auth";
 import Reveal from "@/app/components/Reveal";
@@ -153,8 +153,10 @@ function SectionHead({ eyebrow, title, sub }: { eyebrow: string; title: string; 
 
 export default async function GranjasPage() {
   const user = await getUser();
-  const cta = user ? "/granja" : "/entrar?modo=registro&next=/granja";
-  const ctaTexto = user ? "Ir a Modo Granja" : "Crear cuenta gratis";
+  // Los CTA venden: suscripción mensual (principal) y recarga de créditos. Sin sesión, primero el registro.
+  const suscribir = user ? "/creditos#plan" : "/entrar?modo=registro&next=/creditos";
+  const recargar = user ? "/creditos#paquetes" : "/entrar?modo=registro&next=/creditos";
+  const textoSuscribir = `Suscribirme · $${PLAN.priceUsd}/mes`;
 
   return (
     <div className="overflow-x-clip">
@@ -176,15 +178,21 @@ export default async function GranjasPage() {
               granja, todos los días.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <StarBorder as="a" href={cta} color="#22d3ee" backgroundColor="#3b82f6" textColor="#ffffff" radius={12} className="!text-base !font-semibold">
+              <StarBorder as="a" href={suscribir} color="#22d3ee" backgroundColor="#3b82f6" textColor="#ffffff" radius={12} className="!text-base !font-semibold">
                 <span className="flex items-center justify-center gap-2 px-2">
-                  {ctaTexto} <ArrowRight size={17} />
+                  <Repeat size={17} /> {textoSuscribir}
                 </span>
               </StarBorder>
-              <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="btn-ghost !px-6 !py-3 text-base">
-                <MessageCircle size={17} /> Hablar por WhatsApp
-              </a>
+              <Link href={recargar} className="btn-ghost !px-6 !py-3 text-base">
+                <Coins size={17} className="text-brand-2" /> Recargar créditos
+              </Link>
             </div>
+            <p className="mt-3 text-sm text-mute">
+              {PLAN.credits} créditos cada mes, se acumulan y cancelas cuando quieras ·{" "}
+              <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="text-brand-2 hover:underline">
+                ¿Dudas? Escríbenos por WhatsApp
+              </a>
+            </p>
             <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-mute">
               <span className="flex items-center gap-1.5"><Copy size={15} className="text-brand-2" /> Ningún archivo repetido</span>
               <span className="flex items-center gap-1.5"><FolderTree size={15} className="text-brand-2" /> Una carpeta por cuenta</span>
@@ -404,25 +412,31 @@ export default async function GranjasPage() {
                 versiones de cada uno = 100 videos, uno por cuenta.
               </p>
             </div>
-            <Link href={cta} className="btn-primary !px-8 !py-3 text-base">
-              {ctaTexto} <ArrowRight size={17} />
-            </Link>
+            <div className="flex flex-col gap-2">
+              <Link href={suscribir} className="btn-primary !px-8 !py-3 text-base">
+                <Repeat size={17} /> {textoSuscribir}
+              </Link>
+              <p className="text-center text-xs text-mute">{PLAN.credits} créditos al mes ({PLAN.bonus} vs. paquetes)</p>
+            </div>
           </div>
         </Reveal>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {PACKS.map((p) => (
-            <div key={p.id} className={`card p-5 ${p.popular ? "border-brand shadow-lg shadow-brand/20" : ""}`}>
+            <Link key={p.id} href={recargar} className={`card group flex flex-col p-5 transition hover:-translate-y-0.5 hover:border-brand/60 ${p.popular ? "border-brand shadow-lg shadow-brand/20" : ""}`}>
               <h3 className="text-sm font-semibold">{p.name}</h3>
               <p className="mt-2 text-3xl font-extrabold">${p.priceUsd}</p>
-              <p className="mt-1 text-xs text-mute">
+              <p className="mt-1 flex-1 text-xs text-mute">
                 {p.credits.toLocaleString("es")} créditos {p.bonus && <span className="text-brand-2">({p.bonus})</span>}
               </p>
-            </div>
+              <span className="mt-4 flex items-center gap-1.5 text-sm font-semibold text-brand-2">
+                <Coins size={15} /> Recargar <ArrowRight size={14} className="transition group-hover:translate-x-0.5" />
+              </span>
+            </Link>
           ))}
         </div>
         <p className="mt-6 flex items-center justify-center gap-2 text-center text-sm text-mute">
           <ShieldCheck size={15} className="shrink-0" /> Pago seguro con Stripe. Los créditos no vencen.
-          <Link href="/creditos" className="text-brand-2 hover:underline">Ver planes</Link>
+          <Link href={recargar} className="text-brand-2 hover:underline">Ver planes</Link>
         </p>
       </section>
 
@@ -451,15 +465,15 @@ export default async function GranjasPage() {
             <div className="relative max-w-xl p-8 sm:p-14">
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Que cada cuenta publique algo distinto hoy</h2>
               <p className="mt-3 text-mute">
-                Crea tu cuenta gratis, genera tus videos base y multiplícalos para toda tu granja.
+                Suscríbete o recarga créditos, genera tus videos base y multiplícalos para toda tu granja.
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <Link href={cta} className="btn-primary !px-6 !py-3">
-                  <Wand2 size={17} /> {ctaTexto}
+                <Link href={suscribir} className="btn-primary !px-6 !py-3">
+                  <Repeat size={17} /> {textoSuscribir}
                 </Link>
-                <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="btn-ghost !px-6 !py-3">
-                  <MessageCircle size={17} /> WhatsApp
-                </a>
+                <Link href={recargar} className="btn-ghost !px-6 !py-3">
+                  <Coins size={17} className="text-brand-2" /> Recargar créditos
+                </Link>
               </div>
             </div>
           </div>

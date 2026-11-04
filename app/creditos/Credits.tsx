@@ -106,7 +106,7 @@ export default function Credits() {
       {error && <p className="mt-6 rounded-xl bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
 
       {/* Plan mensual */}
-      <div className="card mt-8 grid items-center gap-6 border-brand/60 bg-gradient-to-br from-brand/15 to-transparent p-6 sm:grid-cols-[1fr_auto]">
+      <div id="plan" className="card mt-8 grid scroll-mt-24 items-center gap-6 border-brand/60 bg-gradient-to-br from-brand/15 to-transparent p-6 sm:grid-cols-[1fr_auto]">
         <div>
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-2">
             <Repeat size={14} /> {PLAN.name} · el que más rinde
@@ -140,7 +140,7 @@ export default function Credits() {
         )}
       </div>
 
-      <h2 className="mt-10 text-lg font-semibold">O compra un paquete suelto</h2>
+      <h2 id="paquetes" className="mt-10 scroll-mt-24 text-lg font-semibold">O compra un paquete suelto</h2>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {PACKS.map((p) => (
           <div key={p.id} className={`card flex flex-col p-6 ${p.popular ? "border-brand" : ""}`}>
