@@ -15,8 +15,8 @@ export interface Cobro {
  * Cobra `amount` créditos al usuario (admins gratis). Devuelve el cobro o una Response 402/500
  * lista para devolver si no alcanza el saldo.
  */
-export async function cobrar(user: User, amount: number, reason: string): Promise<Cobro | Response> {
-  const ref = `editar:${randomUUID()}`;
+export async function cobrar(user: User, amount: number, reason: string, refPrefix = "editar"): Promise<Cobro | Response> {
+  const ref = `${refPrefix}:${randomUUID()}`;
   if (isAdminEmail(user.email)) return { amount: 0, ref, refund: async () => {} };
   const r = await chargeCredits(user.id, amount, reason, ref);
   if (!r.ok) {
