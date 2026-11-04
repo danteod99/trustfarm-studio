@@ -50,6 +50,13 @@ export function crearClienteMem(ahora: { t: Date }, opts: { vinculoAbierto?: boo
     async contarExitosVincular(userId, desde) { return m.exitos.filter(f => f.userId === userId && f.creado >= desde).length },
     async registrarExitoVincular(userId) { m.exitos.push({ userId, creado: ahora.t.toISOString() }) },
     async buscarRegistroVinculable(c) { return m.vinculables.has(c) ? { id: 'reg-' + c, emailValidado: m.emailsValidados.get(c) ?? null } : null },
+    async hayCajaAsignada(email) { return m.cajas.some((c) => c.ownerId === null && c.emailAsignado === email && !m.conRegistro.has(c.id)) },
+    async fijarEmailValidado(registroId, email) {
+      const codigo = registroId.replace(/^reg-/, '')
+      if (!m.vinculables.has(codigo)) return false
+      m.emailsValidados.set(codigo, email)
+      return true
+    },
     async vincularAsignada(o) {
       m.vincularAsignadaLlamadas++
       if (!m.vinculables.has(o.codigo) || m.emailsValidados.get(o.codigo) !== o.email) return { ok: false, motivo: 'codigo_invalido' }

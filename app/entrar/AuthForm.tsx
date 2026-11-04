@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/app/lib/supabase/browser";
+import { siguienteSeguro } from "@/app/lib/siguiente";
 
 export default function AuthForm() {
   const params = useSearchParams();
@@ -13,8 +14,7 @@ export default function AuthForm() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: "error" | "ok"; text: string } | null>(null);
 
-  const rawNext = params.get("next") || "/estudio";
-  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/estudio";
+  const next = siguienteSeguro(params.get("next"));
   // La URL de vuelta va sin parámetros: Supabase solo acepta las que coinciden con su lista de
   // Redirect URLs; con "?next=…" no coincidía y mandaba a la Site URL (trustmind.online).
   // A dónde ir después del login viaja en una cookie corta que lee /auth/callback.
@@ -54,9 +54,24 @@ export default function AuthForm() {
     setLoading(false);
   }
 
+  // La ventana de la mini PC entra directo a Google. Un solo intento: si se cancela, aquí queda el formulario.
+  const directo = params.get("google") === "1";
+
   async function google() {
-    await createBrowserSupabase().auth.signInWithOAuth({ provider: "google", options: { redirectTo: callback() } });
+    await createBrowserSupabase().auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: callback(), ...(directo ? { queryParams: { prompt: "select_account" } } : {}) },
+    });
   }
+
+  const lanzado = useRef(false);
+  useEffect(() => {
+    if (directo && !lanzado.current) {
+      lanzado.current = true;
+      void google();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="card border-brand/30 bg-panel/90 p-7 shadow-[0_0_60px_-18px_rgba(34,211,238,0.45)] backdrop-blur">
