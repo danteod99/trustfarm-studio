@@ -41,6 +41,22 @@ export function clienteStoreSupabase(): ClienteStore {
       if (error) throw new Error('No se pudo leer el registro.')
       return data ? { id: data.id as string, emailValidado: (data.email_validado as string | null) ?? null } : null
     },
+    async hayCajaAsignada(email) {
+      const { data, error } = await db.from('cajas').select('id').is('owner_id', null).eq('email_asignado', email)
+      if (error) throw new Error('No se pudo leer las cajas.')
+      const ids = (data ?? []).map((c) => c.id as string)
+      if (!ids.length) return false
+      // Libre = todavía sin una mini PC unida
+      const { data: regs, error: e2 } = await db.from('caja_registros').select('caja_id').in('caja_id', ids)
+      if (e2) throw new Error('No se pudo leer los registros.')
+      const ocupadas = new Set((regs ?? []).map((r) => r.caja_id as string))
+      return ids.some((id) => !ocupadas.has(id))
+    },
+    async fijarEmailValidado(registroId, email) {
+      const { data, error } = await db.from('caja_registros').update({ email_validado: email }).eq('id', registroId).eq('estado', 'pendiente').is('caja_id', null).select('id')
+      if (error) throw new Error('No se pudo guardar el correo.')
+      return (data?.length ?? 0) > 0
+    },
     async vincularAsignada(o) {
       const { data, error } = await db.rpc('caja_vincular_asignada', { p_codigo: o.codigo, p_owner: o.ownerId, p_email: o.email, p_nombre: o.nombre })
       if (!error && typeof data === 'string') return { ok: true, cajaId: data }
