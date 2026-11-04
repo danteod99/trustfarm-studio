@@ -33,6 +33,10 @@ export const IDEA_CATEGORIES = [
   "Inmobiliaria",
   "Tecnología y granjas",
   "Motivación y paisajes",
+  "Mascotas",
+  "Moda y belleza",
+  "Educación y tips",
+  "Fitness y salud",
 ] as const;
 
 export const IDEAS: Idea[] = [
@@ -78,6 +82,48 @@ export const IDEAS: Idea[] = [
     aspect: "9:16",
     prompt:
       "Imagen vertical dividida en dos: a la izquierda con la palabra ANTES un casco de moto sucio y gastado, a la derecha con la palabra DESPUÉS el mismo casco limpio y brillante como nuevo. Fondo blanco de estudio, etiquetas grandes en negro.",
+  },
+  {
+    id: "vending-flores",
+    category: "Negocios y máquinas",
+    title: "Máquina de flores en el metro",
+    hook: "Un negocio de autoservicio que la gente graba y comparte.",
+    image: img("idea-vending-flores"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    motion: "acercamiento",
+    prompt:
+      "Una máquina expendedora de flores con vitrina de vidrio iluminada en una estación del Metro de Lima, ramos de rosas y girasoles en cada casillero. Una joven elige un ramo en la pantalla táctil, la puerta se abre y saca las flores sonriendo. Sonido ambiente de estación y un pitido de la máquina. Sin logos.",
+  },
+  {
+    id: "impresora-3d",
+    category: "Negocios y máquinas",
+    title: "Impresora 3D fabricando",
+    hook: "Hipnótico: ver cómo nace un producto capa por capa.",
+    image: img("idea-impresora-3d"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    motion: "acercamiento",
+    prompt:
+      "Primer plano macro de una impresora 3D trabajando de noche en un taller, la boquilla deposita filamento azul brillante capa por capa formando un llavero. Luz LED blanca y reflejos azules, la cámara se acerca lento. Zumbido suave de los motores, sin voz.",
+  },
+  {
+    id: "food-truck",
+    category: "Negocios y máquinas",
+    title: "Food truck con tu marca",
+    hook: "Presenta tu carrito o food truck antes de tenerlo.",
+    image: img("idea-food-truck"),
+    kind: "image",
+    model: "qwen-image",
+    aspect: "9:16",
+    prompt:
+      "Foto realista vertical de un food truck moderno de color amarillo estacionado en un parque de Lima al atardecer, con el letrero grande SALCHIPAPAS EXPRESS en letras negras sobre el techo, clientes haciendo cola, luces cálidas colgadas.",
   },
 
   // Brainrot
@@ -126,6 +172,50 @@ export const IDEAS: Idea[] = [
     prompt:
       "Render 3D hiperrealista y absurdo estilo meme brainrot: un pollo a la brasa dorado con piernas de bailarina baila marinera con un pañuelo blanco en un escenario de madera. Voz teatral canta: «¡Pollerina Marinerina!». Zapateo y guitarra festiva. Sin subtítulos.",
   },
+  {
+    id: "brainrot-papa",
+    category: "Brainrot",
+    title: "Papasito Mototaxito",
+    hook: "Un alimento peruano + un vehículo de barrio: combinación ganadora.",
+    image: img("brainrot-papa"),
+    video: vid("brainrot-papa"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    prompt:
+      "Render 3D hiperrealista y absurdo estilo meme brainrot: una papa amarilla gigante con lentes de sol maneja una mototaxi roja por una calle de Lima tocando la bocina. Voz masculina exagerada canta: «¡Papasito Mototaxito!». Sonido de motor y bocina. Sin subtítulos.",
+  },
+  {
+    id: "brainrot-pez",
+    category: "Brainrot",
+    title: "Pescadito Taxidito",
+    hook: "Personajes absurdos en lugares que todos reconocen.",
+    image: img("brainrot-pez"),
+    video: vid("brainrot-pez"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    prompt:
+      "Render 3D hiperrealista y absurdo estilo meme brainrot: un pez gigante con cuerpo de taxi amarillo avanza entre el tráfico de la Vía Expresa de Lima moviendo la cola. Voz dramática grita: «¡Pescadito Taxidito!». Bocinas y tráfico. Sin subtítulos.",
+  },
+  {
+    id: "brainrot-alpaca",
+    category: "Brainrot",
+    title: "Alpacachino Cafetero",
+    hook: "Animal andino + máquina de café: el meme que se hace solo.",
+    image: img("idea-brainrot-alpaca"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    prompt:
+      "Render 3D hiperrealista y absurdo estilo meme brainrot: una alpaca blanca cuyo cuerpo es una máquina de café espresso plateada echa vapor por las orejas y sirve un capuchino en una cafetería de Arequipa. Voz cantada y exagerada: «¡Alpacachino Cafetero!». Sonido de vapor y taza. Sin subtítulos.",
+  },
 
   // Historias
   {
@@ -167,6 +257,45 @@ export const IDEAS: Idea[] = [
     prompt:
       "Ilustración cinematográfica vintage en tonos sepia y dorado: un zorro sabio con traje de tweed sentado en un sillón de cuero junto a una lámpara de bronce, leyendo un libro de cuentas. Luz cálida de lámpara, textura de papel antiguo. Sin texto.",
   },
+  {
+    id: "frutinovela-traicion",
+    category: "Historias",
+    title: "Frutinovela: la traición",
+    hook: "Capítulo 2: celos, miradas y un final que deja con ganas de más.",
+    image: img("idea-frutinovela-traicion"),
+    kind: "image",
+    model: "qwen-image",
+    aspect: "9:16",
+    prompt:
+      "Animación 3D estilo Pixar: personajes que son frutas con cara, brazos y piernas. Un mango amarillo con bigote y camisa espía detrás de una cortina roja a un plátano y una fresa con ojos grandes que conversan en una sala lujosa. Iluminación dramática de telenovela. Sin humanos, sin texto.",
+  },
+  {
+    id: "terror-pasillo",
+    category: "Historias",
+    title: "Terror en 8 segundos",
+    hook: "Microhistorias de miedo: tensión y corte en el peor momento.",
+    image: img("idea-terror-pasillo"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 8,
+    resolution: "720p",
+    motion: "acercamiento",
+    prompt:
+      "Plano cinematográfico de noche en el pasillo de un edificio antiguo del Centro de Lima, una luz fluorescente parpadea. Al fondo una puerta se abre sola muy despacio. Una voz susurra: «No mires atrás». Zumbido de la luz y crujido de la puerta. Sin subtítulos.",
+  },
+  {
+    id: "cuento-abuela",
+    category: "Historias",
+    title: "Cuento animado",
+    hook: "Historias para niños con un personaje tierno que vuelve en cada video.",
+    image: img("idea-cuento-abuela"),
+    kind: "image",
+    model: "z-image",
+    aspect: "9:16",
+    prompt:
+      "Animación 3D estilo película familiar: una abuelita andina con chompa de colores y trenzas canosas le cuenta un cuento a dos niños sentados junto a una chimenea en una casa de adobe, luz cálida del fuego, expresiones tiernas. Sin texto.",
+  },
 
   // Influencers IA
   {
@@ -196,6 +325,48 @@ export const IDEAS: Idea[] = [
     aspect: "9:16",
     prompt:
       "Foto realista de celular de una creadora de contenido latina en un departamento luminoso de Miraflores, sosteniendo el producto de la imagen de referencia junto a su cara y sonriendo a la cámara. Luz natural de ventana, piel real.",
+  },
+  {
+    id: "resena-auto",
+    category: "Influencers IA",
+    title: "Reseña desde el auto",
+    hook: "El formato UGC que más convierte: alguien real recomendando.",
+    image: img("idea-resena-auto"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    motion: "fija",
+    prompt:
+      "Un joven peruano sentado en el asiento del conductor de su auto estacionado mira a la cámara del celular y dice con voz natural: «Lo probé una semana y no lo cambio por nada». Luz natural de día por la ventana, cámara en mano, sonido ambiente de calle.",
+  },
+  {
+    id: "viajera-cusco",
+    category: "Influencers IA",
+    title: "Viajera en Cusco",
+    hook: "Tu influencer virtual de viajes, siempre con la misma cara.",
+    image: img("idea-viajera-cusco"),
+    kind: "image",
+    model: "z-image",
+    aspect: "9:16",
+    prompt:
+      "Foto realista estilo selfie de una viajera latina de 25 años con sombrero y mochila sonriendo en un balcón con vista a la Plaza de Armas del Cusco, cielo azul, luz de mañana, piel real, foto de celular.",
+  },
+  {
+    id: "podcast-ia",
+    category: "Influencers IA",
+    title: "Podcast con invitado IA",
+    hook: "Clips de podcast que parecen grabados en estudio.",
+    image: img("idea-podcast-ia"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 8,
+    resolution: "720p",
+    motion: "fija",
+    prompt:
+      "Estudio de podcast con luz cálida y paneles acústicos: un hombre con audífonos habla a un micrófono y dice: «Nadie te cuenta esto cuando empiezas un negocio». Al frente su invitada asiente. Sonido de estudio limpio, cámara fija.",
   },
 
   // Productos y anuncios
@@ -238,6 +409,45 @@ export const IDEAS: Idea[] = [
     prompt:
       "Póster vertical de una heladería llamada FRUTILANDIA, letras grandes rosadas arriba, helados de fresa y mango en primer plano, estilo fotografía publicitaria.",
   },
+  {
+    id: "zapatilla-flotando",
+    category: "Productos y anuncios",
+    title: "Producto flotando",
+    hook: "El clásico anuncio de marca grande, para tu producto.",
+    image: img("idea-zapatilla-flotando"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    motion: "orbita",
+    prompt:
+      "Una zapatilla deportiva blanca flota y gira lentamente en el aire sobre un fondo azul eléctrico, salpicaduras de agua congeladas a su alrededor, luz de estudio dramática, la cámara orbita alrededor. Música electrónica suave, sin voz. Sin logos.",
+  },
+  {
+    id: "oferta-flash",
+    category: "Productos y anuncios",
+    title: "Oferta flash",
+    hook: "Promos que se leen en un segundo: precio grande y urgencia.",
+    image: img("idea-oferta-flash"),
+    kind: "image",
+    model: "qwen-image",
+    aspect: "9:16",
+    prompt:
+      "Afiche publicitario vertical con fondo rojo intenso, texto grande blanco arriba que dice OFERTA FLASH, abajo en amarillo 50% OFF SOLO HOY, en el centro unos audífonos inalámbricos negros con destellos, estilo anuncio de tienda moderna.",
+  },
+  {
+    id: "mockup-app",
+    category: "Productos y anuncios",
+    title: "Tu app en un celular",
+    hook: "Muestra tu web o app en manos de un cliente.",
+    image: img("idea-mockup-app"),
+    kind: "image",
+    model: "z-image",
+    aspect: "9:16",
+    prompt:
+      "Foto realista de una mano sosteniendo un smartphone moderno con la pantalla encendida mostrando una app de compras colorida, fondo de oficina desenfocado con luz natural, enfoque en el celular, fotografía de producto.",
+  },
 
   // Comida
   {
@@ -267,6 +477,48 @@ export const IDEAS: Idea[] = [
     prompt:
       "Un chef con uniforme negro flambea una sartén en la cocina oscura de un restaurante, grandes llamas y chispas, luz naranja dramática. Sonido del fuego y la sartén. Cinematográfico y realista.",
   },
+  {
+    id: "hamburguesa-lenta",
+    category: "Comida",
+    title: "Hamburguesa en cámara lenta",
+    hook: "Queso derritiéndose y vapor: hambre instantánea.",
+    image: img("idea-hamburguesa-lenta"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    motion: "acercamiento",
+    prompt:
+      "Cámara lenta de una hamburguesa doble con queso cheddar derritiéndose, la tapa de pan cae encima y salpica salsa, vapor saliendo, fondo negro con luz cálida lateral. Sonido de la plancha chisporroteando, sin voz.",
+  },
+  {
+    id: "picarones",
+    category: "Comida",
+    title: "Picarones con miel",
+    hook: "Comida típica en primer plano: el orgullo que se comparte.",
+    image: img("idea-picarones"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    motion: "acercamiento",
+    prompt:
+      "Primer plano de una señora friendo picarones dorados en una paila de aceite en un puesto callejero de Lima de noche, luego los sirve en un plato y les echa miel de chancaca brillante. Sonido del aceite y murmullo de la calle. Sin texto.",
+  },
+  {
+    id: "limonada-frozen",
+    category: "Comida",
+    title: "Bebida del verano",
+    hook: "Hielo, gotas y color: la foto que vende bebidas.",
+    image: img("idea-limonada-frozen"),
+    kind: "image",
+    model: "qwen-image",
+    aspect: "9:16",
+    prompt:
+      "Foto publicitaria vertical de una limonada frozen de maracuyá en un vaso alto con hielo, gotas de condensación, rodaja de limón y hojas de menta, fondo amarillo soleado, texto grande blanco arriba que dice REFRESCATE.",
+  },
 
   // Inmobiliaria
   {
@@ -283,6 +535,33 @@ export const IDEAS: Idea[] = [
     motion: "paneo",
     prompt:
       "Recorrido lento por la sala de un departamento moderno de lujo en Miraflores con ventanales de piso a techo frente al océano Pacífico al atardecer, muebles minimalistas y luces cálidas. Música suave de piano, sin voz.",
+  },
+  {
+    id: "casa-playa",
+    category: "Inmobiliaria",
+    title: "Casa de playa desde el aire",
+    hook: "El dron que vende la casa antes de la visita.",
+    image: img("idea-casa-playa"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 8,
+    resolution: "720p",
+    motion: "alejamiento",
+    prompt:
+      "Toma aérea cinematográfica de una casa de playa moderna blanca con piscina frente al mar en el sur de Lima al atardecer, la cámara se aleja revelando la playa y las olas. Sonido de olas y música suave, sin voz.",
+  },
+  {
+    id: "se-alquila",
+    category: "Inmobiliaria",
+    title: "Anuncio de alquiler",
+    hook: "Foto del espacio + texto claro: listo para Marketplace.",
+    image: img("idea-se-alquila"),
+    kind: "image",
+    model: "qwen-image",
+    aspect: "9:16",
+    prompt:
+      "Foto realista vertical de una oficina moderna vacía con ventanales y vista a la ciudad de Lima, piso de madera y luz natural, con una franja azul abajo que dice en letras blancas grandes SE ALQUILA OFICINA.",
   },
 
   // Tecnología y granjas
@@ -301,6 +580,48 @@ export const IDEAS: Idea[] = [
     motion: "acercamiento",
     prompt:
       "Una caja de metal negra abierta sobre un escritorio de madera, llena de iPhones encendidos de pie en filas, cada uno con un cable USB-C en el puerto inferior. La cámara se acerca muy lento; las pantallas cambian de video y los LED azules parpadean. Detrás, un monitor con un mosaico de videos y luz morada. Zumbido de ventiladores y notificaciones suaves, sin voz.",
+  },
+  {
+    id: "mano-iphone",
+    category: "Tecnología y granjas",
+    title: "Mano sacando un iPhone",
+    hook: "El plano que más vistas trae: primer plano con mano real.",
+    image: img("idea-mano-iphone"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    motion: "acercamiento",
+    prompt:
+      "Primer plano de una mano que saca un iPhone encendido de una caja negra llena de iPhones en filas con cables USB-C conectados en el puerto inferior, de noche, luces LED azules y cian. Zumbido de ventiladores y notificaciones suaves, sin voz.",
+  },
+  {
+    id: "estudio-40-iphones",
+    category: "Tecnología y granjas",
+    title: "Estudio con 40 iPhones",
+    hook: "La escala impresiona: decenas de pantallas trabajando a la vez.",
+    image: img("idea-estudio-40-iphones"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 8,
+    resolution: "720p",
+    motion: "paneo",
+    prompt:
+      "Paneo lento por un estudio oscuro con una pared de 40 iPhones montados en soportes, todos encendidos mostrando videos distintos, cables USB-C ordenados, luz azul y cian. Zumbido de ventiladores, sin voz.",
+  },
+  {
+    id: "setup-creador",
+    category: "Tecnología y granjas",
+    title: "Setup de creador",
+    hook: "El escritorio soñado para hablar de productividad o tecnología.",
+    image: img("idea-setup-creador"),
+    kind: "image",
+    model: "z-image",
+    aspect: "9:16",
+    prompt:
+      "Foto realista de un escritorio de creador de contenido de noche con tres monitores, teclado mecánico iluminado, micrófono en brazo, luces LED moradas y azules detrás, una ventana con la ciudad de noche. Sin texto.",
   },
 
   // Motivación y paisajes
@@ -333,6 +654,220 @@ export const IDEAS: Idea[] = [
     motion: "alejamiento",
     prompt:
       "Toma aérea cinematográfica de Machu Picchu al amanecer, nubes bajas moviéndose entre las montañas, luz dorada, la cámara se aleja lentamente revelando el valle. Viento suave y música épica, sin voz.",
+  },
+  {
+    id: "lluvia-ventana",
+    category: "Motivación y paisajes",
+    title: "Lluvia en la ventana",
+    hook: "Fondo tranquilo para frases o reflexiones.",
+    image: img("idea-lluvia-ventana"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 8,
+    resolution: "720p",
+    motion: "fija",
+    prompt:
+      "Primer plano de gotas de lluvia resbalando por una ventana de noche, detrás las luces de la ciudad desenfocadas en bokeh naranja y azul, una taza de café humeando en el borde. Sonido de lluvia suave, sin voz.",
+  },
+  {
+    id: "cima-montana",
+    category: "Motivación y paisajes",
+    title: "Llegar a la cima",
+    hook: "La toma épica para hablar de disciplina y metas.",
+    image: img("idea-cima-montana"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    motion: "orbita",
+    prompt:
+      "Un montañista con casaca roja llega a la cima nevada de una montaña de los Andes al amanecer y levanta los brazos, nubes debajo, la cámara gira a su alrededor. Viento fuerte y música épica, sin voz.",
+  },
+  {
+    id: "lima-noche",
+    category: "Motivación y paisajes",
+    title: "Lima de noche",
+    hook: "La ciudad que nunca para: intro perfecta para tu canal.",
+    image: img("idea-lima-noche"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 8,
+    resolution: "720p",
+    motion: "paneo",
+    prompt:
+      "Toma aérea nocturna de Miraflores y la Costa Verde de Lima, autos con estelas de luz por la vía, edificios iluminados y el mar oscuro, la cámara se desplaza de lado. Música electrónica suave, sin voz.",
+  },
+  // Mascotas
+  {
+    id: "perro-chef",
+    category: "Mascotas",
+    title: "Perrito chef",
+    hook: "Mascotas haciendo cosas de humanos: siempre funcionan.",
+    image: img("idea-perro-chef"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    motion: "fija",
+    prompt:
+      "Un perrito golden retriever con gorro y delantal de chef está de pie frente a la cocina y voltea un panqueque en la sartén con la pata. Sonido de la sartén y un ladrido feliz. Video realista, luz cálida de cocina.",
+  },
+  {
+    id: "gato-jefe",
+    category: "Mascotas",
+    title: "El gato jefe",
+    hook: "Memes de oficina con tu mascota como protagonista.",
+    image: img("idea-gato-jefe"),
+    kind: "image",
+    model: "z-image",
+    aspect: "9:16",
+    prompt:
+      "Foto realista de un gato naranja con lentes y corbata sentado en una silla de oficina de cuero frente a un escritorio con laptop, mirando a la cámara con cara seria, oficina moderna de fondo.",
+  },
+  {
+    id: "mascota-habla",
+    category: "Mascotas",
+    title: "Tu mascota habla",
+    hook: "Ponle voz a tu perro: el formato que todos comentan.",
+    image: img("idea-mascota-habla"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    motion: "acercamiento",
+    prompt:
+      "Un perro bulldog francés sentado en un sofá mira a la cámara y mueve la boca diciendo con voz grave y graciosa: «¿Otra vez llegaste tarde? Me debes dos paseos». Sonido ambiente de casa. Video realista.",
+  },
+  // Moda y belleza
+  {
+    id: "outfit-calle",
+    category: "Moda y belleza",
+    title: "Outfit del día",
+    hook: "Caminata en la calle con ropa de tu tienda.",
+    image: img("idea-outfit-calle"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    motion: "paneo",
+    prompt:
+      "Una joven latina camina con seguridad por una calle de Barranco con murales de colores, lleva chaqueta denim, pantalón negro y zapatillas blancas, la cámara la sigue de lado. Música urbana suave, sin voz.",
+  },
+  {
+    id: "antes-despues-makeup",
+    category: "Moda y belleza",
+    title: "Maquillaje antes y después",
+    hook: "La transformación que se guarda y se comparte.",
+    image: img("idea-antes-despues-makeup"),
+    kind: "image",
+    model: "qwen-image",
+    aspect: "9:16",
+    prompt:
+      "Imagen vertical dividida en dos mitades por una línea blanca. Mitad de arriba: rostro de una mujer latina sin nada de maquillaje, cara lavada, cabello recogido, luz plana, con la etiqueta grande ANTES en letras blancas sobre fondo negro. Mitad de abajo: la misma mujer con maquillaje de fiesta, sombras doradas, delineado, pestañas largas, labios rojos intensos y cabello suelto con ondas, con la etiqueta grande DESPUÉS en letras blancas sobre fondo negro.",
+  },
+  {
+    id: "unas-diseno",
+    category: "Moda y belleza",
+    title: "Uñas de diseño",
+    hook: "Fotos macro que muestran el detalle de tu trabajo.",
+    image: img("idea-unas-diseno"),
+    kind: "image",
+    model: "z-image",
+    aspect: "9:16",
+    prompt:
+      "Foto macro realista de una mano con uñas largas almendradas de diseño en tonos lila y dorado con brillos, sosteniendo una taza blanca, fondo rosado pastel desenfocado, luz suave de estudio.",
+  },
+  // Educación y tips
+  {
+    id: "profesor-dato",
+    category: "Educación y tips",
+    title: "Profe explica en 5 segundos",
+    hook: "Un dato útil, dicho rápido y con cara amable.",
+    image: img("idea-profesor-dato"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    motion: "fija",
+    prompt:
+      "Un profesor joven con camisa celeste frente a una pizarra en un aula luminosa mira a la cámara y dice: «Si ahorras diez soles al día, al año tienes más de tres mil». Sonido de aula tranquila. Video realista.",
+  },
+  {
+    id: "infografia-pasos",
+    category: "Educación y tips",
+    title: "Infografía en 3 pasos",
+    hook: "Enseña algo en una sola imagen que la gente guarda.",
+    image: img("idea-infografia-pasos"),
+    kind: "image",
+    model: "qwen-image",
+    aspect: "9:16",
+    prompt:
+      "Infografía vertical de diseño plano con fondo azul oscuro. Arriba el título grande blanco 3 PASOS PARA AHORRAR. Debajo tres tarjetas grandes apiladas, cada una con un número grande 1, 2 y 3 y un ícono grande: una alcancía, un calendario y una flecha subiendo, y una sola palabra grande al lado: ANOTA, SEPARA, CRECE. Sin texto pequeño, sin párrafos.",
+  },
+  {
+    id: "chasqui",
+    category: "Educación y tips",
+    title: "Dato histórico: los chasquis",
+    hook: "Historia del Perú contada como película.",
+    image: img("idea-chasqui"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 8,
+    resolution: "720p",
+    motion: "paneo",
+    prompt:
+      "Plano cinematográfico de un chasqui inca corriendo por un camino de piedra en las montañas de los Andes, con su pututo y quipu, al amanecer. Un narrador dice: «Los chasquis llevaban mensajes por relevos a lo largo del Qhapaq Ñan». Viento y pasos, música andina.",
+  },
+  // Fitness y salud
+  {
+    id: "coach-gym",
+    category: "Fitness y salud",
+    title: "Coach en el gimnasio",
+    hook: "Tips de entrenamiento con voz, sin pagar un modelo.",
+    image: img("idea-coach-gym"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    motion: "fija",
+    prompt:
+      "Una entrenadora latina con ropa deportiva en un gimnasio moderno mira a la cámara y dice con energía: «Tres series de esto y me cuentas mañana». Sonido de pesas al fondo. Video realista, luz de gimnasio.",
+  },
+  {
+    id: "bowl-saludable",
+    category: "Fitness y salud",
+    title: "Plato saludable",
+    hook: "Comida fit que se ve rica: perfecta para nutricionistas.",
+    image: img("idea-bowl-saludable"),
+    kind: "image",
+    model: "z-image",
+    aspect: "9:16",
+    prompt:
+      "Foto gastronómica cenital de un bowl saludable con quinua, palta en láminas, pollo a la plancha, tomates cherry, garbanzos y semillas, sobre una mesa de madera clara con luz natural.",
+  },
+  {
+    id: "yoga-amanecer",
+    category: "Fitness y salud",
+    title: "Yoga frente al mar",
+    hook: "Calma y movimiento: fondo para mensajes de bienestar.",
+    image: img("idea-yoga-amanecer"),
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 8,
+    resolution: "720p",
+    motion: "orbita",
+    prompt:
+      "Una mujer hace una postura de yoga sobre un mat en la arena frente al mar al amanecer, la cámara gira lento a su alrededor, luz dorada. Sonido de olas y música relajante, sin voz.",
   },
 ];
 
