@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/app/lib/supabase/browser";
 
@@ -54,9 +54,24 @@ export default function AuthForm() {
     setLoading(false);
   }
 
+  // La ventana de la mini PC entra directo a Google. Un solo intento: si se cancela, aquí queda el formulario.
+  const directo = params.get("google") === "1";
+
   async function google() {
-    await createBrowserSupabase().auth.signInWithOAuth({ provider: "google", options: { redirectTo: callback() } });
+    await createBrowserSupabase().auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: callback(), ...(directo ? { queryParams: { prompt: "select_account" } } : {}) },
+    });
   }
+
+  const lanzado = useRef(false);
+  useEffect(() => {
+    if (directo && !lanzado.current) {
+      lanzado.current = true;
+      void google();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="card border-brand/30 bg-panel/90 p-7 shadow-[0_0_60px_-18px_rgba(34,211,238,0.45)] backdrop-blur">
