@@ -13,7 +13,7 @@ export default async function ConectarPage({ searchParams }: { searchParams: Pro
   return (
     <Conectar
       correo={(user && (correoDeGoogle(user) ?? user.email)) || ""}
-      codigo={texto(p.codigo)}
+      vincular={texto(p.vincular) === "1"}
       caja={texto(p.caja)}
       volver={texto(p.volver)}
       sello={texto(p.sello)}

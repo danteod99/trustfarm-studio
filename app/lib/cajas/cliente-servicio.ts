@@ -4,6 +4,8 @@ import { randomInt } from 'node:crypto'
 import { normalizarCodigo } from './codigo.ts'
 import { enmascararCorreo, normalizarCorreo } from './correo.ts'
 import { firmarPase } from './pase.ts'
+import { firmarReto, verificarReto } from './reto.ts'
+import { autenticar, type CajasStore } from './servicio.ts'
 import { selloValido, volverValido } from './volver.ts'
 import { inicioDiaLima } from './estudio-tope.ts'
 import { RESUMEN_VACIO, diaDesde, respuestasRestantes, resumirConsumo, type FilaConsumo } from '../ia/alertas.ts'
@@ -101,6 +103,7 @@ const ERR_VINCULAR = 'No se pudo vincular la caja. Inténtalo de nuevo.'
 const ERR_SIN_CORREO = 'Primero escribe tu correo en la pantalla de la mini PC y luego vuelve a escanear el QR.'
 const ERR_SOLO_GOOGLE = 'Para vincular tu caja entra a trustfarm.online con tu cuenta de Google. Cierra sesión y usa «Continuar con Google».'
 const ERR_SIN_LIBRES = 'Tu cuenta no tiene cajas libres. Escríbenos si compraste otra mini PC.'
+const ERR_CODIGO_RENOVADO = 'Esta mini PC acaba de renovar su código.'
 const ERR_ENLACE = 'Este enlace no es válido. Vuelve a empezar desde la pantalla de tu mini PC.'
 const ERR_CAJA_AJENA = 'Esta mini PC está vinculada a otra cuenta. Cancela y entra con la cuenta dueña.'
 const errOtraCuenta = (correo: string) => `Esta caja es de otra cuenta (${enmascararCorreo(correo)}). Cierra sesión y entra con ese correo.`
@@ -211,37 +214,52 @@ export async function vincularCaja(deps: ClienteDeps, { userId, email, codigo }:
 }
 
 /**
- * «Continuar con Google» en la propia mini PC. Con `codigo` vincula (la cuenta de Google ya dice cuál es el correo, no hace falta
- * que lo escriban antes en la caja); con `caja` comprueba que sea del usuario. Devuelve a dónde volver con el pase firmado.
+ * «Continuar con Google» en la propia mini PC, primera parte (con la sesión del navegador). Para una caja propia devuelve el pase.
+ * Para vincular NO toca nada: solo firma un reto con la cuenta, dirigido a la propia máquina. Quien vincula es la caja (vincularDesdeCaja),
+ * porque un enlace puede llegarle por mensaje a cualquiera, y el reto solo le sirve a una caja que esté en la máquina de quien inició sesión.
  */
-export async function conectarCaja(deps: ClienteDeps, o: { userId: string; email?: string | null; codigo?: unknown; caja?: unknown; volver: unknown; sello: unknown }): Promise<Respuesta> {
+export async function conectarCaja(deps: ClienteDeps, o: { userId: string; email?: string | null; vincular?: unknown; caja?: unknown; volver: unknown; sello: unknown }): Promise<Respuesta> {
   if (!volverValido(o.volver) || !selloValido(o.sello)) return { status: 400, body: { error: ERR_ENLACE } }
-  const { store } = deps
-  let cajaId: string
+  const vuelta = (campo: string, valor: string): Respuesta => ({ status: 200, body: { url: `${o.volver}/conectado?${campo}=${encodeURIComponent(valor)}&sello=${encodeURIComponent(o.sello as string)}` } })
   if (typeof o.caja === 'string') {
     const c = await cajaPropia(deps, o.userId, o.caja)
     if (!c) return { status: 403, body: { error: ERR_CAJA_AJENA } }
-    cajaId = c.id
-  } else {
-    const correo = normalizarCorreo(o.email)
-    if (!correo) return { status: 403, body: { error: ERR_SOLO_GOOGLE } }
-    const normalizado = typeof o.codigo === 'string' ? normalizarCodigo(o.codigo) : null
-    const desde = new Date(deps.now().getTime() - VENTANA_FALLOS_MS).toISOString()
-    if ((await store.contarFallosVincular(o.userId, desde)) >= MAX_FALLOS) return { status: 429, body: { error: ERR_LIMITE } }
-    const registro = normalizado && !(await store.buscarCajaPreparadaPorCodigo(normalizado)) ? await store.buscarRegistroVinculable(normalizado) : null
-    if (registro && registro.emailValidado !== correo && !deps.env.vinculoAbierto) {
-      if (!(await store.hayCajaAsignada(correo))) {
-        await store.registrarFalloVincular(o.userId)
-        return { status: 409, body: { error: `La cuenta ${correo} no tiene una mini PC asignada. Entra con el correo que diste al comprar o escríbenos.` } }
-      }
-      if (!(await store.fijarEmailValidado(registro.id, correo))) return { status: 409, body: { error: 'Esta mini PC acaba de renovar su código. Cancela y vuelve a intentarlo.' } }
-    }
-    const r = await vincularCaja(deps, { userId: o.userId, email: correo, codigo: o.codigo })
-    if (r.status !== 200) return r
-    cajaId = (r.body as { caja: { id: string } }).caja.id
+    return vuelta('pase', firmarPase({ sub: o.userId, box: c.id, now: deps.now(), privateKeyB64: deps.env.paseKeyPrivada }))
   }
-  const pase = firmarPase({ sub: o.userId, box: cajaId, now: deps.now(), privateKeyB64: deps.env.paseKeyPrivada })
-  return { status: 200, body: { url: `${o.volver}/conectado?pase=${encodeURIComponent(pase)}&sello=${encodeURIComponent(o.sello)}` } }
+  if (o.vincular !== true) return { status: 400, body: { error: ERR_ENLACE } }
+  const correo = normalizarCorreo(o.email)
+  if (!correo) return { status: 403, body: { error: 'Esta mini PC se vincula con tu cuenta de Google. Cancela y entra con «Continuar con Google».' } }
+  return vuelta('reto', firmarReto({ sub: o.userId, email: correo, now: deps.now(), clave: deps.env.paseKeyPrivada }))
+}
+
+/** Segunda parte: la caja, autenticada con su secreto, canjea el reto y vincula SU código con la cuenta que inició sesión. */
+export async function vincularDesdeCaja(deps: ClienteDeps, cajas: Pick<CajasStore, 'buscarRegistro'>, o: { registroId: string; bearer: string | null | undefined; reto: unknown }): Promise<Respuesta> {
+  const registro = await autenticar(cajas, o.registroId, o.bearer)
+  if (!registro) return { status: 401, body: { error: 'No autorizado.' } }
+  const quien = verificarReto(o.reto, { now: deps.now(), clave: deps.env.paseKeyPrivada })
+  if (!quien) return { status: 400, body: { error: 'Ese intento venció.' } }
+  const correo = normalizarCorreo(quien.email)
+  if (!correo) return { status: 403, body: { error: ERR_SOLO_GOOGLE } }
+  const codigo = registro.codigo
+  if (!codigo) return { status: 409, body: { error: ERR_CODIGO_RENOVADO } }
+
+  const { store } = deps
+  const desde = new Date(deps.now().getTime() - VENTANA_FALLOS_MS).toISOString()
+  if ((await store.contarFallosVincular(quien.sub, desde)) >= MAX_FALLOS) return { status: 429, body: { error: ERR_LIMITE } }
+
+  // El correo lo dice Google: no hace falta que lo hayan escrito antes en la caja
+  const pendiente = (await store.buscarCajaPreparadaPorCodigo(codigo)) ? null : await store.buscarRegistroVinculable(codigo)
+  if (pendiente && pendiente.emailValidado !== correo && !deps.env.vinculoAbierto) {
+    if (!(await store.hayCajaAsignada(correo))) {
+      await store.registrarFalloVincular(quien.sub)
+      return { status: 409, body: { error: `La cuenta ${correo} no tiene una mini PC asignada. Entra con el correo que diste al comprar o escríbenos.` } }
+    }
+    if (!(await store.fijarEmailValidado(pendiente.id, correo))) return { status: 409, body: { error: ERR_CODIGO_RENOVADO } }
+  }
+  const r = await vincularCaja(deps, { userId: quien.sub, email: correo, codigo })
+  if (r.status !== 200) return r
+  const cajaId = (r.body as { caja: { id: string } }).caja.id
+  return { status: 200, body: { pase: firmarPase({ sub: quien.sub, box: cajaId, now: deps.now(), privateKeyB64: deps.env.paseKeyPrivada }) } }
 }
 
 export const direccion = (c: CajaCliente, deps: ClienteDeps) => `${c.slug}.${deps.env.dominio}`

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/app/lib/supabase/browser";
+import { siguienteSeguro } from "@/app/lib/siguiente";
 
 export default function AuthForm() {
   const params = useSearchParams();
@@ -13,8 +14,7 @@ export default function AuthForm() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: "error" | "ok"; text: string } | null>(null);
 
-  const rawNext = params.get("next") || "/estudio";
-  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/estudio";
+  const next = siguienteSeguro(params.get("next"));
   // La URL de vuelta va sin parámetros: Supabase solo acepta las que coinciden con su lista de
   // Redirect URLs; con "?next=…" no coincidía y mandaba a la Site URL (trustmind.online).
   // A dónde ir después del login viaja en una cookie corta que lee /auth/callback.

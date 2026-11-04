@@ -5,11 +5,11 @@ import { selloValido, urlCancelar, volverValido } from "@/app/lib/cajas/volver";
 
 const ERR_RED = "No se pudo conectar. Revisa tu internet e inténtalo de nuevo.";
 
-export default function Conectar({ correo, codigo, caja, volver, sello }: { correo: string; codigo: string; caja: string; volver: string; sello: string }) {
+export default function Conectar({ correo, vincular, caja, volver, sello }: { correo: string; vincular: boolean; caja: string; volver: string; sello: string }) {
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lanzado = useRef(false);
-  const valido = volverValido(volver) && selloValido(sello) && Boolean(codigo || caja);
+  const valido = volverValido(volver) && selloValido(sello) && Boolean(vincular || caja);
   const cancelar = urlCancelar(volver, sello);
 
   async function conectar() {
@@ -20,7 +20,7 @@ export default function Conectar({ correo, codigo, caja, volver, sello }: { corr
       const r = await fetch("/api/cajas/conectar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(caja ? { caja, volver, sello } : { codigo, volver, sello }),
+        body: JSON.stringify(caja ? { caja, volver, sello } : { vincular: true, volver, sello }),
       });
       const d = await r.json().catch(() => null);
       if (r.ok && typeof d?.url === "string" && d.url.startsWith(`${volver}/conectado?`)) {

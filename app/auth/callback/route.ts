@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerSupabase } from "@/app/lib/supabase/server";
 import { supabaseAdmin } from "@/app/lib/supabase/admin";
+import { siguienteSeguro } from "@/app/lib/siguiente";
 
 // Vuelta de Google OAuth / enlace de confirmación de email.
 export async function GET(req: Request) {
@@ -9,7 +10,7 @@ export async function GET(req: Request) {
   const code = url.searchParams.get("code");
   const jar = await cookies();
   const next = url.searchParams.get("next") || decodeURIComponent(jar.get("tf_next")?.value || "") || "/estudio";
-  const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/estudio";
+  const safeNext = siguienteSeguro(next);
   if (code) {
     const supabase = await createServerSupabase();
     const { data } = await supabase.auth.exchangeCodeForSession(code);
