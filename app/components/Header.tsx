@@ -14,8 +14,11 @@ export default async function Header() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
         <Logo />
         <nav className="flex items-center gap-1 text-sm sm:gap-2">
-          <Link href="/ideas" className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-mute hover:text-ink">
-            <Lightbulb size={15} className="text-brand-2" /> Ideas
+          <Link href="/ideas" aria-label="Ideas" className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-mute hover:text-ink sm:px-3">
+            <Lightbulb size={15} className="text-brand-2" /> <span className="hidden sm:inline">Ideas</span>
+          </Link>
+          <Link href="/granjas" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink md:block">
+            Granjas
           </Link>
           {user ? (
             <>
@@ -59,7 +62,7 @@ export default async function Header() {
                   Mini PC
                 </Link>
               )}
-              <Link href="/entrar" className="rounded-lg px-3 py-2 text-mute hover:text-ink">
+              <Link href="/entrar" className="rounded-lg px-2 py-2 text-mute hover:text-ink sm:px-3">
                 Entrar
               </Link>
               <Link href="/entrar?modo=registro" className="btn-primary !py-2">

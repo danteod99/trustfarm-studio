@@ -153,8 +153,9 @@ function SectionHead({ eyebrow, title, sub }: { eyebrow: string; title: string; 
 
 export default async function GranjasPage() {
   const user = await getUser();
-  const cta = user ? "/granja" : "/entrar?modo=registro&next=/granja";
-  const ctaTexto = user ? "Ir a Modo Granja" : "Crear cuenta gratis";
+  // Hasta que exista /granja (Modo Granja), el usuario con sesión va al estudio.
+  const cta = user ? "/estudio" : "/entrar?modo=registro&next=/estudio";
+  const ctaTexto = user ? "Ir al estudio" : "Crear cuenta gratis";
 
   return (
     <div className="overflow-x-clip">
