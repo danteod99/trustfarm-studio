@@ -167,6 +167,34 @@ export default function Home() {
         <p className="mt-4 text-center text-xs text-mute">Todo lo que ves en esta página se generó con {BRAND.name}.</p>
       </section>
 
+      {/* Modo Granja → /granjas */}
+      <section className="mx-auto mt-16 max-w-6xl px-4">
+        <Reveal>
+          <Link
+            href="/granjas"
+            className="card group grid items-center gap-6 overflow-hidden bg-gradient-to-br from-brand/15 to-panel p-6 transition hover:border-brand/60 sm:grid-cols-[auto_1fr_auto] sm:p-8"
+          >
+            <div className="flex -space-x-6">
+              {["/showcase/granja-iphones.jpg", "/showcase/ltx-granja.jpg", "/showcase/idea-estudio-40-iphones.jpg"].map((src, i) => (
+                <div key={src} className={`relative aspect-[9/16] w-16 overflow-hidden rounded-lg border border-line shadow-xl sm:w-20 ${i === 1 ? "z-10 -translate-y-2" : ""}`}>
+                  <Image src={src} alt="" fill sizes="80px" className="object-cover" />
+                </div>
+              ))}
+            </div>
+            <div>
+              <p className="eyebrow !text-brand-2">Nuevo · Modo Granja</p>
+              <h2 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Un video distinto para cada cuenta de tu granja</h2>
+              <p className="mt-2 text-sm text-mute">
+                Generas 1 a 5 videos y salen 100 versiones únicas, cada una con su propio gancho. Descarga por carpeta de cuenta.
+              </p>
+            </div>
+            <span className="btn-primary !px-5 !py-3">
+              Ver Modo Granja <ArrowRight size={16} className="transition group-hover:translate-x-1" />
+            </span>
+          </Link>
+        </Reveal>
+      </section>
+
       {/* Ideas */}
       <section className="mx-auto mt-24 max-w-6xl px-4">
         <SectionHead
