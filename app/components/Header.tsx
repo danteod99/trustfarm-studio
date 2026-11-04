@@ -28,6 +28,9 @@ export default async function Header() {
               <Link href="/flujos" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink sm:block">
                 Flujos
               </Link>
+              <Link href="/editar" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink sm:block">
+                Editar
+              </Link>
               <Link href="/cajas" className="rounded-lg px-2 py-2 text-mute hover:text-ink sm:px-3">
                 Mis cajas
               </Link>
