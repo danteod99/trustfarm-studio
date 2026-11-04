@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CalendarClock, CheckCircle2, Loader2, Repeat, ShieldCheck } from "lucide-react";
-import { PACKS, PLAN } from "@/app/lib/catalog";
+import { PACKS, PLAN, getPack } from "@/app/lib/catalog";
+import { eventoStudio } from "@/app/lib/pixel";
 
 interface Me {
   balance: number;
@@ -57,8 +58,10 @@ export default function Credits() {
     setError(null);
     const r = await fetch(path, { method: "POST" });
     const d = await r.json().catch(() => ({}));
-    if (d.url) window.location.href = d.url;
-    else {
+    if (d.url) {
+      if (key === "plan") eventoStudio("InitiateCheckout", { content_name: PLAN.name, value: PLAN.priceUsd, currency: "USD" });
+      window.location.href = d.url;
+    } else {
       setError(d.error || "No se pudo continuar.");
       setBuying(null);
     }
@@ -77,7 +80,11 @@ export default function Credits() {
       body: JSON.stringify({ pack }),
     });
     const d = await r.json();
-    if (d.url) window.location.href = d.url;
+    if (d.url) {
+      const p = getPack(pack);
+      if (p) eventoStudio("InitiateCheckout", { content_name: `Paquete ${p.name}`, value: p.priceUsd, currency: "USD" });
+      window.location.href = d.url;
+    }
     else {
       setError(d.error || "No se pudo iniciar el pago.");
       setBuying(null);

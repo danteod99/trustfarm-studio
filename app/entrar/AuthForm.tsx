@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/app/lib/supabase/browser";
 import { siguienteSeguro } from "@/app/lib/siguiente";
+import { eventoStudio } from "@/app/lib/pixel";
 
 export default function AuthForm() {
   const params = useSearchParams();
@@ -42,6 +43,7 @@ export default function AuthForm() {
         password,
         options: { emailRedirectTo: callback(), data: { signup_source: "studio" } },
       });
+      if (!error && data.user && (data.user.identities?.length ?? 0) > 0) eventoStudio("CompleteRegistration", { content_name: "Cuenta TrustFarm Studio" });
       if (error) {
         setMsg({ type: "error", text: error.message.includes("registered") ? "Ese email ya tiene cuenta. Entra con tu contraseña." : error.message });
       } else if (data.session) {

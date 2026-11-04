@@ -2,6 +2,8 @@ import type Stripe from "stripe";
 import { stripe } from "@/app/lib/stripe";
 import { PLAN, getPack } from "@/app/lib/catalog";
 import { addCredits } from "@/app/lib/credits";
+import { enviarEventoStudio } from "@/app/lib/pixel-server";
+import { SITE_URL } from "@/app/lib/brand";
 import { decidirRama, procesarSesionMinipc } from "@/app/lib/minipc-pedidos";
 import { pedidosStoreSupabase } from "@/app/lib/minipc-store-supabase";
 import { saveSub, subFields } from "@/app/lib/subscription";
@@ -88,6 +90,15 @@ export async function POST(req: Request) {
       console.error("[stripe] no se pudo acreditar:", e);
       return new Response("credit failed", { status: 500 }); // Stripe reintenta
     }
+    // Pixel: compra real con monto (event_id = sesión de Stripe, así un reintento no duplica).
+    await enviarEventoStudio({
+      evento: "Purchase",
+      eventId: `stripe:${session.id}`,
+      url: `${SITE_URL}/creditos`,
+      customData: { value: pack.priceUsd, currency: "USD", content_name: `Paquete ${pack.name}` },
+      email: session.customer_details?.email,
+      externalId: userId,
+    });
   }
 
   return Response.json({ received: true });
@@ -112,6 +123,13 @@ async function invoicePaid(inv: Stripe.Invoice) {
       billing_reason: inv.billing_reason,
     });
     await saveSub(userId, subFields(sub));
+    // Pixel: solo la primera factura cuenta como alta (las renovaciones no vienen de un anuncio).
+    if (inv.billing_reason === "subscription_create") {
+      const base = { url: `${SITE_URL}/creditos`, email: inv.customer_email, externalId: userId };
+      const customData = { value: inv.amount_paid / 100, currency: (inv.currency || "usd").toUpperCase(), content_name: PLAN.name };
+      await enviarEventoStudio({ ...base, evento: "Subscribe", eventId: `stripe-sub:${inv.id}`, customData });
+      await enviarEventoStudio({ ...base, evento: "Purchase", eventId: `stripe:${inv.id}`, customData });
+    }
   } catch (e) {
     console.error("[stripe] factura del plan:", e);
     return new Response("credit failed", { status: 500 }); // Stripe reintenta

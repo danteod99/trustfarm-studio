@@ -28,6 +28,7 @@ import LightRays from "@/app/components/fx/LightRays";
 import StarBorder from "@/app/components/fx/StarBorder";
 import DecryptedText from "@/app/components/fx/DecryptedText";
 import MultiplicarDemo from "./MultiplicarDemo";
+import { EventoAlVer } from "@/app/components/PixelStudio";
 
 const TITULO = "Modo Granja: un video distinto para cada cuenta de tu granja";
 const DESCRIPCION =
@@ -160,6 +161,7 @@ export default async function GranjasPage() {
 
   return (
     <div className="overflow-x-clip">
+      <EventoAlVer evento="ViewContent" datos={{ content_name: "Modo Granja" }} />
       {/* Hero */}
       <section className="relative">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[760px] opacity-70">
