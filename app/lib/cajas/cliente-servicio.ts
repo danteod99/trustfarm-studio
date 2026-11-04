@@ -4,8 +4,10 @@ import { randomInt } from 'node:crypto'
 import { normalizarCodigo } from './codigo.ts'
 import { enmascararCorreo, normalizarCorreo } from './correo.ts'
 import { firmarPase } from './pase.ts'
+import { inicioDiaLima } from './estudio-tope.ts'
+import { RESUMEN_VACIO, diaDesde, respuestasRestantes, resumirConsumo, type FilaConsumo } from '../ia/alertas.ts'
 
-export interface CajaCliente { id: string; ownerId: string | null; nombre: string; slug: string; tunnelId: string; lastSeen: string | null; version?: string | null; creadaEn?: string | null; topeDiario?: number; etiqueta?: string | null; activada?: boolean; /** Administrador que la creó en fábrica (null/ausente = flujo antiguo de vincular con código). */ creadaPor?: string | null; /** Correo de la cuenta a la que va dirigida (null = sin asignar). */ emailAsignado?: string | null }
+export interface CajaCliente { id: string; ownerId: string | null; nombre: string; slug: string; tunnelId: string; lastSeen: string | null; version?: string | null; creadaEn?: string | null; topeDiario?: number; etiqueta?: string | null; activada?: boolean; /** Administrador que la creó en fábrica (null/ausente = flujo antiguo de vincular con código). */ creadaPor?: string | null; /** Correo de la cuenta a la que va dirigida (null = sin asignar). */ emailAsignado?: string | null; iaBloqueada?: boolean; topeDiarioIa?: number }
 
 export type ResultadoVincular =
   | { ok: true; cajaId: string }
@@ -24,6 +26,11 @@ export interface ClienteStore {
     Promise<{ ok: true; cajaId: string } | { ok: false; motivo: 'codigo_invalido' | 'sin_caja_asignada' | 'error' }>
   asignarEmail(cajaId: string, email: string): Promise<void>
   contarCajasConEmail(email: string): Promise<number>
+  /** Filas de consumo de IA de esas cajas desde ese día (YYYY-MM-DD). */
+  consumoIa(ids: string[], desdeDia: string): Promise<FilaConsumo[]>
+  saldoDe(userId: string): Promise<number>
+  /** Cambia bloqueo y tope de la IA; false si la caja no existe. */
+  fijarIa(cajaId: string, o: { bloqueada?: boolean; topeIa?: number }): Promise<boolean>
   /** Cuentas registradas cuyo correo contiene el texto (máximo 8). */
   buscarCuentas(texto: string): Promise<{ id: string; email: string; con_google: boolean }[]>
   /** El correo con que se vinculará esa cuenta (el de Google si lo tiene); null si la cuenta no existe. */
@@ -203,15 +210,30 @@ export function encendida(c: CajaCliente, deps: ClienteDeps): boolean {
   return Number.isFinite(t) && deps.now().getTime() - t <= ENCENDIDA_MS
 }
 
+const redondear = (n: number) => Math.round(n * 10) / 10
+
 export async function listarMisCajas(deps: ClienteDeps, { userId }: { userId: string }): Promise<Respuesta> {
   const cajas = (await deps.store.listarCajas(userId)).filter(c => c.ownerId === userId)
+  const hoy = inicioDiaLima(deps.now()).toISOString().slice(0, 10)
+  const [filas, saldo] = await Promise.all([
+    cajas.length ? deps.store.consumoIa(cajas.map(c => c.id), diaDesde(hoy)) : Promise.resolve([]),
+    deps.store.saldoDe(userId),
+  ])
+  const resumen = resumirConsumo(filas, hoy)
+  const deLaCuenta = Object.values(resumen).reduce((t, r) => ({ creditosMes: t.creditosMes + r.creditosMes, solicitudesMes: t.solicitudesMes + r.solicitudesMes }), { creditosMes: 0, solicitudesMes: 0 })
   return {
     status: 200,
     body: {
-      cajas: cajas.map(c => ({
-        id: c.id, nombre: c.nombre, direccion: direccion(c, deps),
-        estado: encendida(c, deps) ? 'encendida' : 'apagada', ultima_senal: c.lastSeen,
-      })),
+      saldo,
+      ia_respuestas_restantes: respuestasRestantes(saldo, deLaCuenta),
+      cajas: cajas.map(c => {
+        const r = resumen[c.id] ?? RESUMEN_VACIO
+        return {
+          id: c.id, nombre: c.nombre, direccion: direccion(c, deps),
+          estado: encendida(c, deps) ? 'encendida' : 'apagada', ultima_senal: c.lastSeen,
+          ia_creditos_hoy: redondear(r.creditosHoy), ia_creditos_mes: redondear(r.creditosMes),
+        }
+      }),
     },
   }
 }

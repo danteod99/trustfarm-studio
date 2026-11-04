@@ -1,5 +1,6 @@
 // Dependencias reales del Estudio para la caja (Supabase y el motor de generación de Studio).
 // Perezosas: se construyen dentro de la petición para que `next build` no falle si faltan variables.
+import { MODELO_VIDEO } from "@/app/lib/ia/pasarela";
 import { supabaseAdmin } from "../supabase/admin";
 import { getBalance } from "../credits";
 import { MODELS, available, creditCost, getModel, validOptions, type Capacity, type ModelDef } from "../catalog";
@@ -49,7 +50,10 @@ export function estudioDepsReales(): EstudioDeps | null {
       async gastoHoy(cajaId, desdeIso) {
         const { data, error } = await db().rpc("caja_gasto_hoy", { p_caja: cajaId, p_desde: desdeIso });
         if (error) throw new Error("No se pudo leer el gasto de la caja.");
-        return Number(data) || 0;
+        // El editor de video con IA (Sonnet) cuenta en este mismo tope
+        const { data: video, error: e2 } = await db().rpc("caja_ia_gasto_hoy", { p_caja: cajaId, p_dia: desdeIso.slice(0, 10), p_modelo: MODELO_VIDEO });
+        if (e2) throw new Error("No se pudo leer el gasto de la caja.");
+        return (Number(data) || 0) + (Number(video) || 0) / 1_000_000;
       },
       async tomarCandado(cajaId) {
         // 150 s: lo que dura la ruta generar (maxDuration 120 s) más un margen

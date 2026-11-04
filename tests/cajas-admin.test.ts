@@ -46,7 +46,7 @@ test('paginaAdminCajas: justo 100 no marca hay_mas; página vacía', async () =>
 test('paginaAdminCajas: forma de salida sin tunnel_id y página inválida cae a 0', async () => {
   const { deps } = conCajas(1)
   const p = await paginaAdminCajas(deps, -3)
-  assert.deepEqual(Object.keys(p.cajas[0]).sort(), ['activada', 'asignacion', 'direccion', 'email_asignado', 'estado', 'etiqueta', 'gastado_hoy', 'id', 'nombre', 'owner_id', 'tope_diario', 'ultima_senal', 'version', 'vinculada_en'])
+  assert.deepEqual(Object.keys(p.cajas[0]).sort(), ['activada', 'asignacion', 'direccion', 'email_asignado', 'estado', 'etiqueta', 'gastado_hoy', 'ia_alertas', 'ia_bloqueada', 'ia_costo_mes_usd', 'ia_creditos_mes', 'id', 'nombre', 'owner_id', 'tope_diario', 'tope_diario_ia', 'ultima_senal', 'version', 'vinculada_en'])
   assert.equal(p.cajas[0].direccion, 's0.cajas.test')
   assert.equal(p.cajas[0].estado, 'apagada')
   assert.ok(!JSON.stringify(p).includes('TUNEL-SECRETO'))

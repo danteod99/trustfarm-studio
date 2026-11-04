@@ -3,10 +3,12 @@
 import { supabaseAdmin } from '../supabase/admin'
 import type { CajaCliente, ClienteStore } from './cliente-servicio'
 import { correoDeGoogle } from './correo'
+import { getBalance } from '../credits'
+import type { FilaConsumo } from '../ia/alertas'
 
-const COLS = 'id, owner_id, nombre, slug, tunnel_id, last_seen, version, created_at, tope_diario, etiqueta, creada_por, email_asignado'
-type Fila = { id: string; owner_id: string | null; etiqueta?: string | null; nombre: string; slug: string; tunnel_id: string; last_seen: string | null; version?: string | null; created_at?: string | null; tope_diario?: number | null; creada_por?: string | null; email_asignado?: string | null }
-const mapear = (f: Fila): CajaCliente => ({ id: f.id, ownerId: f.owner_id, nombre: f.nombre, slug: f.slug, tunnelId: f.tunnel_id, lastSeen: f.last_seen ?? null, version: f.version ?? null, creadaEn: f.created_at ?? null, topeDiario: f.tope_diario ?? undefined, etiqueta: f.etiqueta ?? null, creadaPor: f.creada_por ?? null, emailAsignado: f.email_asignado ?? null })
+const COLS = 'id, owner_id, nombre, slug, tunnel_id, last_seen, version, created_at, tope_diario, etiqueta, creada_por, email_asignado, ia_bloqueada, tope_diario_ia'
+type Fila = { id: string; owner_id: string | null; etiqueta?: string | null; nombre: string; slug: string; tunnel_id: string; last_seen: string | null; version?: string | null; created_at?: string | null; tope_diario?: number | null; creada_por?: string | null; email_asignado?: string | null; ia_bloqueada?: boolean | null; tope_diario_ia?: number | null }
+const mapear = (f: Fila): CajaCliente => ({ id: f.id, ownerId: f.owner_id, nombre: f.nombre, slug: f.slug, tunnelId: f.tunnel_id, lastSeen: f.last_seen ?? null, version: f.version ?? null, creadaEn: f.created_at ?? null, topeDiario: f.tope_diario ?? undefined, etiqueta: f.etiqueta ?? null, creadaPor: f.creada_por ?? null, emailAsignado: f.email_asignado ?? null, iaBloqueada: f.ia_bloqueada ?? false, topeDiarioIa: f.tope_diario_ia ?? undefined })
 
 export function clienteStoreSupabase(): ClienteStore {
   const db = supabaseAdmin()
@@ -50,6 +52,20 @@ export function clienteStoreSupabase(): ClienteStore {
     async asignarEmail(cajaId, email) {
       const { error } = await db.from('cajas').update({ email_asignado: email }).eq('id', cajaId)
       if (error) throw new Error('No se pudo guardar el correo.')
+    },
+    async consumoIa(ids, desdeDia) {
+      const { data, error } = await db.from('caja_ia_consumo').select('caja_id, dia, modelo, solicitudes, costo_microusd, creditos_micro, cambios_ip').in('caja_id', ids).gte('dia', desdeDia)
+      if (error) throw new Error('No se pudo leer el consumo.')
+      return ((data ?? []) as FilaConsumo[]).map((f) => ({ ...f, solicitudes: Number(f.solicitudes), costo_microusd: Number(f.costo_microusd), creditos_micro: Number(f.creditos_micro), cambios_ip: Number(f.cambios_ip) }))
+    },
+    saldoDe: getBalance,
+    async fijarIa(cajaId, o) {
+      const cambios: { ia_bloqueada?: boolean; tope_diario_ia?: number } = {}
+      if (o.bloqueada !== undefined) cambios.ia_bloqueada = o.bloqueada
+      if (o.topeIa !== undefined) cambios.tope_diario_ia = o.topeIa
+      const { data, error } = await db.from('cajas').update(cambios).eq('id', cajaId).select('id')
+      if (error) throw new Error('No se pudo guardar.')
+      return (data?.length ?? 0) > 0
     },
     async buscarCuentas(texto) {
       const { data, error } = await db.rpc('caja_buscar_cuentas', { p_texto: texto })

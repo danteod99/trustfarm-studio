@@ -38,6 +38,9 @@ export function crearClienteMem(ahora: { t: Date }, opts: { vinculoAbierto?: boo
     // Cuentas registradas (buscador del panel de administración)
     cuentas: [] as { id: string; email: string; con_google: boolean }[],
     busquedas: [] as string[],
+    // IA: consumo por caja y saldo por cuenta
+    consumo: [] as import('../app/lib/ia/alertas.ts').FilaConsumo[],
+    saldos: {} as Record<string, number>,
   }
   let n = 0
   const store: ClienteStore = {
@@ -62,6 +65,15 @@ export function crearClienteMem(ahora: { t: Date }, opts: { vinculoAbierto?: boo
       if (m.asignarFalla) throw new Error('boom')
       const c = m.cajas.find((x) => x.id === cajaId)
       if (c) c.emailAsignado = email
+    },
+    async consumoIa(ids, desdeDia) { return m.consumo.filter((f) => ids.includes(f.caja_id) && f.dia >= desdeDia) },
+    async saldoDe(userId) { return m.saldos[userId] ?? 0 },
+    async fijarIa(cajaId, o) {
+      const c = m.cajas.find((x) => x.id === cajaId)
+      if (!c) return false
+      if (o.bloqueada !== undefined) c.iaBloqueada = o.bloqueada
+      if (o.topeIa !== undefined) c.topeDiarioIa = o.topeIa
+      return true
     },
     async contarCajasConEmail(email) { return m.cajas.filter((c) => c.emailAsignado === email).length },
     async buscarCuentas(texto) { m.busquedas.push(texto); return m.cuentas.filter((c) => c.email.includes(texto.toLowerCase())) },
