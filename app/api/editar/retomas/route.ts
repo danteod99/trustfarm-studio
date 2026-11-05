@@ -1,5 +1,5 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { getUser, UNAUTHORIZED } from "@/app/lib/auth";
+import { claudeConTope, topeAbort } from "@/app/lib/claude-tope";
 import { cobrar } from "@/app/lib/editar-cobro";
 import { EDITAR_PRECIOS } from "@/app/lib/editar";
 
@@ -8,7 +8,8 @@ import { EDITAR_PRECIOS } from "@/app/lib/editar";
 //   2) Claude sobre la transcripción numerada (retomas más separadas, falsos comienzos,
 //      autocorrecciones) + condensado opcional de ideas redundantes.
 // Devuelve rangos de TIEMPO a eliminar; el navegador corta con ffmpeg.wasm.
-// Retomas + condensado, cada uno con hasta 2 intentos de 100 s: el reembolso tiene que alcanzar a correr.
+// Retomas + condensado, con hasta 2 intentos de 100 s cada uno, superarían maxDuration: claudeConTope
+// corta antes para que el reembolso siempre alcance a correr.
 export const maxDuration = 300;
 
 interface Word { word: string; start: number; end: number }
@@ -59,9 +60,9 @@ const RETAKE_SCHEMA = {
   additionalProperties: false,
 };
 
-async function claudeCuts(words: Word[], prompt: string, anthropic: Anthropic): Promise<IdxCut[]> {
+async function claudeCuts(words: Word[], prompt: string, crear: ReturnType<typeof claudeConTope>): Promise<IdxCut[]> {
   const numbered = words.map((w, i) => `[${i}]${w.word}`).join(" ");
-  const resp = await anthropic.messages.create({
+  const resp = await crear({
     model: "claude-sonnet-5",
     max_tokens: 8000,
     output_config: { format: { type: "json_schema", schema: RETAKE_SCHEMA } },
@@ -145,14 +146,14 @@ export async function POST(req: Request) {
   const cobro = await cobrar(user, EDITAR_PRECIOS.retomas, "editar:retomas");
   if (cobro instanceof Response) return cobro;
 
-  const anthropic = new Anthropic({ apiKey: key, maxRetries: 1, timeout: 100_000 });
+  const crear = claudeConTope(key, topeAbort(maxDuration));
   let idx: IdxCut[] = basicos;
   let warning: string | null = null;
   let cost = cobro.amount;
   try {
-    idx = idx.concat(await claudeCuts(words, RETAKE_PROMPT, anthropic));
+    idx = idx.concat(await claudeCuts(words, RETAKE_PROMPT, crear));
     if (body.condense) {
-      try { idx = idx.concat(await claudeCuts(words, CONDENSE_PROMPT, anthropic)); } catch { /* opcional */ }
+      try { idx = idx.concat(await claudeCuts(words, CONDENSE_PROMPT, crear)); } catch { /* opcional */ }
     }
   } catch (e) {
     console.error("[editar/retomas] claude", e);

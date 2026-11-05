@@ -1,5 +1,5 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { getUser, UNAUTHORIZED } from "@/app/lib/auth";
+import { claudeConTope, topeAbort } from "@/app/lib/claude-tope";
 import { addCredits } from "@/app/lib/credits";
 import { cobrar } from "@/app/lib/editar-cobro";
 import { GANCHOS_POR_LOTE, hooksCost, normalizeHandle, parseNetwork, type HookSlot } from "@/app/lib/granja";
@@ -8,7 +8,8 @@ import { HOOKS_SCHEMA, IDIOMAS, generateHooks, type Idioma } from "@/app/lib/gra
 // Modo Granja: un gancho (≤ 8 palabras, va quemado arriba del video) + caption con 3–5 hashtags
 // por cada video de cada cuenta. Cobro por lote: 1 crédito cada 20 ganchos (mín. 1); se devuelve
 // lo que no se pudo escribir. El navegador llama en lotes de hasta 120 ganchos.
-// Hasta 2 intentos de 100 s y 2 rondas: el tope tiene que alcanzar para devolver lo no escrito.
+// Hasta 2 intentos de 100 s y 2 rondas superarían maxDuration: claudeConTope corta antes para que
+// siempre alcance a devolverse lo no escrito.
 export const maxDuration = 300;
 
 export async function POST(req: Request) {
@@ -49,9 +50,9 @@ export async function POST(req: Request) {
   const cobro = await cobrar(user, cost, "granja:ganchos", "granja");
   if (cobro instanceof Response) return cobro;
 
-  const anthropic = new Anthropic({ apiKey: key, maxRetries: 1, timeout: 100_000 });
+  const crear = claudeConTope(key, topeAbort(maxDuration));
   const call = async (prompt: string) => {
-    const resp = await anthropic.messages.create({
+    const resp = await crear({
       model: "claude-sonnet-5",
       max_tokens: 16000,
       output_config: { format: { type: "json_schema", schema: HOOKS_SCHEMA } },

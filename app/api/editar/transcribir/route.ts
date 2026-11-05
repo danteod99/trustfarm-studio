@@ -1,4 +1,5 @@
 import { getUser, UNAUTHORIZED } from "@/app/lib/auth";
+import { topeAbort } from "@/app/lib/claude-tope";
 import { cobrar } from "@/app/lib/editar-cobro";
 import { EDITAR_PRECIOS, MAX_AUDIO_BYTES } from "@/app/lib/editar";
 
@@ -37,6 +38,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { Authorization: `Bearer ${groqKey}` },
       body: groqForm,
+      signal: topeAbort(maxDuration), // si Groq se cuelga, el catch alcanza a reembolsar
     });
     if (!res.ok) {
       console.error("[editar/transcribir] groq", res.status, (await res.text().catch(() => "")).slice(0, 300));
