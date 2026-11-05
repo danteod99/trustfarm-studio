@@ -11,9 +11,10 @@ import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import VideoPicker from "@/app/editar/VideoPicker";
 import { MAX_AUDIO_BYTES } from "@/app/lib/editar";
 import {
-  buildAss, execLogged, extractAudioMp3, fmtMB, getVideoInfo, keepSegments, loadEngine, mapTime, mountFont,
-  onProgress, parseSilences, readBlob, resetEngine, safeDelete, selectExpr, writeInput,
-  type Range, type SubSegment, type SubWord,
+  buildAss, costoCortos, duracionTotal, execLogged, extractAudioMp3, fmtMB, getVideoInfo, guardarRetomas, guardarTranscripcion,
+  keepSegments, loadEngine, mapTime, mountFont, onProgress, parseSilences, readBlob, resetEngine, retomasGuardadas, safeDelete,
+  selectExpr, transcripcionGuardada, writeInput,
+  type CacheCortos, type Range, type SubSegment, type SubWord,
 } from "@/app/lib/video";
 
 const MAX_FILE_MB = 200;
@@ -36,10 +37,13 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const musicRef = useRef<HTMLInputElement>(null);
+  /** Transcripción y retomas ya pagadas de estas tomas: reintentar no las vuelve a cobrar. */
+  const pagadoRef = useRef<CacheCortos | null>(null);
 
   useEffect(() => () => { if (result?.url) URL.revokeObjectURL(result.url); }, [result]);
 
-  const cost = (cutRetakes || subsOn ? precios.transcripcion : 0) + (cutRetakes ? precios.retomas : 0);
+  const cost = costoCortos(precios, pagadoRef.current, files, { cutRetakes, subsOn, condense });
+  const yaPagado = !cost && costoCortos(precios, null, files, { cutRetakes, subsOn, condense }) > 0;
 
   const move = (i: number, d: -1 | 1) => setFiles((prev) => {
     const j = i + d;
@@ -55,15 +59,19 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
     const off = onProgress((r) => setPct((p) => Math.min(99, Math.max(p, Math.round(r * 100)))));
     let paid = false;
     try {
+      const infos = await Promise.all(files.map((f) => getVideoInfo(f)));
+      const W = infos[0].w, H = infos[0].h;
+      const dur = duracionTotal(infos.map((i) => i.dur));
+      // Cortes y subtítulos dependen de la duración: sin ella saldría un video vacío ya cobrado.
+      if (dur === null && (cutRetakes || cutSilences || subsOn)) {
+        throw new Error("Tu navegador no puede leer este video (suele pasar con MOV HEVC de iPhone). Conviértelo a MP4 H.264 o prueba en otro navegador. No se te cobró nada.");
+      }
+      const origDur = dur ?? 0;
       const { ffmpeg } = await loadEngine(setStatus);
-      const info = await getVideoInfo(files[0]);
-      const W = info.w, H = info.h;
-      let origDur = 0;
 
       if (files.length === 1) {
         setStatus("Cargando el video…");
         await writeInput(ffmpeg, "in.mp4", files[0]);
-        origDur = info.dur;
       } else {
         // Varias tomas: se normalizan al formato de la 1.ª y se unen en orden.
         const list: string[] = [];
@@ -77,7 +85,6 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
           if (code !== 0) throw new Error(`No se pudo preparar la toma ${i + 1}.`);
           await safeDelete(ffmpeg, `src${i}.mp4`);
           list.push(`file norm${i}.mp4`);
-          origDur += (await getVideoInfo(files[i])).dur;
         }
         await writeInput(ffmpeg, "concat.txt", list.join("\n") + "\n");
         const cc = await ffmpeg.exec(["-f", "concat", "-safe", "0", "-i", "concat.txt", "-c", "copy", "-y", "in.mp4"]);
@@ -88,7 +95,11 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
       // 1) Transcripción (para retomas y/o subtítulos)
       let words: SubWord[] = [];
       let segments: SubSegment[] = [];
-      if (cutRetakes || subsOn) {
+      const guardada = transcripcionGuardada(pagadoRef.current, files);
+      if ((cutRetakes || subsOn) && guardada) {
+        words = guardada.words;
+        segments = guardada.segments;
+      } else if (cutRetakes || subsOn) {
         setStatus("Transcribiendo con IA…");
         const audio = await extractAudioMp3(ffmpeg);
         if (!audio) throw new Error("No se pudo leer el audio del video.");
@@ -101,11 +112,16 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
         paid = true;
         words = d.words || [];
         segments = d.segments || [];
+        pagadoRef.current = guardarTranscripcion(pagadoRef.current, files, { words, segments });
       }
 
       // 2) Cortes: retomas (IA) + silencios (ffmpeg)
       const cuts: Range[] = [];
-      if (cutRetakes && words.length >= 4) {
+      const retomas = retomasGuardadas(pagadoRef.current, files, condense);
+      if (cutRetakes && retomas) {
+        cuts.push(...retomas.cuts);
+        if (retomas.warning) setWarning(retomas.warning);
+      } else if (cutRetakes && words.length >= 4) {
         setStatus("Buscando retomas y falsos comienzos…");
         const res = await fetch("/api/editar/retomas", {
           method: "POST",
@@ -113,7 +129,12 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
           body: JSON.stringify({ words, condense }),
         });
         const d = await res.json().catch(() => ({}));
-        if (res.ok) { cuts.push(...(d.cuts || [])); if (d.warning) setWarning(d.warning); }
+        if (res.ok) {
+          cuts.push(...(d.cuts || []));
+          if (d.warning) setWarning(d.warning);
+          if (d.cost > 0) paid = true;
+          pagadoRef.current = guardarRetomas(pagadoRef.current, files, condense, { cuts: d.cuts || [], warning: d.warning ?? null, cost: d.cost ?? 0 });
+        }
         else setWarning(`Retomas: ${d.error || "no disponibles"}. Se siguió sin cortarlas.`);
       }
       if (cutSilences) {
@@ -271,7 +292,7 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
           {running ? <><Loader2 size={16} className="animate-spin" /> Editando…</> : <><Scissors size={16} /> {files.length > 1 ? "Unir y editar" : "Editar video"}</>}
         </button>
         <span className="text-sm">
-          {cost ? <>Costo: <span className="font-semibold text-brand-2">{cost} créditos</span></> : <span className="font-semibold text-emerald-400">Gratis</span>}
+          {cost ? <>Costo: <span className="font-semibold text-brand-2">{cost} créditos</span></> : <span className="font-semibold text-emerald-400">{yaPagado ? "Ya pagado: no se cobra de nuevo" : "Gratis"}</span>}
         </span>
         {running && <span className="text-sm text-mute">{status}</span>}
       </div>

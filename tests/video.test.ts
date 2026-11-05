@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { assTime, assEscape, buildAss, captionLines } from '../app/lib/video/ass.ts'
-import { keepSegments, mapTime, parseSilences, selectExpr } from '../app/lib/video/cuts.ts'
+import { duracionTotal, keepSegments, mapTime, parseSilences, selectExpr } from '../app/lib/video/cuts.ts'
 import { PROFILES, getProfile, variationArgs, videoFilter, audioFilter } from '../app/lib/video/profiles.ts'
 
 test('assTime: formato H:MM:SS.CC', () => {
@@ -79,4 +79,16 @@ test('variationArgs: con logo usa filter_complex y overlay', () => {
   const fc = primary[primary.indexOf('-filter_complex') + 1]
   assert.match(fc, /\[1:v\]scale=200:-1\[wm\];\[bg\]\[wm\]overlay=30:main_h-overlay_h-30\[v\]/)
   assert.ok(primary.includes('0:a?'))
+})
+
+test('duracionTotal: suma las tomas', () => {
+  assert.equal(duracionTotal([10, 2.5]), 12.5)
+})
+
+test('duracionTotal: null si alguna toma no se pudo leer (no se suma a medias)', () => {
+  assert.equal(duracionTotal([0]), null)
+  assert.equal(duracionTotal([10, 0]), null)
+  assert.equal(duracionTotal([10, Infinity]), null)
+  assert.equal(duracionTotal([NaN]), null)
+  assert.equal(duracionTotal([]), null)
 })

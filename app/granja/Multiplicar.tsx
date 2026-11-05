@@ -83,6 +83,8 @@ export default function Multiplicar({ accounts, characters, goToAccounts }: { ac
   const [uniqueOk, setUniqueOk] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const cancelRef = useRef(false);
+  const runningRef = useRef(false);
+  const montadoRef = useRef(true);
   const zipsRef = useRef(zips);
   zipsRef.current = zips;
   const previewRef = useRef(preview);
@@ -96,9 +98,16 @@ export default function Multiplicar({ accounts, characters, goToAccounts }: { ac
     if (!manual) setPicked(new Set(accounts.filter((a) => netFilter === "all" || a.network === netFilter).map((a) => a.id)));
   }, [accounts, netFilter, manual]);
 
-  useEffect(() => () => {
-    zipsRef.current.forEach((z) => URL.revokeObjectURL(z.url));
-    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+  useEffect(() => {
+    montadoRef.current = true;
+    return () => {
+      montadoRef.current = false;
+      zipsRef.current.forEach((z) => URL.revokeObjectURL(z.url));
+      if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+      // Salir de la página corta el render: el motor es único y lo puede necesitar otra herramienta.
+      cancelRef.current = true;
+      if (runningRef.current) resetEngine();
+    };
   }, []);
 
   useEffect(() => {
@@ -197,6 +206,7 @@ export default function Multiplicar({ accounts, characters, goToAccounts }: { ac
     if (targets.length > MAX_FARM_ACCOUNTS) return setError(`Máximo ${MAX_FARM_ACCOUNTS} cuentas por lote.`);
     clearOutputs();
     setRunning(true); setError(null);
+    runningRef.current = true;
     cancelRef.current = false;
     const plan = buildPlan(targets.length, perAccount, bases.length);
     const parts = splitParts(plan, VIDEOS_POR_ZIP);
@@ -232,13 +242,14 @@ export default function Multiplicar({ accounts, characters, goToAccounts }: { ac
           sinceLoad++;
           return blob;
         } catch (e) {
-          if (attempt >= 1) throw e;
+          if (attempt >= 1 || cancelRef.current) throw e;
           console.warn("[granja] render falló, reinicio el motor y reintento:", e);
           await prepare();
         }
       }
     };
     const zipPart = async (outs: Output[], pi: number) => {
+      if (!montadoRef.current) return;
       setStatus(`Armando el ZIP${parts.length > 1 ? ` ${pi + 1} de ${parts.length}` : ""}…`);
       const entries: ZipEntry[] = [];
       const byAcc = new Map<number, Output[]>();
@@ -298,6 +309,7 @@ export default function Multiplicar({ accounts, characters, goToAccounts }: { ac
       setStatus(cancelRef.current ? `Cancelado: se guardaron ${count} videos en el ZIP.` : "¡Listo! Descarga tu ZIP.");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
+      if (!montadoRef.current) return; // salió de la página: el motor ya se descartó y puede estar en uso
       resetEngine();
       // Lo ya hecho no se pierde: se empaqueta lo que quedó en la parte en curso.
       if (outs.length) { try { await zipPart(outs, pi); } catch { /* sin memoria */ } }
@@ -308,6 +320,7 @@ export default function Multiplicar({ accounts, characters, goToAccounts }: { ac
       clearInterval(tick);
       setEta(0);
       setRunning(false);
+      runningRef.current = false;
     }
   };
 

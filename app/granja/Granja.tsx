@@ -76,11 +76,13 @@ export default function Granja() {
       {loadError && <div className="card mt-5 border-red-500/50 bg-red-500/5 p-4 text-sm text-red-300">{loadError}</div>}
 
       <div className="mt-6">
-        {tab === "cuentas" ? (
+        {tab === "cuentas" && (
           <Cuentas accounts={accounts} characters={characters} disabled={missingTable} onChange={setAccounts} reload={reload} />
-        ) : (
-          <Multiplicar accounts={accounts ?? []} characters={characters} goToAccounts={() => setTab("cuentas")} />
         )}
+        {/* Siempre montado: al cambiar de pestaña no se pierden videos, ganchos pagados, ZIP ni el render en curso. */}
+        <div className={tab === "multiplicar" ? "" : "hidden"}>
+          <Multiplicar accounts={accounts ?? []} characters={characters} goToAccounts={() => setTab("cuentas")} />
+        </div>
       </div>
     </div>
   );
