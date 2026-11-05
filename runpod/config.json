@@ -22,7 +22,7 @@
       },
       "loras_estilo": [
         {
-          "archivo": "dntfarm_zimage_turbo_v1.safetensors",
+          "archivo": "trust_granja_zimage_turbo_v1.safetensors",
           "palabra": "dntfarm",
           "fuerza": 1.0,
           "nodo_modelo": "28",
