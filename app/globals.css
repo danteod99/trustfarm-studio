@@ -67,3 +67,25 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee, .animate-float { animation: none; }
 }
+
+/* Muro de videos: columnas que suben y bajan sin parar (landing /personajes) */
+@keyframes col-up {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
+@keyframes col-down {
+  from { transform: translateY(-50%); }
+  to { transform: translateY(0); }
+}
+@utility animate-col-up {
+  animation: col-up 38s linear infinite;
+}
+@utility animate-col-down {
+  animation: col-down 44s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-col-up,
+  .animate-col-down {
+    animation: none;
+  }
+}
