@@ -1,10 +1,11 @@
 import LegalPage from "@/app/components/LegalPage";
+import { RESERVA_USD } from "@/app/lib/minipc";
 
 export const metadata = { title: "Política de reembolsos" };
 
 export default function Reembolsos() {
   return (
-    <LegalPage title="Política de reembolsos" updated="30 de octubre de 2026">
+    <LegalPage title="Política de reembolsos" updated="5 de noviembre de 2026">
       <h2>Generaciones fallidas</h2>
       <p>
         Si una generación no se completa por un error técnico, por tiempo de espera o por el filtro de seguridad del modelo,
@@ -29,6 +30,10 @@ export default function Reembolsos() {
       <p>
         Esta sección es solo para la compra de equipos TRUST Assistant (mini PC). La política de reembolso de los paquetes
         de créditos descrita arriba no cambia.
+      </p>
+      <p>
+        La reserva de ${RESERVA_USD} USD con la que separas tu equipo no es reembolsable si decides no completar la compra.
+        Solo la devolvemos si nosotros no podemos entregarte el equipo.
       </p>
       <p>
         El plazo y las condiciones de devolución del equipo los define el dueño de TRUST y se publicarán aquí. Mientras

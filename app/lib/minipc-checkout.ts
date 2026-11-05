@@ -44,7 +44,7 @@ export function armarSesionMinipc(o: {
           unit_amount: reservaCentavos(),
           product_data: {
             name: `Reserva TRUST Assistant — Plan ${plan.nombre}`,
-            description: `Separa tu equipo (${plan.equipo} · ${plan.memoria}). Los $${RESERVA_USD} se descuentan del precio de $${plan.precioUsd}: el saldo de $${saldoUsd(plan)} se paga al coordinar la entrega (${ENTREGA_TEXTO}). Mensualidad de $${plan.mensualUsd} desde que activas tu caja.`,
+            description: `Separa tu equipo (${plan.equipo} · ${plan.memoria}). Los $${RESERVA_USD} se descuentan del precio de $${plan.precioUsd}: el saldo de $${saldoUsd(plan)} se paga al coordinar la entrega (${ENTREGA_TEXTO}). Reserva no reembolsable. Mensualidad de $${plan.mensualUsd} desde que activas tu caja.`,
           },
         },
       },

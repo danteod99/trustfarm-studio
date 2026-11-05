@@ -27,7 +27,7 @@ export default function PlanCard({ plan, ventaAbierta }: { plan: Plan; ventaAbie
       <p className="mt-1 text-xs text-mute">La mensualidad empieza cuando activas tu caja</p>
       <p className="mt-3 rounded-lg border border-brand/40 bg-brand/10 px-3 py-2 text-sm">
         Resérvala hoy con <strong>{usd.format(RESERVA_USD)}</strong>. Se descuentan del precio: el saldo de{" "}
-        {usd.format(saldoUsd(plan))} lo pagas al coordinar la entrega.
+        {usd.format(saldoUsd(plan))} lo pagas al coordinar la entrega. La reserva no es reembolsable.
       </p>
 
       <dl className="mt-5 space-y-2 text-sm">

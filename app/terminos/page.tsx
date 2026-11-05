@@ -6,7 +6,7 @@ export const metadata = { title: "Términos y condiciones" };
 
 export default function Terminos() {
   return (
-    <LegalPage title="Términos y condiciones" updated="30 de octubre de 2026">
+    <LegalPage title="Términos y condiciones" updated="5 de noviembre de 2026">
       <p>
         {BRAND.name} ({BRAND.domain}) es un servicio operado por {BRAND.legalEntity} que permite generar imágenes y videos
         mediante modelos de inteligencia artificial de terceros. Al crear una cuenta aceptas estos términos.
@@ -69,7 +69,8 @@ export default function Terminos() {
         <li>Los precios de los equipos y de la mensualidad se muestran y se cobran en dólares americanos (USD).</li>
         <li>
           Por ahora los equipos se venden con una reserva de ${RESERVA_USD} USD, que separa tu equipo y se descuenta de su
-          precio. El saldo se paga al coordinar la entrega.
+          precio. El saldo se paga al coordinar la entrega. La reserva no es reembolsable si decides no completar la
+          compra; solo la devolvemos si nosotros no podemos entregarte el equipo.
         </li>
         <li>
           Solo enviamos a Perú. La entrega estimada es de {ENTREGA_TEXTO} después de pagado el saldo; es una
