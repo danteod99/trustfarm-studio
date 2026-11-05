@@ -35,6 +35,7 @@ create index if not exists soporte_tickets_caja on soporte_tickets (caja_id, own
 create index if not exists soporte_tickets_estado on soporte_tickets (estado, creado_en desc);
 comment on table soporte_tickets is 'empleado-ia/cajas';
 alter table soporte_tickets enable row level security; -- sin políticas: solo service_role
+revoke all on table soporte_tickets from anon, authenticated;
 
 create table if not exists soporte_permisos (
   id            uuid primary key default gen_random_uuid(),
@@ -54,6 +55,7 @@ create unique index if not exists soporte_permisos_uno_abierto on soporte_permis
 create index if not exists soporte_permisos_ticket on soporte_permisos (ticket_id);
 comment on table soporte_permisos is 'empleado-ia/cajas';
 alter table soporte_permisos enable row level security; -- sin políticas: solo service_role
+revoke all on table soporte_permisos from anon, authenticated;
 
 create table if not exists soporte_accesos (
   id         uuid primary key default gen_random_uuid(),
@@ -66,5 +68,6 @@ create table if not exists soporte_accesos (
 create index if not exists soporte_accesos_permiso on soporte_accesos (permiso_id);
 comment on table soporte_accesos is 'empleado-ia/cajas';
 alter table soporte_accesos enable row level security; -- sin políticas: solo service_role
+revoke all on table soporte_accesos from anon, authenticated;
 
 commit;

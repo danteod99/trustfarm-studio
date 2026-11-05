@@ -36,4 +36,7 @@ test('RLS activado y sin políticas públicas', () => {
     assert.match(sql, new RegExp(`alter table ${t} enable row level security`))
   }
   assert.doesNotMatch(sql, /create policy/i)
+  for (const t of ['soporte_tickets', 'soporte_permisos', 'soporte_accesos']) {
+    assert.match(sql, new RegExp(`revoke all on table ${t} from anon, authenticated`), `${t}: sin permisos para anon ni authenticated`)
+  }
 })
