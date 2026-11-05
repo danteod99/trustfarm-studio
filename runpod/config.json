@@ -23,10 +23,9 @@
       "loras_estilo": [
         {
           "archivo": "trust_granja_zimage_turbo_v1.safetensors",
-          "palabra": "dntfarm",
           "fuerza": 1.0,
           "nodo_modelo": "28",
-          "si": "dntfarm|granjas? de (celulares|iphones|tel[eé]fonos|m[oó]viles|smartphones|bots|cuentas)|(phone|box|bot|click)[ -]?farms?|(iphones|celulares|smartphones|tel[eé]fonos|m[oó]viles)[^.]{0,80}(en filas?|parados|de pie|cables? usb|rack|caja)|(caja|rack|fila|filas|pared|estante)[^.]{0,40}(iphones|celulares|smartphones|tel[eé]fonos|m[oó]viles)"
+          "si": "dntfarm|granjas? (de|con) (\\S+ ){0,2}(celulares|celus|iphones|tel[eé]fonos|m[oó]viles|smartphones|androids?|dispositivos|bots|cuentas|likes|clics)|\\b(phone|box|bot|click|device|mobile)[ -]?farm(s|ing)?\\b|(iphones|celulares|celus|smartphones|tel[eé]fonos|m[oó]viles)[^.]{0,80}(en filas?\\b|parados|cables? usb|\\bracks?\\b|conectados (a|por))|\\b(cajas?|racks?|filas? de|pared(es)? de|estantes?)\\b[^.]{0,30}(iphones|celulares|celus|smartphones|tel[eé]fonos|m[oó]viles)|\\b(walls?|rows?|racks?|shel(f|ves)) of (\\S+ ){0,2}(phones|smartphones|iphones|devices)|\\b(phones|smartphones|iphones)[^.]{0,60}(in (a )?rows?\\b|usb cables|on (shelves|racks|stands))"
         }
       ]
     },
