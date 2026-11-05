@@ -343,7 +343,7 @@ test('entrar_app y comando_ssh registran el acceso y entregan lo necesario', asy
   assert.equal(p.exp, Math.floor(T0.getTime() / 1000) + 60)
   assert.equal(p.vence, new Date(T0.getTime() + 30 * 60_000).toISOString())
   const ssh = (await e.admin('comando_ssh', { ticket_id: ticket.id })).body as any
-  assert.equal(ssh.comando, 'ssh -o ProxyCommand="cloudflared access ssh --hostname %h" -i ~/.ssh/trust-soporte empleado@soporte-abcd1234.cajas.test')
+  assert.equal(ssh.comando, 'ssh -o ProxyCommand="cloudflared access ssh --hostname %h" -i ~/.ssh/trust-soporte trust-soporte@soporte-abcd1234.cajas.test')
   assert.deepEqual(e.sop.m.accesos.map((a) => [a.nivel, a.quien]), [['app', 'dante@test.pe'], ['sistema', 'dante@test.pe']])
   const vista = ((await e.pedir('listar')).body as any).tickets[0]
   assert.equal(vista.accesos.length, 2)

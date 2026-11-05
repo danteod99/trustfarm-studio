@@ -333,7 +333,7 @@ export async function soporteAdmin(
       const p = await acceso(x.caja.id, x.t.id)
       if (!p || p.nivel !== 'sistema') return SIN_ACCESO()
       await deps.soporte.registrarAcceso({ permisoId: p.id, nivel: 'sistema', quien: o.quien, entroEn: deps.now().toISOString() })
-      const comando = `ssh -o ProxyCommand="cloudflared access ssh --hostname %h" -i ~/.ssh/trust-soporte empleado@soporte-${x.caja.slug}.${deps.env.dominio}`
+      const comando = `ssh -o ProxyCommand="cloudflared access ssh --hostname %h" -i ~/.ssh/trust-soporte trust-soporte@soporte-${x.caja.slug}.${deps.env.dominio}`
       return { status: 200, body: { comando } }
     }
     default:
