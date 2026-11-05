@@ -5,11 +5,15 @@ export const metadata = { title: "Política de privacidad" };
 
 export default function Privacidad() {
   return (
-    <LegalPage title="Política de privacidad" updated="31 de octubre de 2026">
+    <LegalPage title="Política de privacidad" updated="5 de noviembre de 2026">
       <h2>Qué datos guardamos</h2>
       <ul>
         <li>Tu email y datos de inicio de sesión.</li>
         <li>Las descripciones, imágenes que subes y los archivos que generas, para mostrarlos en tu galería.</li>
+        <li>
+          Las descripciones y resultados que generas, y cómo los usas (por ejemplo, si los descargas o los animas), para mejorar
+          la calidad de nuestros modelos. Para eso no usamos tu nombre ni tu email, y no los publicamos ni los vendemos.
+        </li>
         <li>Tu historial de créditos y compras. Los datos de tu tarjeta los procesa Stripe; nosotros no los vemos.</li>
       </ul>
       <h2>Con quién se comparten</h2>
