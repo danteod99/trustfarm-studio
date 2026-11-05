@@ -1,6 +1,6 @@
 import LegalPage from "@/app/components/LegalPage";
 import { BRAND } from "@/app/lib/brand";
-import { ENTREGA_TEXTO } from "@/app/lib/minipc";
+import { ENTREGA_TEXTO, RESERVA_USD } from "@/app/lib/minipc";
 
 export const metadata = { title: "Términos y condiciones" };
 
@@ -68,7 +68,11 @@ export default function Terminos() {
       <ul>
         <li>Los precios de los equipos y de la mensualidad se muestran y se cobran en dólares americanos (USD).</li>
         <li>
-          Solo enviamos a Perú. La entrega estimada es de {ENTREGA_TEXTO} después de confirmado el pago; es una
+          Por ahora los equipos se venden con una reserva de ${RESERVA_USD} USD, que separa tu equipo y se descuenta de su
+          precio. El saldo se paga al coordinar la entrega.
+        </li>
+        <li>
+          Solo enviamos a Perú. La entrega estimada es de {ENTREGA_TEXTO} después de pagado el saldo; es una
           estimación y no una fecha garantizada.
         </li>
         <li>La mensualidad corre desde que activas tu caja, no desde la fecha de compra.</li>

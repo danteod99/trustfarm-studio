@@ -2,7 +2,7 @@
 // Se ejecuta directo con Node (strip-types): imports relativos con .ts, sin enum.
 
 import type Stripe from 'stripe'
-import { getPlan, precioCentavos, PAISES_ENVIO, ENTREGA_TEXTO } from './minipc.ts'
+import { getPlan, reservaCentavos, saldoUsd, PAISES_ENVIO, ENTREGA_TEXTO, RESERVA_USD } from './minipc.ts'
 import type { Plan } from './minipc.ts'
 
 export type ResultadoCompra =
@@ -29,7 +29,7 @@ export function armarSesionMinipc(o: {
   siteUrl: string
 }): Stripe.Checkout.SessionCreateParams {
   const { plan, userId, email, siteUrl } = o
-  const metadata = { kind: 'minipc', plan_id: plan.id, user_id: userId }
+  const metadata = { kind: 'minipc', tipo: 'reserva', plan_id: plan.id, user_id: userId }
   // OJO: sin `allow_promotion_codes` ni `discounts`. Un cupón del 100 % deja la sesión en
   // payment_status 'no_payment_required' y el webhook no la guarda como pedido.
   const sesion: Stripe.Checkout.SessionCreateParams = {
@@ -41,10 +41,10 @@ export function armarSesionMinipc(o: {
         quantity: 1,
         price_data: {
           currency: 'usd',
-          unit_amount: precioCentavos(plan),
+          unit_amount: reservaCentavos(),
           product_data: {
-            name: `TRUST Assistant — Plan ${plan.nombre}`,
-            description: `${plan.equipo} · ${plan.memoria}. Mensualidad de $${plan.mensualUsd} desde que activas tu caja. Entrega en ${ENTREGA_TEXTO}.`,
+            name: `Reserva TRUST Assistant — Plan ${plan.nombre}`,
+            description: `Separa tu equipo (${plan.equipo} · ${plan.memoria}). Los $${RESERVA_USD} se descuentan del precio de $${plan.precioUsd}: el saldo de $${saldoUsd(plan)} se paga al coordinar la entrega (${ENTREGA_TEXTO}). Mensualidad de $${plan.mensualUsd} desde que activas tu caja.`,
           },
         },
       },

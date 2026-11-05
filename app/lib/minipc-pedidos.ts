@@ -2,7 +2,7 @@
 // Se ejecuta directo con Node (strip-types): imports relativos con .ts, sin enum.
 // No importa `stripe`: usa tipos mínimos propios.
 
-import { getPlan, precioCentavos, PAISES_ENVIO } from './minipc.ts'
+import { getPlan, precioCentavos, reservaCentavos, PAISES_ENVIO } from './minipc.ts'
 
 export type EstadoPedido = 'pagado' | 'revisar' | 'enviado' | 'entregado' | 'reembolsado' | 'cancelado'
 
@@ -129,8 +129,10 @@ export async function procesarSesionMinipc(
 
   if (!plan) motivos.push('plan desconocido')
   else if (!plan.activo) motivos.push('plan inactivo')
-  if (plan && s.amount_total !== precioCentavos(plan)) {
-    motivos.push(`monto distinto al del plan (${s.amount_total ?? 'sin monto'} vs ${precioCentavos(plan)})`)
+  // Las reservas cobran solo RESERVA_USD; las compras completas, el precio del plan.
+  const esperado = plan ? (s.metadata?.tipo === 'reserva' ? reservaCentavos() : precioCentavos(plan)) : null
+  if (esperado !== null && s.amount_total !== esperado) {
+    motivos.push(`monto distinto al esperado (${s.amount_total ?? 'sin monto'} vs ${esperado})`)
   }
   if (!userId) motivos.push('sin usuario')
   if (monedaRaw !== 'usd') motivos.push(`moneda inesperada (${monedaRaw ?? 'ausente'})`)

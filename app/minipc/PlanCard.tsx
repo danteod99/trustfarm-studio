@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
 import type { Plan } from "@/app/lib/minipc";
-import { ENTREGA_TEXTO } from "@/app/lib/minipc";
+import { ENTREGA_TEXTO, RESERVA_USD, saldoUsd } from "@/app/lib/minipc";
 import BotonComprar from "./BotonComprar";
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -25,6 +25,10 @@ export default function PlanCard({ plan, ventaAbierta }: { plan: Plan; ventaAbie
       </p>
       <p className="text-sm text-mute">+ {usd.format(plan.mensualUsd)} al mes</p>
       <p className="mt-1 text-xs text-mute">La mensualidad empieza cuando activas tu caja</p>
+      <p className="mt-3 rounded-lg border border-brand/40 bg-brand/10 px-3 py-2 text-sm">
+        Resérvala hoy con <strong>{usd.format(RESERVA_USD)}</strong>. Se descuentan del precio: el saldo de{" "}
+        {usd.format(saldoUsd(plan))} lo pagas al coordinar la entrega.
+      </p>
 
       <dl className="mt-5 space-y-2 text-sm">
         <div>
@@ -54,7 +58,7 @@ export default function PlanCard({ plan, ventaAbierta }: { plan: Plan; ventaAbie
       <div className="mt-6">
         <BotonComprar
           planId={plan.id}
-          etiqueta={`Comprar plan ${plan.nombre}`}
+          etiqueta={`Reservar ${plan.nombre} con ${usd.format(RESERVA_USD)}`}
           ventaAbierta={ventaAbierta}
           destacado={plan.recomendado}
         />

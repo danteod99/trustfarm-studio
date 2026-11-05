@@ -55,15 +55,16 @@ test('armarSesionMinipc para pro', () => {
   const li = s.line_items![0]
   assert.equal(li.quantity, 1)
   assert.equal(li.price_data?.currency, 'usd')
-  assert.equal(li.price_data?.unit_amount, 79000)
-  assert.equal(li.price_data?.product_data?.name, 'TRUST Assistant — Plan Pro')
+  assert.equal(li.price_data?.unit_amount, 2000)
+  assert.equal(li.price_data?.product_data?.name, 'Reserva TRUST Assistant — Plan Pro')
   const desc = li.price_data?.product_data?.description ?? ''
   assert.ok(desc.includes('AMD Ryzen 7 7735HS'))
   assert.ok(desc.includes('$79'))
+  assert.ok(desc.includes('$770'))
   assert.deepEqual(s.shipping_address_collection?.allowed_countries, ['PE'])
   assert.equal(s.phone_number_collection?.enabled, true)
   assert.equal(s.payment_intent_data?.setup_future_usage, 'off_session')
-  assert.deepEqual(s.metadata, { kind: 'minipc', plan_id: 'pro', user_id: 'u1' })
+  assert.deepEqual(s.metadata, { kind: 'minipc', tipo: 'reserva', plan_id: 'pro', user_id: 'u1' })
   assert.deepEqual(s.payment_intent_data?.metadata, s.metadata)
   assert.equal(s.success_url, `${SITE}/minipc/gracias`)
   assert.equal(s.cancel_url, `${SITE}/minipc`)
@@ -76,11 +77,11 @@ test('sin descuentos ni códigos promocionales (cupón 100 % no se guardaría co
   assert.equal('discounts' in s, false)
 })
 
-test('unit_amount de básico y negocio', () => {
+test('todos los planes cobran solo la reserva de $20', () => {
   const b = armarSesionMinipc({ plan: getPlan('basico')!, userId: 'u', email: undefined, siteUrl: SITE })
   const n = armarSesionMinipc({ plan: getPlan('negocio')!, userId: 'u', email: undefined, siteUrl: SITE })
-  assert.equal(b.line_items![0].price_data?.unit_amount, 49000)
-  assert.equal(n.line_items![0].price_data?.unit_amount, 129000)
+  assert.equal(b.line_items![0].price_data?.unit_amount, 2000)
+  assert.equal(n.line_items![0].price_data?.unit_amount, 2000)
 })
 
 test('sin email no hay clave customer_email', () => {

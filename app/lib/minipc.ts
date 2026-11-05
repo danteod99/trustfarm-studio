@@ -68,6 +68,17 @@ export function precioCentavos(p: Plan): number {
   return Math.round(p.precioUsd * 100)
 }
 
+// Por ahora se vende como reserva: se paga RESERVA_USD y se descuenta del precio del equipo.
+export const RESERVA_USD = 20
+
+export function reservaCentavos(): number {
+  return Math.round(RESERVA_USD * 100)
+}
+
+export function saldoUsd(p: Plan): number {
+  return p.precioUsd - RESERVA_USD
+}
+
 export const PAISES_ENVIO: readonly string[] = ['PE']
 export const ENTREGA_TEXTO = '5 a 7 días'
 

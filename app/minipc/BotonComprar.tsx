@@ -57,7 +57,7 @@ export default function BotonComprar({
       setError(
         typeof data.error === "string" && data.error
           ? data.error
-          : "No pudimos iniciar el pago. Inténtalo de nuevo en unos minutos."
+          : "No pudimos iniciar la reserva. Inténtalo de nuevo en unos minutos."
       );
     } catch {
       setError("No pudimos conectar. Revisa tu internet e inténtalo de nuevo.");
@@ -75,7 +75,7 @@ export default function BotonComprar({
         className={`${destacado ? "btn-primary" : "btn-ghost"} w-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand`}
       >
         {cargando && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-        {cargando ? "Abriendo el pago…" : etiqueta}
+        {cargando ? "Abriendo la reserva…" : etiqueta}
       </button>
       {error && (
         <p role="alert" className="mt-2 text-sm text-red-400">

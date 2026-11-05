@@ -390,3 +390,25 @@ test('seguimiento sin caracteres de control ni bidi, y se cuenta tras limpiar', 
   const r = await cambiarEstadoPedido({ store: s2, ahora }, { id: 'ped_1', estado: 'enviado', seguimiento: 'x'.repeat(120) + '‮\u0000' })
   assert.deepEqual(r, { ok: true })
 })
+
+test('reserva: $20 con tipo reserva se guarda como pagado', async () => {
+  const { store, d } = deps()
+  const r = await procesarSesionMinipc(d, sesionOk({ amount_total: 2000, metadata: { kind: 'minipc', tipo: 'reserva', plan_id: 'pro', user_id: 'u-1' } }))
+  assert.equal(r.resultado, 'creado')
+  assert.equal(store.filas[0].estado, 'pagado')
+  assert.equal(store.filas[0].montoCentavos, 2000)
+})
+
+test('reserva: $20 sin tipo reserva va a revisar', async () => {
+  const { store, d } = deps()
+  const r = await procesarSesionMinipc(d, sesionOk({ amount_total: 2000 }))
+  assert.equal(r.resultado, 'revisar')
+  assert.match(store.filas[0].notaRevision ?? '', /monto/i)
+})
+
+test('reserva: precio completo con tipo reserva va a revisar', async () => {
+  const { store, d } = deps()
+  const r = await procesarSesionMinipc(d, sesionOk({ metadata: { kind: 'minipc', tipo: 'reserva', plan_id: 'pro', user_id: 'u-1' } }))
+  assert.equal(r.resultado, 'revisar')
+  assert.equal(store.filas[0].estado, 'revisar')
+})

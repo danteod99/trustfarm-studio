@@ -5,6 +5,7 @@ import type { PedidoVista } from "@/app/lib/minipc-admin";
 import type { EstadoPedido } from "@/app/lib/minipc-pedidos";
 // Reutiliza la tabla de transiciones del servidor: solo se muestran acciones válidas.
 import { validarCambioEstado } from "@/app/lib/minipc-pedidos";
+import { getPlan, RESERVA_USD, saldoUsd } from "@/app/lib/minipc";
 
 const ETIQUETA: Record<EstadoPedido, string> = {
   pagado: "Pagado",
@@ -136,6 +137,11 @@ export default function PedidosMinipc() {
                   US$ {p.monto_usd.toFixed(2)}
                   {p.moneda && p.moneda.toLowerCase() !== "usd" ? ` (${p.moneda.toUpperCase()})` : ""}
                 </span>
+                {p.monto_usd === RESERVA_USD && getPlan(p.plan_id) && (
+                  <span className="rounded-full bg-brand/15 px-2.5 py-0.5 text-xs font-semibold text-brand">
+                    Reserva · saldo US$ {saldoUsd(getPlan(p.plan_id)!).toFixed(2)}
+                  </span>
+                )}
                 <span className="text-mute">{new Date(p.creado).toLocaleString("es")}</span>
               </div>
 

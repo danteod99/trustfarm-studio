@@ -6,6 +6,7 @@ import {
   PLANES,
   CONTACTO,
   ENTREGA_TEXTO,
+  RESERVA_USD,
   ventaAbierta,
   paginaVisible,
   libroReclamacionesUrl,
@@ -336,7 +337,7 @@ export default function MinipcPage() {
         id="planes"
         eyebrow="Planes · Mini PC + vendedor IA"
         titulo="Elige tu plan"
-        sub={`Pagas el equipo una vez y la mensualidad empieza cuando activas tu caja. Envíos solo a Perú por ahora. Entrega en ${ENTREGA_TEXTO}.`}
+        sub={`Reserva tu equipo hoy con $${RESERVA_USD}; se descuentan del precio y el saldo lo pagas al coordinar la entrega. La mensualidad empieza cuando activas tu caja. Envíos solo a Perú por ahora. Entrega en ${ENTREGA_TEXTO}.`}
       >
         <div className="grid gap-8 pt-3 md:grid-cols-3">
           {PLANES.filter((p) => p.activo).map((p) => (
