@@ -58,9 +58,6 @@ export default function Terminos() {
         que hayas pagado en los últimos 3 meses.
       </p>
       <h2>6. Compra de equipos TRUST Assistant</h2>
-      <div className="mt-4 rounded-lg border border-brand/40 bg-panel p-3 text-ink">
-        <strong>Texto provisional: pendiente de revisión legal</strong>
-      </div>
       <p>
         Además de los créditos, puedes comprar un equipo TRUST Assistant (la mini PC). Esta sección aplica solo a esa
         compra; lo de los créditos sigue igual.
