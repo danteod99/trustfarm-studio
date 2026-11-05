@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PublicGeneration } from "@/app/components/GenerationCard";
+import { EVENTO_SALDO } from "@/app/components/SaldoCreditos";
 
 const POLL_MS = 8000;
 
@@ -9,7 +10,12 @@ const POLL_MS = 8000;
 export function useGenerations(query = "") {
   const [items, setItems] = useState<PublicGeneration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [balance, setBalance] = useState<number | null>(null);
+  const [balance, setBalanceLocal] = useState<number | null>(null);
+  // Además de guardarlo aquí, avisa al contador del menú para que cambie al instante.
+  const setBalance = useCallback((n: number) => {
+    setBalanceLocal(n);
+    window.dispatchEvent(new CustomEvent(EVENTO_SALDO, { detail: n }));
+  }, []);
   const itemsRef = useRef(items);
   itemsRef.current = items;
 
