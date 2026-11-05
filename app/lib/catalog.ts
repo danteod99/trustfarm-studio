@@ -5,8 +5,8 @@
 // Costos reales de proveedor (oficiales Google 2026-10-15; fal.ai por verificar
 // en la página de cada modelo antes de lanzar):
 //   Nano Banana 2 (gemini-3.1-flash-image) $0.101/img · Nano Banana Pro $0.134/img
-//   Veo 3.1 Lite  $0.05/s 720p · $0.08/s 1080p (con audio)
-//   Veo 3.1 Fast  $0.10/s 720p · $0.12/s 1080p (con audio)
+//   Video: Gemini Omni 1.1 Flash (Veo 3.1 Preview se apagó el 2026-10-22), medido el
+//   2026-11-04: $0.10/s 720p · $0.15/s 1080p (con audio). Lite y Fast usan el mismo modelo.
 //   Qwen-Image (fal) ~$0.02/img · Wan 2.2 A14B (fal) ~$0.40 por clip 720p de 5 s
 
 export type Kind = "image" | "video";
@@ -125,13 +125,13 @@ export const MODELS: ModelDef[] = [
     kind: "video",
     provider: "veo",
     name: "Trust Cine Lite",
-    engine: "Veo 3.1 Lite",
+    engine: "Gemini Omni 1.1 Flash",
     tagline: "Video con audio al menor costo.",
-    providerModel: "veo-3.1-lite-generate-preview",
+    providerModel: "gemini-omni-1.1-flash",
     aspects: ["9:16", "16:9"],
     durations: [4, 6, 8],
     resolutions: ["720p", "1080p"],
-    credits: { "720p": 1.25, "1080p": 1.75 },
+    credits: { "720p": 1.5, "1080p": 2.25 },
     acceptsImage: true,
     badge: "Económico",
   },
@@ -141,9 +141,9 @@ export const MODELS: ModelDef[] = [
     kind: "video",
     provider: "veo",
     name: "Trust Cine",
-    engine: "Veo 3.1 Fast",
+    engine: "Gemini Omni 1.1 Flash",
     tagline: "Mejor movimiento, diálogo y lip-sync en español.",
-    providerModel: "veo-3.1-fast-generate-preview",
+    providerModel: "gemini-omni-1.1-flash",
     aspects: ["9:16", "16:9"],
     durations: [4, 6, 8],
     resolutions: ["720p", "1080p"],

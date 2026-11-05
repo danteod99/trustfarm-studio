@@ -1,5 +1,5 @@
 // Google Gemini API por REST: imagen con Nano Banana (generateContent) y video con
-// Veo 3.1 (predictLongRunning + polling). Mismo contrato que realista-bot/gemini.py.
+// Gemini Omni Flash (API de Interactions en segundo plano + polling).
 import type { Aspect, Resolution } from "@/app/lib/catalog";
 
 const BASE = "https://generativelanguage.googleapis.com/v1beta";
@@ -80,34 +80,41 @@ export async function generateImage(
   throw new ProviderError(`La imagen no se generó (${blockReason(data) || "respuesta vacía"}).`, true);
 }
 
-/** Veo 3.1: lanza la generación y devuelve el nombre de la operación. */
+/** Gemini Omni Flash (reemplazo de Veo 3.1 Preview, apagado el 2026-10-22): lanza la
+ *  generación en segundo plano por la API de Interactions y devuelve "interactions/<id>". */
 export async function startVeo(
   model: string,
   prompt: string,
   opts: { aspect: Aspect; resolution: Resolution; duration: number },
   image?: InputImage
 ): Promise<string> {
-  const instance: Record<string, unknown> = { prompt };
-  if (image) instance.image = { bytesBase64Encoded: image.data, mimeType: image.mime };
+  const input = image
+    ? [
+        { type: "image", data: image.data, mime_type: image.mime },
+        { type: "text", text: prompt },
+      ]
+    : prompt;
   const body = {
-    instances: [instance],
-    parameters: {
-      aspectRatio: opts.aspect,
+    model,
+    input,
+    background: true,
+    response_format: {
+      type: "video",
+      aspect_ratio: opts.aspect,
       resolution: opts.resolution,
-      durationSeconds: opts.duration,
-      // La API solo permite "allow_adult" cuando se parte de una imagen.
-      personGeneration: image ? "allow_adult" : "allow_all",
+      duration: `${opts.duration}s`,
+      delivery: "uri",
     },
   };
-  const r = await fetch(`${BASE}/models/${model}:predictLongRunning`, {
+  const r = await fetch(`${BASE}/interactions`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify(body),
   });
   if (!r.ok) await fail(r, "Video");
   const data = await r.json();
-  if (!data?.name) throw new ProviderError("Veo no devolvió operación.");
-  return data.name as string;
+  if (!data?.id) throw new ProviderError("Google no devolvió la generación del video.");
+  return `interactions/${data.id}`;
 }
 
 export type PollResult = { state: "running" } | { state: "done"; uri: string } | { state: "failed"; error: string; blocked: boolean };
@@ -120,15 +127,15 @@ export async function pollVeo(operation: string): Promise<PollResult> {
     return { state: "failed", error: `polling HTTP ${r.status}`, blocked: false };
   }
   const d = await r.json();
-  if (!d.done) return { state: "running" };
-  if (d.error) {
-    const msg = `${d.error.code ?? ""} ${d.error.message ?? ""}`.trim();
-    const blocked = ["safety", "blocked", "policy", "filtered"].some((s) => msg.toLowerCase().includes(s));
-    return { state: "failed", error: blocked ? "El video fue rechazado por el filtro de seguridad de Google." : msg, blocked };
+  if (d.status === "in_progress" || d.status === "queued") return { state: "running" };
+  for (const step of d.steps ?? []) {
+    for (const c of step?.content ?? []) {
+      if (c?.type === "video" && c.uri) return { state: "done", uri: c.uri };
+    }
   }
-  const uri = d?.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri;
-  if (!uri) return { state: "failed", error: `Video sin resultado (${blockReason(d) || "sin muestras"}).`, blocked: true };
-  return { state: "done", uri };
+  const msg = `${d.error?.code ?? ""} ${d.error?.message ?? ""}`.trim() || `estado ${d.status ?? "desconocido"}, sin video`;
+  const blocked = ["safety", "blocked", "policy", "filtered", "prohibited"].some((s) => msg.toLowerCase().includes(s));
+  return { state: "failed", error: blocked ? "El video fue rechazado por el filtro de seguridad de Google." : `Video sin resultado (${msg}).`, blocked };
 }
 
 export async function downloadVeo(uri: string): Promise<Buffer> {
