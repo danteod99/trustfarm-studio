@@ -10,6 +10,7 @@ Uso:  python worker.py            (lee config.json junto a este archivo)
 from __future__ import annotations
 
 import json
+import re
 import os
 import random
 import socket
@@ -151,6 +152,27 @@ def rellenar(nodo, valores: dict):
     return nodo
 
 
+def aplicar_loras(workflow: dict, prompt: str, loras: list) -> tuple[dict, str]:
+    """LoRAs de estilo propias (config "loras_estilo"): si el prompt calza con su regex "si",
+    mete un LoraLoaderModelOnly después del nodo del modelo ("nodo_modelo"), reengancha a quien
+    usaba ese modelo y antepone su palabra clave al prompt. Sin coincidencia no cambia nada."""
+    for i, lora in enumerate(loras or []):
+        if not re.search(lora["si"], prompt, re.IGNORECASE):
+            continue
+        base, nuevo = lora["nodo_modelo"], f"lora_estilo_{i}"
+        for nodo in workflow.values():
+            for k, v in (nodo.get("inputs") or {}).items():
+                if v == [base, 0]:
+                    nodo["inputs"][k] = [nuevo, 0]
+        workflow[nuevo] = {"class_type": "LoraLoaderModelOnly", "inputs": {
+            "model": [base, 0], "lora_name": lora["archivo"], "strength_model": float(lora.get("fuerza", 1.0))}}
+        palabra = lora.get("palabra")
+        if palabra and palabra.lower() not in prompt.lower():
+            prompt = f"{palabra}, {prompt}"
+        log(f"   + LoRA de estilo {lora['archivo']}")
+    return workflow, prompt
+
+
 def subir_a_comfy(datos: bytes, nombre: str) -> str:
     r = requests.post(f"{COMFY}/upload/image", files={"image": (nombre, datos, "image/jpeg")},
                       data={"overwrite": "true"}, timeout=60)
@@ -230,7 +252,9 @@ def procesar(job: dict):
     else:
         plantilla = modelo["workflow"]
 
-    workflow = rellenar(json.loads((AQUI / plantilla).read_text(encoding="utf-8")), valores)
+    workflow = json.loads((AQUI / plantilla).read_text(encoding="utf-8"))
+    workflow, valores["PROMPT"] = aplicar_loras(workflow, valores["PROMPT"], modelo.get("loras_estilo"))
+    workflow = rellenar(workflow, valores)
     t0 = time.time()
     datos, ext = ejecutar(workflow)
     ruta = f"{job['user_id']}/{job['id']}.{ext}"

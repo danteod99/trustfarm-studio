@@ -20,7 +20,16 @@
           1344,
           768
         ]
-      }
+      },
+      "loras_estilo": [
+        {
+          "archivo": "dntfarm_zimage_turbo_v1.safetensors",
+          "palabra": "dntfarm",
+          "fuerza": 1.0,
+          "nodo_modelo": "28",
+          "si": "dntfarm|granjas? de (celulares|iphones|tel[eé]fonos|m[oó]viles|smartphones|bots|cuentas)|(phone|box|bot|click)[ -]?farms?|(iphones|celulares|smartphones|tel[eé]fonos|m[oó]viles)[^.]{0,80}(en filas?|parados|de pie|cables? usb|rack|caja)|(caja|rack|fila|filas|pared|estante)[^.]{0,40}(iphones|celulares|smartphones|tel[eé]fonos|m[oó]viles)"
+        }
+      ]
     },
     "qwen-image": {
       "workflow": "workflows/qwen_image.json",
