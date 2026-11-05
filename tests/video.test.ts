@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { assTime, assEscape, buildAss, captionLines } from '../app/lib/video/ass.ts'
-import { duracionTotal, keepSegments, mapTime, parseSilences, selectExpr } from '../app/lib/video/cuts.ts'
+import { casiTodoSilencio, duracionTotal, keepSegments, mapTime, parseSilences, selectExpr } from '../app/lib/video/cuts.ts'
 import { PROFILES, getProfile, variationArgs, videoFilter, audioFilter } from '../app/lib/video/profiles.ts'
 
 test('assTime: formato H:MM:SS.CC', () => {
@@ -91,4 +91,21 @@ test('duracionTotal: null si alguna toma no se pudo leer (no se suma a medias)',
   assert.equal(duracionTotal([10, Infinity]), null)
   assert.equal(duracionTotal([NaN]), null)
   assert.equal(duracionTotal([]), null)
+})
+
+test('casiTodoSilencio: un video mudo entero cuenta como silencio', () => {
+  assert.equal(casiTodoSilencio([{ start: 0, end: 21.696 }], 21.717), true)
+})
+
+test('casiTodoSilencio: varios tramos que suman casi todo también', () => {
+  assert.equal(casiTodoSilencio([{ start: 0, end: 10 }, { start: 10.2, end: 20 }], 20), true)
+})
+
+test('casiTodoSilencio: un video con voz y pausas normales no', () => {
+  assert.equal(casiTodoSilencio([{ start: 2, end: 3 }, { start: 9, end: 12 }], 20), false)
+  assert.equal(casiTodoSilencio([], 20), false)
+})
+
+test('casiTodoSilencio: sin duración no decide nada', () => {
+  assert.equal(casiTodoSilencio([{ start: 0, end: 5 }], 0), false)
 })

@@ -11,7 +11,7 @@ import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import VideoPicker from "@/app/editar/VideoPicker";
 import { MAX_AUDIO_BYTES } from "@/app/lib/editar";
 import {
-  buildAss, costoCortos, duracionTotal, execLogged, extractAudioMp3, fmtMB, getVideoInfo, guardarRetomas, guardarTranscripcion,
+  buildAss, casiTodoSilencio, costoCortos, duracionTotal, execLogged, extractAudioMp3, fmtMB, getVideoInfo, guardarRetomas, guardarTranscripcion,
   keepSegments, loadEngine, mapTime, mountFont, onProgress, parseSilences, readBlob, resetEngine, retomasGuardadas, safeDelete,
   selectExpr, transcripcionGuardada, writeInput,
   type CacheCortos, type Range, type SubSegment, type SubWord,
@@ -92,6 +92,16 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
         await safeDelete(ffmpeg, "concat.txt", ...files.map((_, i) => `norm${i}.mp4`));
       }
 
+      // 0) Audio: un video sin sonido no se transcribe ni se cobra, y cortar sus "silencios" lo dejaría vacío.
+      let silencios: Range[] = [];
+      if (cutRetakes || subsOn || cutSilences) {
+        setStatus("Revisando el audio…");
+        const { logs } = await execLogged(ffmpeg, ["-i", "in.mp4", "-af", "silencedetect=noise=-30dB:d=0.5", "-f", "null", "-"]);
+        silencios = parseSilences(logs, origDur);
+      }
+      const sinSonido = casiTodoSilencio(silencios, origDur);
+      if (sinSonido) setWarning("Este video casi no tiene sonido: no se transcribió, no se cortaron silencios y no se cobró nada.");
+
       // 1) Transcripción (para retomas y/o subtítulos)
       let words: SubWord[] = [];
       let segments: SubSegment[] = [];
@@ -99,7 +109,7 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
       if ((cutRetakes || subsOn) && guardada) {
         words = guardada.words;
         segments = guardada.segments;
-      } else if (cutRetakes || subsOn) {
+      } else if ((cutRetakes || subsOn) && !sinSonido) {
         setStatus("Transcribiendo con IA…");
         const audio = await extractAudioMp3(ffmpeg);
         if (!audio) throw new Error("No se pudo leer el audio del video.");
@@ -137,14 +147,13 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
         }
         else setWarning(`Retomas: ${d.error || "no disponibles"}. Se siguió sin cortarlas.`);
       }
-      if (cutSilences) {
-        setStatus("Buscando silencios…");
-        const { logs } = await execLogged(ffmpeg, ["-i", "in.mp4", "-af", "silencedetect=noise=-30dB:d=0.5", "-f", "null", "-"]);
-        cuts.push(...parseSilences(logs, origDur));
-      }
-      const keep = cuts.length && origDur > 0 ? keepSegments(cuts, origDur) : [{ start: 0, end: origDur }];
+      if (cutSilences && !sinSonido) cuts.push(...silencios);
+      const conservar = cuts.length && origDur > 0 ? keepSegments(cuts, origDur) : [];
+      // Si los cortes cubrieran todo el video no quedaría nada: se entrega sin cortar y se avisa.
+      if (cuts.length && !conservar.length) setWarning("Los cortes cubrían todo el video: se dejó sin cortar.");
+      const keep = conservar.length ? conservar : [{ start: 0, end: origDur }];
       const newDur = keep.reduce((a, k) => a + (k.end - k.start), 0);
-      const hasCuts = cuts.length > 0;
+      const hasCuts = conservar.length > 0;
       const sel = hasCuts ? selectExpr(keep) : "";
       const selA = hasCuts ? `aselect='${sel}',asetpts=N/SR/TB,` : "";
 
