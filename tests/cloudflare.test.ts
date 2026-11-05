@@ -241,3 +241,52 @@ test('timeout en borrarTunel lanza error genérico sin token', async () => {
   await assert.rejects(crearCloudflare(env, s.fetchFn, 30).borrarTunel(TUN, 'abril123'), (e: Error) => /DNS/.test(e.message) && !e.message.includes(TOKEN_API))
   assert.ok(s.llamadas[0].signal instanceof AbortSignal)
 })
+
+test('abrirRutaSoporte conserva la dirección normal de la caja y añade ssh://localhost:22', async () => {
+  const { fetchFn, llamadas } = simulado([ok({}), ok([]), ok({ id: 'dns1' })])
+  const cf = crearCloudflare(env, fetchFn)
+  const nombre = await cf.abrirRutaSoporte(TUN, 'abcd1234')
+  assert.equal(nombre, 'soporte-abcd1234.cajas.ejemplo.test')
+  assert.equal(llamadas[0].method, 'PUT')
+  assert.deepEqual((llamadas[0].body as any).config.ingress, [
+    { hostname: 'abcd1234.cajas.ejemplo.test', service: 'http://localhost:8080' },
+    { hostname: 'soporte-abcd1234.cajas.ejemplo.test', service: 'ssh://localhost:22' },
+    { service: 'http_status:404' },
+  ])
+  assert.deepEqual(llamadas[2].body, { type: 'CNAME', name: 'soporte-abcd1234.cajas.ejemplo.test', content: `${TUN}.cfargotunnel.com`, proxied: true })
+})
+
+test('abrirRutaSoporte no duplica el registro si ya existe', async () => {
+  const destino = `${TUN}.cfargotunnel.com`
+  const { fetchFn, llamadas } = simulado([ok({}), ok([{ id: 'dns1', type: 'CNAME', name: 'soporte-abcd1234.cajas.ejemplo.test', content: destino }])])
+  await crearCloudflare(env, fetchFn).abrirRutaSoporte(TUN, 'abcd1234')
+  assert.equal(llamadas.length, 2)
+})
+
+test('cerrarRutaSoporte deja solo la dirección normal y borra únicamente el registro de soporte de ese túnel', async () => {
+  const destino = `${TUN}.cfargotunnel.com`
+  const { fetchFn, llamadas } = simulado([
+    ok({}),
+    ok([
+      { id: 'dns1', type: 'CNAME', name: 'soporte-abcd1234.cajas.ejemplo.test', content: destino },
+      { id: 'ajeno', type: 'CNAME', name: 'soporte-abcd1234.cajas.ejemplo.test', content: 'otro.cfargotunnel.com' },
+    ]),
+    ok({}),
+  ])
+  await crearCloudflare(env, fetchFn).cerrarRutaSoporte(TUN, 'abcd1234')
+  assert.deepEqual((llamadas[0].body as any).config.ingress, [
+    { hostname: 'abcd1234.cajas.ejemplo.test', service: 'http://localhost:8080' },
+    { service: 'http_status:404' },
+  ])
+  assert.equal(llamadas.length, 3)
+  assert.match(llamadas[2].url, /dns_records\/dns1$/)
+})
+
+test('las rutas de soporte validan slug y túnel, y no filtran el token en los errores', async () => {
+  const { fetchFn } = simulado([falla(403)])
+  const cf = crearCloudflare(env, fetchFn)
+  await assert.rejects(cf.abrirRutaSoporte('no-valido', 'abcd1234'))
+  await assert.rejects(cf.abrirRutaSoporte(TUN, '../malo'))
+  await assert.rejects(cf.abrirRutaSoporte(TUN, 'abcd1234'), (e: Error) => !e.message.includes(TOKEN_API))
+})
+

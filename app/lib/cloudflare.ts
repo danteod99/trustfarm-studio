@@ -4,6 +4,7 @@
 
 const API = 'https://api.cloudflare.com/client/v4'
 const SERVICIO_CAJA = 'http://localhost:8080'
+const SERVICIO_SOPORTE = 'ssh://localhost:22'
 /** Contrato: el slug de una caja son 8 caracteres [a-z0-9]. */
 export const SLUG_REGEX = /^[a-z0-9]{8}$/
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -67,6 +68,7 @@ export function crearCloudflare(env: CloudflareEnv, fetchFn: typeof fetch = fetc
   }
 
   const hostnameDe = (slug: string) => `${slug}.${env.dominio}`
+  const hostnameSoporteDe = (slug: string) => `soporte-${slug}.${env.dominio}`
 
   async function obtenerTokenTunel(tunnelId: string): Promise<string> {
     validarTunnelId(tunnelId)
@@ -134,5 +136,45 @@ export function crearCloudflare(env: CloudflareEnv, fetchFn: typeof fetch = fetc
     await borrarSoloTunel(tunnelId)
   }
 
-  return { crearTunel, obtenerTokenTunel, borrarTunel }
+  // Registros de la dirección de soporte que apuntan a ESTE túnel
+  async function dnsSoporte(tunnelId: string, slug: string): Promise<RegistroDns[]> {
+    const nombre = hostnameSoporteDe(slug).toLowerCase()
+    const destino = `${tunnelId}.cfargotunnel.com`.toLowerCase()
+    const registros: RegistroDns[] | null = await llamar(
+      'buscar registro DNS', 'GET', `/zones/${zona}/dns_records?name=${encodeURIComponent(nombre)}`,
+    )
+    return (Array.isArray(registros) ? registros : []).filter((r) => r?.id && r.type === 'CNAME'
+      && typeof r.name === 'string' && r.name.toLowerCase() === nombre
+      && typeof r.content === 'string' && r.content.toLowerCase() === destino)
+  }
+
+  /** Mientras dura un acceso de sistema, la caja recibe SSH por su túnel. Devuelve la dirección. */
+  async function abrirRutaSoporte(tunnelId: string, slug: string): Promise<string> {
+    validarSlug(slug)
+    validarTunnelId(tunnelId)
+    const nombre = hostnameSoporteDe(slug)
+    await llamar('configurar túnel', 'PUT', `/accounts/${cuenta}/cfd_tunnel/${encodeURIComponent(tunnelId)}/configurations`, {
+      config: { ingress: [{ hostname: hostnameDe(slug), service: SERVICIO_CAJA }, { hostname: nombre, service: SERVICIO_SOPORTE }, { service: 'http_status:404' }] },
+    })
+    if ((await dnsSoporte(tunnelId, slug)).length === 0) {
+      await llamar('crear registro DNS', 'POST', `/zones/${zona}/dns_records`, {
+        type: 'CNAME',
+        name: nombre,
+        content: `${tunnelId}.cfargotunnel.com`,
+        proxied: true,
+      })
+    }
+    return nombre
+  }
+
+  async function cerrarRutaSoporte(tunnelId: string, slug: string): Promise<void> {
+    validarSlug(slug)
+    validarTunnelId(tunnelId)
+    await llamar('configurar túnel', 'PUT', `/accounts/${cuenta}/cfd_tunnel/${encodeURIComponent(tunnelId)}/configurations`, {
+      config: { ingress: [{ hostname: hostnameDe(slug), service: SERVICIO_CAJA }, { service: 'http_status:404' }] },
+    })
+    for (const r of await dnsSoporte(tunnelId, slug)) await borrarDns(r.id)
+  }
+
+  return { crearTunel, obtenerTokenTunel, borrarTunel, abrirRutaSoporte, cerrarRutaSoporte }
 }

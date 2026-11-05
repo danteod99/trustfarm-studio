@@ -6,6 +6,8 @@ import { clienteStoreSupabase } from './store-cliente-supabase'
 import { slugAleatorio, type ClienteDeps } from './cliente-servicio'
 import { derivarPublica } from './pase'
 import type { ServicioDeps } from './servicio'
+import { soporteStoreSupabase } from './store-soporte-supabase'
+import type { SoporteDeps } from './soporte-servicio'
 
 export const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -50,6 +52,21 @@ export function depsClienteReales(): ClienteDeps | null {
     env: { dominio, paseKeyPrivada, vinculoAbierto: e.CAJAS_VINCULO_ABIERTO === '1' },
     cloudflare: { crearTunel: slug => cf.crearTunel(slug), borrarTunel: (id, slug) => cf.borrarTunel(id, slug) },
     nuevoSlug: slugAleatorio,
+  }
+}
+
+/** Dependencias del soporte a distancia; null si falta alguna variable (sin nombrarla). */
+export function depsSoporteReales(): SoporteDeps | null {
+  const base = depsReales()
+  const e = process.env
+  const paseKeyPrivada = e.PASE_PRIVATE_KEY
+  if (!base || !paseKeyPrivada) return null
+  const cf = crearCloudflare({ token: e.CF_API_TOKEN!, accountId: e.CF_ACCOUNT_ID!, zoneId: e.CF_ZONE_ID!, dominio: e.DOMINIO_CAJAS! })
+  return {
+    ...base,
+    soporte: soporteStoreSupabase(),
+    paseKeyPrivada,
+    rutas: { abrir: (t, s) => cf.abrirRutaSoporte(t, s), cerrar: (t, s) => cf.cerrarRutaSoporte(t, s) },
   }
 }
 

@@ -41,14 +41,48 @@ export function firmarPase(o: { sub: string; box: string; now: Date; privateKeyB
     exp: Math.floor(ms / 1000) + PASE_VIDA_SEG,
     jti: randomBytes(16).toString('hex'),
   }
+  return firmar(payload, o.privateKeyB64)
+}
+
+function firmar(payload: object, privateKeyB64: string): string {
   const cuerpo = Buffer.from(JSON.stringify(payload)).toString('base64url')
   let firma: string
   try {
-    const clave = createPrivateKey({ key: Buffer.from(o.privateKeyB64, 'base64'), format: 'der', type: 'pkcs8' })
+    const clave = createPrivateKey({ key: Buffer.from(privateKeyB64, 'base64'), format: 'der', type: 'pkcs8' })
     firma = sign(null, Buffer.from(cuerpo), clave).toString('base64url')
   } catch {
     // No se propaga el error original: podría arrastrar material de la clave
     throw new Error('No se pudo firmar el pase: la clave privada del pase no es válida.')
   }
   return `${cuerpo}.${firma}`
+}
+
+/** Vida de la aceptación de soporte: la caja la pide cada pocos segundos mientras espera. */
+export const ACEPTACION_VIDA_SEG = 120
+
+/** Le dice a la caja que soporte aceptó el permiso. Lleva `uso`: no sirve como pase, ni al revés. */
+export function firmarAceptacionSoporte(o: { box: string; ticket: string; nivel: string; venceEn: string; now: Date; privateKeyB64: string }): string {
+  return firmar({
+    v: 1,
+    uso: 'soporte-acepta',
+    box: o.box,
+    ticket: o.ticket,
+    nivel: o.nivel,
+    vence: o.venceEn,
+    exp: Math.floor(o.now.getTime() / 1000) + ACEPTACION_VIDA_SEG,
+    jti: randomBytes(16).toString('hex'),
+  }, o.privateKeyB64)
+}
+
+/** Abre la caja para soporte, solo mientras el dueño lo permita. La caja lo rechaza como pase normal. */
+export function firmarPaseSoporte(o: { sub: string; box: string; venceEn: string; now: Date; privateKeyB64: string }): string {
+  return firmar({
+    v: 1,
+    uso: 'soporte',
+    sub: o.sub,
+    box: o.box,
+    vence: o.venceEn,
+    exp: Math.floor(o.now.getTime() / 1000) + PASE_VIDA_SEG,
+    jti: randomBytes(16).toString('hex'),
+  }, o.privateKeyB64)
 }

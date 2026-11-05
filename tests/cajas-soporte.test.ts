@@ -1,14 +1,25 @@
 // Soporte a distancia: tickets y permisos, vistos desde la caja que llama con su secreto.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { generateKeyPairSync, createPublicKey, verify } from 'node:crypto'
 import { registrarCaja } from '../app/lib/cajas/servicio.ts'
-import { soporteCaja } from '../app/lib/cajas/soporte-servicio.ts'
+import { soporteAdmin, soporteCaja } from '../app/lib/cajas/soporte-servicio.ts'
+import { isSoporteEmail } from '../app/lib/cajas/soporte-acceso.ts'
+import { firmarPase } from '../app/lib/cajas/pase.ts'
 import { crearDeps } from './cajas-mem.ts'
 import { crearSoporteMem } from './cajas-soporte-mem.ts'
 
 const T0 = new Date('2026-11-05T12:00:00Z')
 const OWNER = '00000000-0000-4000-8000-0000000000aa'
 const OTRO = '00000000-0000-4000-8000-0000000000bb'
+const pareja = generateKeyPairSync('ed25519')
+const CLAVE = pareja.privateKey.export({ type: 'pkcs8', format: 'der' }).toString('base64')
+
+function leerFirmado(token: string) {
+  const [cuerpo, firma] = token.split('.')
+  assert.ok(verify(null, Buffer.from(cuerpo), createPublicKey(pareja.privateKey), Buffer.from(firma, 'base64url')), 'firma válida')
+  return JSON.parse(Buffer.from(cuerpo, 'base64url').toString('utf8'))
+}
 
 async function nuevaCaja(e: ReturnType<typeof entorno>, id: string, slug: string, ownerId: string | null = OWNER) {
   const r = await registrarCaja(e.deps, { ip: id, version: '1.0.0' })
@@ -24,8 +35,24 @@ function entorno() {
   const ahora = { t: new Date(T0) }
   const base = crearDeps(ahora)
   const sop = crearSoporteMem()
-  const deps = { ...base.deps, soporte: sop.store }
-  return { ...base, deps, ahora, sop }
+  const rutas = { abiertas: [] as string[], cerradas: [] as string[], falla: false }
+  const deps = {
+    ...base.deps,
+    soporte: sop.store,
+    paseKeyPrivada: CLAVE,
+    rutas: {
+      abrir: async (tunnelId: string, slug: string) => {
+        if (rutas.falla) throw new Error('Cloudflare rechazó la operación')
+        rutas.abiertas.push(tunnelId)
+        return `soporte-${slug}.cajas.test`
+      },
+      cerrar: async (tunnelId: string) => {
+        if (rutas.falla) throw new Error('Cloudflare rechazó la operación')
+        rutas.cerradas.push(tunnelId)
+      },
+    },
+  }
+  return { ...base, deps, ahora, sop, rutas }
 }
 
 async function conCaja() {
@@ -36,7 +63,8 @@ async function conCaja() {
     const r = await pedir('crear', { asunto: 'No responde', nivel: 'app', minutos: 30, ...o })
     return { r, ticket: (r.body as any).ticket }
   }
-  return { ...e, c, pedir, crear }
+  const admin = (accion: string, datos: object = {}) => soporteAdmin(e.deps, { quien: 'dante@test.pe', accion, datos: datos as Record<string, unknown> })
+  return { ...e, c, pedir, crear, admin }
 }
 
 test('crear: asunto de 1 a 2000 caracteres; minutos fuera de 15-10080 o no enteros dan 400', async () => {
@@ -167,3 +195,185 @@ test('la vista trae los accesos y nunca datos de otra cuenta', async () => {
   assert.equal('ownerId' in t || 'owner_id' in t, false)
   assert.equal(t.id, ticket.id)
 })
+
+// ───────── Lado de soporte ─────────
+
+test('isSoporteEmail no acepta a quien solo está en ADMIN_EMAILS', () => {
+  const antes = { a: process.env.ADMIN_EMAILS, s: process.env.SOPORTE_EMAILS }
+  process.env.ADMIN_EMAILS = 'gerente@test.pe, dante@test.pe'
+  process.env.SOPORTE_EMAILS = ' Dante@Test.pe '
+  assert.equal(isSoporteEmail('dante@test.pe'), true)
+  assert.equal(isSoporteEmail('DANTE@test.pe'), true)
+  assert.equal(isSoporteEmail('gerente@test.pe'), false)
+  assert.equal(isSoporteEmail(null), false)
+  delete process.env.SOPORTE_EMAILS
+  assert.equal(isSoporteEmail('dante@test.pe'), false)
+  process.env.ADMIN_EMAILS = antes.a
+  if (antes.s !== undefined) process.env.SOPORTE_EMAILS = antes.s
+})
+
+test('aceptar sin permiso del cliente: 409; el ticket no cambia', async () => {
+  const e = await conCaja()
+  const creado = await e.admin('crear', { caja_id: 'caja-1', asunto: 'Revisar apagado' })
+  assert.equal(creado.status, 200)
+  const id = (creado.body as any).ticket.id
+  assert.equal((creado.body as any).ticket.abierto_por, 'soporte')
+  const r = await e.admin('aceptar', { ticket_id: id })
+  assert.equal(r.status, 409)
+  assert.equal(e.sop.m.tickets[0].estado, 'abierto')
+})
+
+test('aceptar: pasa a en_atencion y vence_en = ahora + minutos', async () => {
+  const e = await conCaja()
+  const { ticket } = await e.crear({ minutos: 45 })
+  e.ahora.t = new Date(T0.getTime() + 5 * 60_000) // el tiempo corre desde que soporte acepta
+  assert.equal((await e.admin('aceptar', { ticket_id: ticket.id })).status, 200)
+  assert.equal(e.sop.m.tickets[0].estado, 'en_atencion')
+  const p = e.sop.m.permisos[0]
+  assert.equal(p.aceptadoPor, 'dante@test.pe')
+  assert.equal(p.venceEn, new Date(T0.getTime() + 50 * 60_000).toISOString())
+  // Aceptar otra vez no alarga el tiempo
+  e.ahora.t = new Date(T0.getTime() + 10 * 60_000)
+  assert.equal((await e.admin('aceptar', { ticket_id: ticket.id })).status, 200)
+  assert.equal(e.sop.m.permisos[0].venceEn, new Date(T0.getTime() + 50 * 60_000).toISOString())
+})
+
+test('aceptar nivel sistema abre la ruta; nivel app no la toca', async () => {
+  const e = await conCaja()
+  const a = await e.crear({ nivel: 'app' })
+  await e.admin('aceptar', { ticket_id: a.ticket.id })
+  assert.deepEqual(e.rutas.abiertas, [])
+  await e.admin('cerrar_acceso', { ticket_id: a.ticket.id })
+  const s = await e.crear({ nivel: 'sistema' })
+  await e.admin('aceptar', { ticket_id: s.ticket.id })
+  assert.deepEqual(e.rutas.abiertas, ['tun-abcd1234'])
+})
+
+test('si Cloudflare falla al aceptar: error y no queda aceptado', async () => {
+  const e = await conCaja()
+  const { ticket } = await e.crear({ nivel: 'sistema' })
+  e.rutas.falla = true
+  const r = await e.admin('aceptar', { ticket_id: ticket.id })
+  assert.equal(r.status, 502)
+  assert.equal(e.sop.m.permisos[0].aceptadoEn, null)
+  assert.equal(e.sop.m.tickets[0].estado, 'abierto')
+})
+
+test('el permiso de un dueño anterior no se puede aceptar', async () => {
+  const e = await conCaja()
+  const { ticket } = await e.crear()
+  e.m.cajas.find((x: any) => x.id === 'caja-1')!.ownerId = OTRO
+  assert.equal((await e.admin('aceptar', { ticket_id: ticket.id })).status, 409)
+})
+
+test('sondear con permiso aceptado y vigente entrega aceptación firmada, nueva en cada llamada', async () => {
+  const e = await conCaja()
+  const { ticket } = await e.crear({ nivel: 'sistema', minutos: 30 })
+  await e.admin('aceptar', { ticket_id: ticket.id })
+  const uno = (await e.pedir('sondear', { ticket_id: ticket.id })).body as any
+  const dos = (await e.pedir('sondear', { ticket_id: ticket.id })).body as any
+  assert.equal(uno.estado, 'aceptado')
+  assert.notEqual(uno.aceptacion, dos.aceptacion)
+  const p = leerFirmado(uno.aceptacion)
+  assert.equal(p.uso, 'soporte-acepta')
+  assert.equal(p.box, 'caja-1')
+  assert.equal(p.ticket, ticket.id)
+  assert.equal(p.nivel, 'sistema')
+  assert.equal(p.vence, new Date(T0.getTime() + 30 * 60_000).toISOString())
+  assert.equal(p.exp, Math.floor(T0.getTime() / 1000) + 120)
+})
+
+test('sondear sin aceptar no trae aceptación; cerrado trae estado cerrado y nota', async () => {
+  const e = await conCaja()
+  const { ticket } = await e.crear()
+  assert.deepEqual((await e.pedir('sondear', { ticket_id: ticket.id })).body, { estado: 'esperando' })
+  await e.admin('aceptar', { ticket_id: ticket.id })
+  assert.equal((await e.admin('cerrar_ticket', { ticket_id: ticket.id, nota: 'Listo, era el cable' })).status, 200)
+  assert.deepEqual((await e.pedir('sondear', { ticket_id: ticket.id })).body, { estado: 'cerrado', nota: 'Listo, era el cable' })
+  assert.equal(e.sop.m.tickets[0].estado, 'cerrado')
+  assert.equal(e.sop.m.permisos[0].motivoCierre, 'ticket')
+})
+
+test('cerrar_acceso de soporte cierra la ruta; un fallo de Cloudflare no impide cerrar', async () => {
+  const e = await conCaja()
+  const { ticket } = await e.crear({ nivel: 'sistema' })
+  await e.admin('aceptar', { ticket_id: ticket.id })
+  e.rutas.falla = true
+  assert.equal((await e.admin('cerrar_acceso', { ticket_id: ticket.id })).status, 200)
+  assert.equal(e.sop.m.permisos[0].motivoCierre, 'soporte')
+  assert.deepEqual((await e.pedir('sondear', { ticket_id: ticket.id })).body, { estado: 'cerrado', nota: null })
+})
+
+test('al vencer se cierra el permiso y la ruta, y el cliente también al cerrar', async () => {
+  const e = await conCaja()
+  const a = await e.crear({ nivel: 'sistema', minutos: 30 })
+  await e.admin('aceptar', { ticket_id: a.ticket.id })
+  e.ahora.t = new Date(T0.getTime() + 30 * 60_000)
+  assert.equal(((await e.pedir('sondear', { ticket_id: a.ticket.id })).body as any).estado, 'cerrado')
+  assert.equal(e.sop.m.permisos[0].motivoCierre, 'vencio')
+  assert.deepEqual(e.rutas.cerradas, ['tun-abcd1234'])
+  const b = await e.pedir('permitir', { ticket_id: a.ticket.id, nivel: 'sistema', minutos: 30 })
+  assert.equal(b.status, 200)
+  await e.admin('aceptar', { ticket_id: a.ticket.id })
+  await e.pedir('cerrar_acceso', { ticket_id: a.ticket.id })
+  assert.equal(e.rutas.cerradas.length, 2)
+})
+
+test('entrar_app y comando_ssh: 409 sin acceso vigente, y comando_ssh 409 si es solo app', async () => {
+  const e = await conCaja()
+  const { ticket } = await e.crear({ nivel: 'app' })
+  assert.equal((await e.admin('entrar_app', { ticket_id: ticket.id })).status, 409)
+  await e.admin('aceptar', { ticket_id: ticket.id })
+  assert.equal((await e.admin('comando_ssh', { ticket_id: ticket.id })).status, 409)
+  e.ahora.t = new Date(T0.getTime() + 31 * 60_000)
+  assert.equal((await e.admin('entrar_app', { ticket_id: ticket.id })).status, 409)
+})
+
+test('entrar_app y comando_ssh registran el acceso y entregan lo necesario', async () => {
+  const e = await conCaja()
+  const { ticket } = await e.crear({ nivel: 'sistema' })
+  await e.admin('aceptar', { ticket_id: ticket.id })
+  const app = (await e.admin('entrar_app', { ticket_id: ticket.id })).body as any
+  const u = new URL(app.url)
+  assert.equal(u.origin + u.pathname, 'https://abcd1234.cajas.test/auth/soporte')
+  const p = leerFirmado(u.searchParams.get('pase')!)
+  assert.equal(p.uso, 'soporte')
+  assert.equal(p.box, 'caja-1')
+  assert.equal(p.sub, 'dante@test.pe')
+  assert.equal(p.exp, Math.floor(T0.getTime() / 1000) + 60)
+  assert.equal(p.vence, new Date(T0.getTime() + 30 * 60_000).toISOString())
+  const ssh = (await e.admin('comando_ssh', { ticket_id: ticket.id })).body as any
+  assert.equal(ssh.comando, 'ssh -o ProxyCommand="cloudflared access ssh --hostname %h" -i ~/.ssh/trust-soporte empleado@soporte-abcd1234.cajas.test')
+  assert.deepEqual(e.sop.m.accesos.map((a) => [a.nivel, a.quien]), [['app', 'dante@test.pe'], ['sistema', 'dante@test.pe']])
+  const vista = ((await e.pedir('listar')).body as any).tickets[0]
+  assert.equal(vista.accesos.length, 2)
+})
+
+test('un pase normal no lleva uso', () => {
+  const p = firmarPase({ sub: 's', box: 'b', now: T0, privateKeyB64: CLAVE })
+  assert.equal(leerFirmado(p).uso, undefined)
+})
+
+test('listar de soporte trae lo pendiente con su caja; crear exige caja con dueño; acción desconocida 400', async () => {
+  const e = await conCaja()
+  await e.crear()
+  const l = (await e.admin('listar')).body as any
+  assert.equal(l.tickets.length, 1)
+  assert.equal(l.tickets[0].caja.slug, 'abcd1234')
+  assert.equal((await e.admin('crear', { caja_id: 'no-existe', asunto: 'x' })).status, 404)
+  await nuevaCaja(e, 'caja-2', 'efgh5678', null)
+  assert.equal((await e.admin('crear', { caja_id: 'caja-2', asunto: 'x' })).status, 409)
+  assert.equal((await e.admin('crear', { caja_id: 'caja-1', asunto: '' })).status, 400)
+  assert.equal((await e.admin('otra')).status, 400)
+})
+
+test('listar de soporte cierra lo vencido', async () => {
+  const e = await conCaja()
+  const { ticket } = await e.crear({ nivel: 'sistema', minutos: 30 })
+  await e.admin('aceptar', { ticket_id: ticket.id })
+  e.ahora.t = new Date(T0.getTime() + 31 * 60_000)
+  await e.admin('listar')
+  assert.equal(e.sop.m.permisos[0].motivoCierre, 'vencio')
+  assert.deepEqual(e.rutas.cerradas, ['tun-abcd1234'])
+})
+
