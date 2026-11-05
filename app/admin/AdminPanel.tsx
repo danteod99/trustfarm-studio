@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { MODELS } from "@/app/lib/catalog";
 import PedidosMinipc from "@/app/admin/PedidosMinipc";
 import Clientes from "@/app/admin/Clientes";
+import SoporteAdmin from "@/app/admin/SoporteAdmin";
 
 interface Stats {
   revenueUsd: number;
@@ -489,7 +490,7 @@ function CajasAdmin() {
   );
 }
 
-export default function AdminPanel() {
+export default function AdminPanel({ soporte = false }: { soporte?: boolean }) {
   const [stats, setStats] = useState<Stats | null>(null);
   const [email, setEmail] = useState("");
   const [credits, setCredits] = useState("");
@@ -591,6 +592,8 @@ export default function AdminPanel() {
       </section>
 
       <CajasAdmin />
+
+      {soporte && <SoporteAdmin />}
 
       <section id="regalar" className="card p-5">
         <h2 className="font-semibold">Regalar créditos</h2>
