@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, Copy, Download, FolderDown, ImagePlus, Loader2, Trash2, X } from "lucide-react";
 import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import VideoPicker from "@/app/editar/VideoPicker";
+import { MAX_AUDIO_BYTES } from "@/app/lib/editar";
 import {
   LOGO_POSITIONS, buildAss, downloadBlobUrl, execLogged, extractAudioMp3, fmtMB, getProfile, getVideoInfo,
   loadEngine, mountFont, onProgress, renderVariation, resetEngine, safeDelete, writeInput,
@@ -132,7 +133,9 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
           } else {
             setStatus(`Transcribiendo "${file.name}" con IA…`);
             const audio = await extractAudioMp3(ffmpeg);
-            if (audio) {
+            if (audio && audio.size > MAX_AUDIO_BYTES) {
+              setError(`"${file.name}" es muy largo para transcribir (máx. unos 20 minutos): sale sin subtítulos.`);
+            } else if (audio) {
               const fd = new FormData();
               fd.append("audio", new File([audio], "audio.mp3", { type: "audio/mpeg" }));
               const res = await fetch("/api/editar/transcribir", { method: "POST", body: fd });
@@ -154,7 +157,10 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
           ratio = 0;
           setStatus(`Video ${fi + 1}/${files.length} · variación ${vi + 1}/${numVars}`);
           const blob = await renderVariation(ffmpeg, {
-            profile: getProfile(vi),
+            // El perfil 0 es el original sin cambios: se empieza en el 1, con zoom y velocidad leves.
+            profile: getProfile(vi + 1),
+            zoom: Number((1 + ((vi * 3 + 1) % 7) * 0.01).toFixed(2)),
+            speed: Number((0.97 + ((vi * 5 + 3) % 7) * 0.01).toFixed(2)),
             assPath: ass ? "sub.ass" : undefined,
             logoPath: logo ? "logo.png" : undefined,
             logoPos,

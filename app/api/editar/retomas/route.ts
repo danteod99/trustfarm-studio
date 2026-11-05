@@ -8,7 +8,8 @@ import { EDITAR_PRECIOS } from "@/app/lib/editar";
 //   2) Claude sobre la transcripción numerada (retomas más separadas, falsos comienzos,
 //      autocorrecciones) + condensado opcional de ideas redundantes.
 // Devuelve rangos de TIEMPO a eliminar; el navegador corta con ffmpeg.wasm.
-export const maxDuration = 120;
+// Retomas + condensado, cada uno con hasta 2 intentos de 100 s: el reembolso tiene que alcanzar a correr.
+export const maxDuration = 300;
 
 interface Word { word: string; start: number; end: number }
 interface IdxCut { desde: number; hasta: number; motivo?: string }
@@ -67,12 +68,10 @@ async function claudeCuts(words: Word[], prompt: string, anthropic: Anthropic): 
     messages: [{ role: "user", content: prompt.replace("{TRANSCRIPT}", numbered) }],
   });
   const block = resp.content.find((b) => b.type === "text");
-  if (resp.stop_reason === "refusal" || !block) return [];
-  try {
-    return (JSON.parse(block.text).cortes || []) as IdxCut[];
-  } catch {
-    return [];
-  }
+  if (resp.stop_reason === "refusal" || !block) throw new Error(`retomas sin respuesta (${resp.stop_reason})`);
+  const cortes = JSON.parse(block.text).cortes;
+  if (!Array.isArray(cortes)) throw new Error("retomas: JSON sin cortes");
+  return cortes as IdxCut[];
 }
 
 const RETAKE_PROMPT = `Eres editor de video. Transcripción de un video donde una persona habla SIN GUION: se traba, repite frases, hace falsos comienzos. Cada palabra con su ÍNDICE:

@@ -11,6 +11,7 @@ export async function GET() {
     .select(FARM_COLUMNS)
     .eq("user_id", user.id)
     .order("created_at", { ascending: true })
+    .order("id", { ascending: true })
     .limit(MAX_FARM_ACCOUNTS);
   if (error) {
     if (isMissingTable(error)) return MISSING_TABLE();

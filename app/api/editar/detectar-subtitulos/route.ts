@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   if (cobro instanceof Response) return cobro;
 
   try {
-    const anthropic = new Anthropic({ apiKey: key, maxRetries: 1, timeout: 50_000 });
+    const anthropic = new Anthropic({ apiKey: key, maxRetries: 1, timeout: 20_000 });
     const resp = await anthropic.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 100,

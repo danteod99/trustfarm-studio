@@ -8,7 +8,8 @@ import { HOOKS_SCHEMA, IDIOMAS, generateHooks, type Idioma } from "@/app/lib/gra
 // Modo Granja: un gancho (≤ 8 palabras, va quemado arriba del video) + caption con 3–5 hashtags
 // por cada video de cada cuenta. Cobro por lote: 1 crédito cada 20 ganchos (mín. 1); se devuelve
 // lo que no se pudo escribir. El navegador llama en lotes de hasta 120 ganchos.
-export const maxDuration = 120;
+// Hasta 2 intentos de 100 s y 2 rondas: el tope tiene que alcanzar para devolver lo no escrito.
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   const user = await getUser();

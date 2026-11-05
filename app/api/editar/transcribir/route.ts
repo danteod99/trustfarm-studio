@@ -1,6 +1,6 @@
 import { getUser, UNAUTHORIZED } from "@/app/lib/auth";
 import { cobrar } from "@/app/lib/editar-cobro";
-import { EDITAR_PRECIOS } from "@/app/lib/editar";
+import { EDITAR_PRECIOS, MAX_AUDIO_BYTES } from "@/app/lib/editar";
 
 // Transcripción (Groq Whisper) con tiempos por palabra para subtítulos y retomas de /editar.
 // El navegador extrae el audio (mono 16 kHz) y lo manda aquí; el video nunca se sube.
@@ -18,8 +18,9 @@ export async function POST(req: Request) {
   const form = await req.formData().catch(() => null);
   const audio = form?.get("audio");
   if (!(audio instanceof File) || audio.size === 0) return Response.json({ error: "Falta el audio." }, { status: 400 });
-  if (audio.size > 24 * 1024 * 1024) {
-    return Response.json({ error: "El audio es muy largo (máx. 24 MB, unos 50 minutos). Usa un video más corto." }, { status: 413 });
+  // Vercel corta el body en 4.5 MB; el navegador manda MP3 mono de 24 kbps (≈ 23 minutos).
+  if (audio.size > MAX_AUDIO_BYTES) {
+    return Response.json({ error: "El video es muy largo para transcribir (máx. unos 20 minutos). Usa uno más corto." }, { status: 413 });
   }
 
   const cobro = await cobrar(user, EDITAR_PRECIOS.transcripcion, "editar:transcripcion");

@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, Captions, CheckCircle2, Download, Loader2, Music, Scissors, X } from "lucide-react";
 import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import VideoPicker from "@/app/editar/VideoPicker";
+import { MAX_AUDIO_BYTES } from "@/app/lib/editar";
 import {
   buildAss, execLogged, extractAudioMp3, fmtMB, getVideoInfo, keepSegments, loadEngine, mapTime, mountFont,
   onProgress, parseSilences, readBlob, resetEngine, safeDelete, selectExpr, writeInput,
@@ -91,6 +92,7 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
         setStatus("Transcribiendo con IA…");
         const audio = await extractAudioMp3(ffmpeg);
         if (!audio) throw new Error("No se pudo leer el audio del video.");
+        if (audio.size > MAX_AUDIO_BYTES) throw new Error("El video es muy largo para transcribir (máx. unos 20 minutos).");
         const fd = new FormData();
         fd.append("audio", new File([audio], "audio.mp3", { type: "audio/mpeg" }));
         const res = await fetch("/api/editar/transcribir", { method: "POST", body: fd });

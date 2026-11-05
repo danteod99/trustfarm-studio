@@ -16,3 +16,6 @@ export const EDITAR_PRECIOS = {
 
 /** Límite diario de videos en Multiclipping (los admins no tienen límite). */
 export const CLIPS_LIMITE_DIARIO = 5;
+
+/** Tope del audio que se manda a transcribir: Vercel rechaza bodies de más de 4.5 MB. */
+export const MAX_AUDIO_BYTES = 4_300_000;

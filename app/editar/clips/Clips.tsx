@@ -94,7 +94,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombre: nombre || file.name.replace(/\.[^.]+$/, ""), ext, clips: numClips, subs, framing, preset }),
       });
-      const d = await r.json();
+      const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "No se pudo crear el trabajo.");
       router.refresh();
       await new Promise<void>((resolve, reject) => {
@@ -115,6 +115,10 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
         xhr.onerror = () => reject(new Error("No se pudo conectar con el servicio de clips. Revisa tu conexión e intenta de nuevo."));
         xhr.onabort = () => reject(new Error("Subida cancelada."));
         xhr.send(file);
+      }).catch(async (e) => {
+        // Sin video subido el trabajo nunca corre: borrarlo devuelve los créditos y el cupo del día.
+        await fetch(`/api/editar/clips/${d.jobId}`, { method: "DELETE" }).catch(() => {});
+        throw e;
       });
       setUploadPct(100);
       setFile(null); setNombre("");
@@ -147,7 +151,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
         <p className="mb-3 text-xs text-mute">
           {result.clips.length} clips en el orden sugerido para publicar (gancho, claridad, valor y cierre). Los enlaces duran 1 hora: si vencen, vuelve a abrir el video.
         </p>
-        {result.warning && <p className="mb-3 text-xs text-amber-300">La IA no pudo puntuar este video ({result.warning}); se cortó por frases completas.</p>}
+        {result.warning && <p className="mb-3 text-xs text-amber-300">La IA no pudo elegir los mejores momentos de este video; se cortó por frases completas.</p>}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {sorted.map((c: ClipResult) => {
             const u = urls[c.index];

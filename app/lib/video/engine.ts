@@ -172,7 +172,7 @@ export async function mountFont(ffmpeg: FFmpeg) {
 
 /** Audio mono 16 kHz en MP3 (para transcribir). */
 export async function extractAudioMp3(ffmpeg: FFmpeg, input = "in.mp4"): Promise<Blob | null> {
-  const code = await ffmpeg.exec(["-i", input, "-vn", "-ar", "16000", "-ac", "1", "-b:a", "64k", "-y", "audio.mp3"]);
+  const code = await ffmpeg.exec(["-i", input, "-vn", "-ar", "16000", "-ac", "1", "-b:a", "24k", "-y", "audio.mp3"]);
   if (code !== 0) return null;
   const blob = await readBlob(ffmpeg, "audio.mp3", "audio/mpeg");
   await safeDelete(ffmpeg, "audio.mp3");

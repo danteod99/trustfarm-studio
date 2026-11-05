@@ -44,11 +44,12 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
   if (!user) return UNAUTHORIZED();
   const { id } = await ctx.params;
   if (!UUID.test(id)) return Response.json({ error: "Cuenta no encontrada." }, { status: 404 });
-  const { error } = await farmDb().delete().eq("id", id).eq("user_id", user.id);
+  const { data, error } = await farmDb().delete().eq("id", id).eq("user_id", user.id).select("id");
   if (error) {
     if (isMissingTable(error)) return MISSING_TABLE();
     console.error("[granja/cuentas] DELETE:", error.message);
     return Response.json({ error: "No se pudo borrar." }, { status: 500 });
   }
+  if (!data?.length) return Response.json({ error: "Cuenta no encontrada." }, { status: 404 });
   return Response.json({ ok: true });
 }
