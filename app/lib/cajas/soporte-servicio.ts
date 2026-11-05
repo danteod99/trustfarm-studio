@@ -10,6 +10,7 @@ export type MotivoCierre = 'vencio' | 'cliente' | 'soporte' | 'ticket'
 export const MIN_MINUTOS = 15
 export const MAX_MINUTOS = 10080
 const MAX_ASUNTO = 2000
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export interface TicketFila {
   id: string
@@ -57,7 +58,9 @@ export interface SoporteStore {
   permisoAbierto(cajaId: string): Promise<PermisoFila | null>
   permisosDeTickets(ids: string[]): Promise<PermisoFila[]>
   crearPermiso(p: Pick<PermisoFila, 'ticketId' | 'cajaId' | 'nivel' | 'minutos' | 'concedidoEn'>): Promise<PermisoFila | 'ocupado'>
-  actualizarPermiso(id: string, cambios: Partial<Pick<PermisoFila, 'aceptadoEn' | 'aceptadoPor' | 'venceEn' | 'cerradoEn' | 'motivoCierre'>>): Promise<void>
+  actualizarPermiso(id: string, cambios: Partial<Pick<PermisoFila, 'cerradoEn' | 'motivoCierre'>>): Promise<void>
+  /** Solo si sigue abierto y sin aceptar: el cliente pudo cancelar mientras tanto. */
+  aceptarPermiso(id: string, cambios: Pick<PermisoFila, 'aceptadoEn' | 'aceptadoPor' | 'venceEn'>): Promise<boolean>
   accesosDePermisos(ids: string[]): Promise<AccesoFila[]>
   registrarAcceso(a: Pick<AccesoFila, 'permisoId' | 'nivel' | 'quien' | 'entroEn'>): Promise<void>
   terminarAccesos(permisoId: string, cuando: string): Promise<void>
@@ -117,10 +120,15 @@ export async function cerrarPermiso(deps: SoporteDeps, p: PermisoFila, motivo: M
   }
 }
 
-/** Si el permiso ya venció lo cierra, y devuelve el que sigue vigente o por aceptar. */
+/** Cierra lo vencido y lo de un dueño anterior, y devuelve el permiso que sigue vigente o por aceptar. */
 export async function permisoAlDia(deps: SoporteDeps, cajaId: string): Promise<PermisoFila | null> {
   const p = await deps.soporte.permisoAbierto(cajaId)
   if (!p) return null
+  const [t, caja] = await Promise.all([deps.soporte.ticket(p.ticketId), deps.store.obtenerCaja(cajaId)])
+  if (!t || !caja || caja.ownerId !== t.ownerId) {
+    await cerrarPermiso(deps, p, 'ticket')
+    return null
+  }
   if (p.venceEn !== null && Date.parse(p.venceEn) <= deps.now().getTime()) {
     await cerrarPermiso(deps, p, 'vencio')
     return null
@@ -172,8 +180,8 @@ export async function soporteCaja(
 
   // El ticket pedido, si es de esta caja y de su dueño actual
   const propio = async (): Promise<TicketFila | null> => {
-    if (typeof d.ticket_id !== 'string') return null
-    const t = await deps.soporte.ticket(d.ticket_id).catch(() => null)
+    if (typeof d.ticket_id !== 'string' || !UUID.test(d.ticket_id)) return null
+    const t = await deps.soporte.ticket(d.ticket_id)
     return t && t.cajaId === caja.id && t.ownerId === caja.ownerId ? t : null
   }
 
@@ -208,7 +216,7 @@ export async function soporteCaja(
     case 'cerrar_acceso': {
       const t = await propio()
       if (!t) return NO_ENCONTRADO()
-      const p = await deps.soporte.permisoAbierto(caja.id)
+      const p = await permisoAlDia(deps, caja.id)
       if (p && p.ticketId === t.id) await cerrarPermiso(deps, p, 'cliente')
       return { status: 200, body: { ok: true } }
     }
@@ -236,7 +244,7 @@ export async function soporteAdmin(
 ): Promise<Respuesta> {
   const d = o.datos
   const delTicket = async () => {
-    if (typeof d.ticket_id !== 'string') return null
+    if (typeof d.ticket_id !== 'string' || !UUID.test(d.ticket_id)) return null
     const t = await deps.soporte.ticket(d.ticket_id)
     if (!t) return null
     const caja = await deps.store.obtenerCaja(t.cajaId)
@@ -284,7 +292,7 @@ export async function soporteAdmin(
     case 'aceptar': {
       const x = await delTicket()
       if (!x) return NO_ENCONTRADO()
-      if (x.t.estado === 'cerrado' || x.caja.ownerId !== x.t.ownerId) return { status: 409, body: { error: 'Este ticket ya no se puede aceptar.' } }
+      if (x.t.estado === 'cerrado') return { status: 409, body: { error: 'Este ticket ya no se puede aceptar.' } }
       const p = await permisoAlDia(deps, x.caja.id)
       if (!p || p.ticketId !== x.t.id) return { status: 409, body: { error: 'El cliente todavía no dio su permiso.' } }
       if (p.aceptadoEn !== null) return { status: 200, body: { ok: true, vence_en: p.venceEn } }
@@ -297,14 +305,18 @@ export async function soporteAdmin(
       }
       const ahora = deps.now()
       const venceEn = new Date(ahora.getTime() + p.minutos * 60_000).toISOString()
-      await deps.soporte.actualizarPermiso(p.id, { aceptadoEn: ahora.toISOString(), aceptadoPor: o.quien, venceEn })
+      if (!(await deps.soporte.aceptarPermiso(p.id, { aceptadoEn: ahora.toISOString(), aceptadoPor: o.quien, venceEn }))) {
+        // Canceló mientras se abría la ruta: no debe quedar abierta
+        if (p.nivel === 'sistema') await deps.rutas.cerrar(x.caja.tunnelId, x.caja.slug).catch(() => console.error('[soporte] no se pudo cerrar la ruta SSH'))
+        return { status: 409, body: { error: 'El cliente canceló el permiso.' } }
+      }
       await deps.soporte.actualizarTicket(x.t.id, { estado: 'en_atencion' })
       return { status: 200, body: { ok: true, vence_en: venceEn } }
     }
     case 'cerrar_acceso': {
       const x = await delTicket()
       if (!x) return NO_ENCONTRADO()
-      const p = await deps.soporte.permisoAbierto(x.caja.id)
+      const p = await permisoAlDia(deps, x.caja.id)
       if (p && p.ticketId === x.t.id) await cerrarPermiso(deps, p, 'soporte')
       return { status: 200, body: { ok: true } }
     }

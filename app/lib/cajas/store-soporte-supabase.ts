@@ -70,13 +70,17 @@ export function soporteStoreSupabase(): SoporteStore {
     },
     async actualizarPermiso(id, c) {
       const { error } = await db.from('soporte_permisos').update({
-        ...(c.aceptadoEn !== undefined ? { aceptado_en: c.aceptadoEn } : {}),
-        ...(c.aceptadoPor !== undefined ? { aceptado_por: c.aceptadoPor } : {}),
-        ...(c.venceEn !== undefined ? { vence_en: c.venceEn } : {}),
         ...(c.cerradoEn !== undefined ? { cerrado_en: c.cerradoEn } : {}),
         ...(c.motivoCierre !== undefined ? { motivo_cierre: c.motivoCierre } : {}),
       }).eq('id', id)
       if (error) throw falla('guardar')
+    },
+    async aceptarPermiso(id, c) {
+      const { data, error } = await db.from('soporte_permisos')
+        .update({ aceptado_en: c.aceptadoEn, aceptado_por: c.aceptadoPor, vence_en: c.venceEn })
+        .eq('id', id).is('cerrado_en', null).is('aceptado_en', null).select('id')
+      if (error) throw falla('guardar')
+      return (data ?? []).length === 1
     },
     async accesosDePermisos(ids) {
       const { data, error } = await db.from('soporte_accesos').select('*').in('permiso_id', ids).order('entro_en', { ascending: true })

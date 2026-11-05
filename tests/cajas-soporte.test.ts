@@ -377,3 +377,62 @@ test('listar de soporte cierra lo vencido', async () => {
   assert.deepEqual(e.rutas.cerradas, ['tun-abcd1234'])
 })
 
+// ───────── Hallazgos de la revisión ─────────
+
+test('cambio de dueño con permiso abierto: el nuevo no queda bloqueado y soporte ya no entra', async () => {
+  const e = await conCaja()
+  const { ticket } = await e.crear({ nivel: 'sistema' })
+  await e.admin('aceptar', { ticket_id: ticket.id })
+  e.m.cajas.find((x: any) => x.id === 'caja-1')!.ownerId = OTRO
+  assert.equal((await e.admin('entrar_app', { ticket_id: ticket.id })).status, 409)
+  assert.equal((await e.admin('comando_ssh', { ticket_id: ticket.id })).status, 409)
+  assert.equal(e.sop.m.permisos[0].motivoCierre, 'ticket')
+  assert.deepEqual(e.rutas.cerradas, ['tun-abcd1234'])
+  assert.equal((await e.crear()).r.status, 200, 'el dueño nuevo puede pedir soporte')
+})
+
+test('cambio de dueño con permiso sin aceptar: el nuevo no queda bloqueado', async () => {
+  const e = await conCaja()
+  await e.crear()
+  e.m.cajas.find((x: any) => x.id === 'caja-1')!.ownerId = OTRO
+  assert.equal((await e.crear()).r.status, 200)
+})
+
+test('un fallo al leer el ticket no parece un 404', async () => {
+  const e = await conCaja()
+  const { ticket } = await e.crear()
+  e.sop.store.ticket = async () => { throw new Error('supabase caído') }
+  await assert.rejects(e.pedir('sondear', { ticket_id: ticket.id }))
+})
+
+test('ticket_id que no es un identificador: 404 sin consultar la base', async () => {
+  const e = await conCaja()
+  e.sop.store.ticket = async () => { throw new Error('no debe consultar') }
+  assert.equal((await e.pedir('sondear', { ticket_id: "x'; drop" })).status, 404)
+})
+
+test('cerrar_acceso de un permiso vencido queda como vencido, no como cerrado por el cliente', async () => {
+  const e = await conCaja()
+  const { ticket } = await e.crear({ nivel: 'sistema', minutos: 30 })
+  await e.admin('aceptar', { ticket_id: ticket.id })
+  e.ahora.t = new Date(T0.getTime() + 31 * 60_000)
+  assert.equal((await e.pedir('cerrar_acceso', { ticket_id: ticket.id })).status, 200)
+  assert.equal(e.sop.m.permisos[0].motivoCierre, 'vencio')
+  assert.deepEqual(e.rutas.cerradas, ['tun-abcd1234'])
+})
+
+test('el cliente cancela mientras se abre la ruta: aceptar falla y la ruta se cierra', async () => {
+  const e = await conCaja()
+  const { ticket } = await e.crear({ nivel: 'sistema' })
+  const abrir = e.deps.rutas.abrir
+  e.deps.rutas.abrir = async (t: string, s: string) => {
+    const r = await abrir(t, s)
+    await e.pedir('cerrar_acceso', { ticket_id: ticket.id })
+    return r
+  }
+  const r = await e.admin('aceptar', { ticket_id: ticket.id })
+  assert.equal(r.status, 409)
+  assert.deepEqual(e.rutas.cerradas, ['tun-abcd1234'])
+  assert.equal(e.sop.m.permisos[0].aceptadoEn, null)
+  assert.equal(e.sop.m.tickets[0].estado, 'abierto')
+})

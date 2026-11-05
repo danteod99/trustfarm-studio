@@ -38,6 +38,12 @@ export function crearSoporteMem() {
     async actualizarPermiso(id, cambios) {
       Object.assign(m.permisos.find((p) => p.id === id)!, cambios)
     },
+    async aceptarPermiso(id, cambios) {
+      const p = m.permisos.find((x) => x.id === id)!
+      if (p.cerradoEn !== null || p.aceptadoEn !== null) return false
+      Object.assign(p, cambios)
+      return true
+    },
     async accesosDePermisos(ids) {
       return m.accesos.filter((a) => ids.includes(a.permisoId))
     },
