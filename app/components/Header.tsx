@@ -3,7 +3,8 @@ import Logo from "@/app/components/Logo";
 import { getUser, isAdminEmail } from "@/app/lib/auth";
 import { getBalance } from "@/app/lib/credits";
 import { paginaVisible } from "@/app/lib/minipc";
-import { Coins, Lightbulb, Menu } from "lucide-react";
+import { Lightbulb, Menu } from "lucide-react";
+import SaldoCreditos from "@/app/components/SaldoCreditos";
 
 export default async function Header() {
   const user = await getUser();
@@ -50,10 +51,7 @@ export default async function Header() {
                   Admin
                 </Link>
               )}
-              <Link href="/creditos" className="btn-ghost whitespace-nowrap !py-2">
-                <Coins size={15} className="text-brand-2" />
-                {balance} <span className="hidden sm:inline">créditos</span>
-              </Link>
+              <SaldoCreditos inicial={balance} />
               {/* Debajo de lg los links secundarios van en un menú desplegable. */}
               <details className="relative lg:hidden">
                 <summary aria-label="Menú" className="flex cursor-pointer list-none items-center rounded-lg p-2 text-mute hover:text-ink [&::-webkit-details-marker]:hidden">
