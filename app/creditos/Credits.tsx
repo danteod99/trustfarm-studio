@@ -79,7 +79,7 @@ export default function Credits() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pack }),
     });
-    const d = await r.json();
+    const d = await r.json().catch(() => ({}));
     if (d.url) {
       const p = getPack(pack);
       if (p) eventoStudio("InitiateCheckout", { content_name: `Paquete ${p.name}`, value: p.priceUsd, currency: "USD" });

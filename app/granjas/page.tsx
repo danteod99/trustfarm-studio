@@ -155,8 +155,8 @@ function SectionHead({ eyebrow, title, sub }: { eyebrow: string; title: string; 
 export default async function GranjasPage() {
   const user = await getUser();
   // Los CTA venden: suscripción mensual (principal) y recarga de créditos. Sin sesión, primero el registro.
-  const suscribir = user ? "/creditos#plan" : "/entrar?modo=registro&next=/creditos";
-  const recargar = user ? "/creditos#paquetes" : "/entrar?modo=registro&next=/creditos";
+  const suscribir = user ? "/creditos#plan" : "/entrar?modo=registro&next=/creditos%23plan";
+  const recargar = user ? "/creditos#paquetes" : "/entrar?modo=registro&next=/creditos%23paquetes";
   const textoSuscribir = `Suscribirme · $${PLAN.priceUsd}/mes`;
 
   return (

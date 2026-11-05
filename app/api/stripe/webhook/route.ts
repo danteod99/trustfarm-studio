@@ -105,7 +105,8 @@ export async function POST(req: Request) {
 }
 
 async function invoicePaid(inv: Stripe.Invoice) {
-  const subId = inv.parent?.subscription_details?.subscription;
+  // API 2025+ (basil) lo trae en parent; versiones anteriores, en inv.subscription.
+  const subId = inv.parent?.subscription_details?.subscription ?? (inv as unknown as { subscription?: string | Stripe.Subscription | null }).subscription;
   if (!subId) return Response.json({ received: true, ignored: true });
   try {
     const sub = await stripe().subscriptions.retrieve(typeof subId === "string" ? subId : subId.id);

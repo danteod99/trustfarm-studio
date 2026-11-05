@@ -3,7 +3,7 @@ import Logo from "@/app/components/Logo";
 import { getUser, isAdminEmail } from "@/app/lib/auth";
 import { getBalance } from "@/app/lib/credits";
 import { paginaVisible } from "@/app/lib/minipc";
-import { Coins, Lightbulb } from "lucide-react";
+import { Coins, Lightbulb, Menu } from "lucide-react";
 
 export default async function Header() {
   const user = await getUser();
@@ -17,43 +17,66 @@ export default async function Header() {
           <Link href="/ideas" aria-label="Ideas" className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-mute hover:text-ink sm:px-3">
             <Lightbulb size={15} className="text-brand-2" /> <span className="hidden sm:inline">Ideas</span>
           </Link>
-          <Link href="/granjas" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink md:block">
+          <Link href="/granjas" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink lg:block">
             Granjas
           </Link>
           {user ? (
             <>
-              <Link href="/estudio" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink sm:block">
+              <Link href="/estudio" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink lg:block">
                 Estudio
               </Link>
-              <Link href="/galeria" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink sm:block">
+              <Link href="/galeria" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink lg:block">
                 Galería
               </Link>
-              <Link href="/flujos" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink sm:block">
+              <Link href="/flujos" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink lg:block">
                 Flujos
               </Link>
-              <Link href="/editar" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink sm:block">
+              <Link href="/editar" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink lg:block">
                 Editar
               </Link>
-              <Link href="/granja" className="hidden whitespace-nowrap rounded-lg px-3 py-2 text-mute hover:text-ink md:block">
+              <Link href="/granja" className="hidden whitespace-nowrap rounded-lg px-3 py-2 text-mute hover:text-ink lg:block">
                 Modo Granja
               </Link>
-              <Link href="/cajas" className="rounded-lg px-2 py-2 text-mute hover:text-ink sm:px-3">
+              <Link href="/cajas" className="hidden whitespace-nowrap rounded-lg px-3 py-2 text-mute hover:text-ink sm:block">
                 Mis cajas
               </Link>
               {minipcVisible && (
-                <Link href="/minipc" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink sm:block">
+                <Link href="/minipc" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink lg:block">
                   Mini PC
                 </Link>
               )}
               {isAdminEmail(user.email) && (
-                <Link href="/admin" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink sm:block">
+                <Link href="/admin" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink lg:block">
                   Admin
                 </Link>
               )}
-              <Link href="/creditos" className="btn-ghost !py-2">
+              <Link href="/creditos" className="btn-ghost whitespace-nowrap !py-2">
                 <Coins size={15} className="text-brand-2" />
-                {balance} créditos
+                {balance} <span className="hidden sm:inline">créditos</span>
               </Link>
+              {/* Debajo de lg los links secundarios van en un menú desplegable. */}
+              <details className="relative lg:hidden">
+                <summary aria-label="Menú" className="flex cursor-pointer list-none items-center rounded-lg p-2 text-mute hover:text-ink [&::-webkit-details-marker]:hidden">
+                  <Menu size={18} />
+                </summary>
+                <div className="absolute right-0 top-full mt-2 flex w-48 flex-col rounded-xl border border-line bg-panel p-1.5 shadow-xl">
+                  {[
+                    ["/estudio", "Estudio"],
+                    ["/galeria", "Galería"],
+                    ["/flujos", "Flujos"],
+                    ["/editar", "Editar"],
+                    ["/granja", "Modo Granja"],
+                    ["/cajas", "Mis cajas"],
+                    ["/granjas", "Granjas"],
+                    ...(minipcVisible ? [["/minipc", "Mini PC"]] : []),
+                    ...(isAdminEmail(user.email) ? [["/admin", "Admin"]] : []),
+                  ].map(([href, label]) => (
+                    <Link key={href} href={href} className="rounded-lg px-3 py-2 text-mute hover:bg-panel-2 hover:text-ink">
+                      {label}
+                    </Link>
+                  ))}
+                </div>
+              </details>
             </>
           ) : (
             <>
