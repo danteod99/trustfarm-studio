@@ -17,6 +17,7 @@ import * as runpod from "@/app/lib/providers/runpod";
 import { ProviderError, type InputImage, type PollResult } from "@/app/lib/providers/gemini";
 import { getPreset, presetPrefix, storageImage } from "@/app/lib/presets";
 import { getMotion } from "@/app/lib/templates";
+import { marcarRegeneracion, registrarSenal } from "@/app/lib/senales";
 
 export interface Generation {
   id: string;
@@ -164,6 +165,10 @@ export async function startGeneration(userId: string, free: boolean, input: Star
     }
     await db.from("ai_generations").update({ charged: true }).eq("id", row.id);
   }
+
+  // Señales de calidad para entrenar: animar = le gustó la imagen; repetir el prompt = no le gustó.
+  if (input.fromGeneration) await registrarSenal(input.fromGeneration, userId, "animate");
+  await marcarRegeneracion(userId, model.id, finalPrompt, row.id);
 
   if (route === "local" || route === "runpod") {
     try {

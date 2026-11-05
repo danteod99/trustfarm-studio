@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { getUser, UNAUTHORIZED } from "@/app/lib/auth";
 import { supabaseAdmin, MEDIA_BUCKET } from "@/app/lib/supabase/admin";
 import { MAX_PRESETS, MAX_PRESET_DESC, listPresets, publicPresets, type PresetKind } from "@/app/lib/presets";
+import { registrarSenal } from "@/app/lib/senales";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
@@ -71,5 +72,6 @@ export async function POST(req: Request) {
     console.error("[presets] insert:", error?.message);
     return Response.json({ error: "No se pudo guardar." }, { status: 500 });
   }
+  if (kind === "character" && body.fromGeneration) await registrarSenal(String(body.fromGeneration), user.id, "character");
   return Response.json({ preset: (await publicPresets([row]))[0] });
 }

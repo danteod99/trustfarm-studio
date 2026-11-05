@@ -66,7 +66,14 @@ export default function GenerationCard({ g, onAnimate, onSaveCharacter }: Props)
             {g.params.resolution ? ` · ${g.params.resolution}` : ""}
           </span>
           {g.status === "done" && g.url && (
-            <a href={g.url} download target="_blank" rel="noreferrer" className="flex items-center gap-1 text-brand-2 hover:underline">
+            <a
+              href={g.url}
+              download
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => void fetch(`/api/generations/${g.id}/senal`, { method: "POST", keepalive: true }).catch(() => {})}
+              className="flex items-center gap-1 text-brand-2 hover:underline"
+            >
               <Download size={13} /> Descargar
             </a>
           )}

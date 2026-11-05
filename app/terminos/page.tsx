@@ -41,6 +41,8 @@ export default function Terminos() {
         Puedes usar comercialmente lo que generes, sujeto a estos términos y a las políticas de los proveedores de los
         modelos. Eres responsable de cómo publicas y usas ese contenido. Algunos resultados incluyen marcas de agua
         invisibles que identifican el contenido como generado por IA.
+        Nos autorizas a usar tus descripciones y resultados, sin datos que te identifiquen, para entrenar y mejorar los modelos
+        de TrustFarm. Si no quieres que se usen, escríbenos y los excluimos.
       </p>
       <h2>4. Disponibilidad</h2>
       <p>
