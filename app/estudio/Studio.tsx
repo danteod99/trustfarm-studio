@@ -296,7 +296,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
       {/* Panel de control */}
       <section
         ref={panelRef}
-        className="card h-fit scroll-mt-24 space-y-5 border-brand/30 bg-panel/90 p-5 shadow-[0_0_60px_-18px_rgba(34,211,238,0.45)] backdrop-blur lg:sticky lg:top-24"
+        className="card h-fit scroll-mt-24 space-y-5 border-brand/30 bg-panel/90 p-5 shadow-[0_0_60px_-18px_rgba(34,211,238,0.45)] backdrop-blur lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto"
       >
         {/* Formatos */}
         <div>
@@ -580,6 +580,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
         )}
         {error && <p className="rounded-xl bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
 
+        <div className="sticky bottom-0 z-10 -mx-5 -mb-5 space-y-2 rounded-b-2xl border-t border-line bg-panel/95 px-5 pb-4 pt-3 backdrop-blur">
         {notEnough ? (
           <Link href="/creditos" className="btn-primary w-full">
             Te faltan {cost - balance} créditos · Recargar
@@ -597,6 +598,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
         <p className="text-center text-xs text-mute">
           Saldo: {balance} créditos. Si la generación falla, se devuelven. Al publicar, marca el video como hecho con IA.
         </p>
+        </div>
       </section>
 
       {/* Resultados */}
