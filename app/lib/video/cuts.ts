@@ -52,6 +52,12 @@ export function parseSilences(logLines: string[], duration: number): Range[] {
   return cuts;
 }
 
+/** ¿El video casi no tiene sonido? Cortar sus "silencios" lo dejaría vacío y transcribirlo no sirve. */
+export function casiTodoSilencio(silencios: Range[], duration: number): boolean {
+  if (duration <= 0) return false;
+  return silencios.reduce((a, s) => a + (s.end - s.start), 0) >= duration * 0.95;
+}
+
 /** Expresión de `select`/`aselect` que conserva solo los tramos dados. */
 export function selectExpr(keep: Range[]): string {
   return keep.map((k) => `between(t,${k.start.toFixed(3)},${k.end.toFixed(3)})`).join("+");
