@@ -11,7 +11,7 @@ import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import VideoPicker from "@/app/editar/VideoPicker";
 import { MAX_AUDIO_BYTES } from "@/app/lib/editar";
 import {
-  buildAss, execLogged, extractAudioMp3, fmtMB, getVideoInfo, keepSegments, loadEngine, mapTime, mountFont,
+  buildAss, duracionTotal, execLogged, extractAudioMp3, fmtMB, getVideoInfo, keepSegments, loadEngine, mapTime, mountFont,
   onProgress, parseSilences, readBlob, resetEngine, safeDelete, selectExpr, writeInput,
   type Range, type SubSegment, type SubWord,
 } from "@/app/lib/video";
@@ -55,15 +55,19 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
     const off = onProgress((r) => setPct((p) => Math.min(99, Math.max(p, Math.round(r * 100)))));
     let paid = false;
     try {
+      const infos = await Promise.all(files.map((f) => getVideoInfo(f)));
+      const W = infos[0].w, H = infos[0].h;
+      const dur = duracionTotal(infos.map((i) => i.dur));
+      // Cortes y subtítulos dependen de la duración: sin ella saldría un video vacío ya cobrado.
+      if (dur === null && (cutRetakes || cutSilences || subsOn)) {
+        throw new Error("Tu navegador no puede leer este video (suele pasar con MOV HEVC de iPhone). Conviértelo a MP4 H.264 o prueba en otro navegador. No se te cobró nada.");
+      }
+      const origDur = dur ?? 0;
       const { ffmpeg } = await loadEngine(setStatus);
-      const info = await getVideoInfo(files[0]);
-      const W = info.w, H = info.h;
-      let origDur = 0;
 
       if (files.length === 1) {
         setStatus("Cargando el video…");
         await writeInput(ffmpeg, "in.mp4", files[0]);
-        origDur = info.dur;
       } else {
         // Varias tomas: se normalizan al formato de la 1.ª y se unen en orden.
         const list: string[] = [];
@@ -77,7 +81,6 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
           if (code !== 0) throw new Error(`No se pudo preparar la toma ${i + 1}.`);
           await safeDelete(ffmpeg, `src${i}.mp4`);
           list.push(`file norm${i}.mp4`);
-          origDur += (await getVideoInfo(files[i])).dur;
         }
         await writeInput(ffmpeg, "concat.txt", list.join("\n") + "\n");
         const cc = await ffmpeg.exec(["-f", "concat", "-safe", "0", "-i", "concat.txt", "-c", "copy", "-y", "in.mp4"]);
