@@ -2,6 +2,7 @@ import { getUser, UNAUTHORIZED } from "@/app/lib/auth";
 import { getPack } from "@/app/lib/catalog";
 import { BRAND, SITE_URL } from "@/app/lib/brand";
 import { stripe } from "@/app/lib/stripe";
+import { navegadorAMetadata } from "@/app/lib/pixel-server";
 
 // Crea una sesión de Stripe Checkout para un paquete de créditos (pago único).
 export async function POST(req: Request) {
@@ -30,7 +31,8 @@ export async function POST(req: Request) {
           },
         },
       ],
-      metadata: { user_id: user.id, pack_id: pack.id },
+      // Datos del navegador para el Purchase del pixel que manda el webhook.
+      metadata: { user_id: user.id, pack_id: pack.id, ...navegadorAMetadata(req) },
       payment_intent_data: { metadata: { user_id: user.id, pack_id: pack.id } },
       success_url: `${SITE_URL}/creditos?pago=ok`,
       cancel_url: `${SITE_URL}/creditos?pago=cancelado`,

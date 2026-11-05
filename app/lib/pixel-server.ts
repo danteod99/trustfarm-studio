@@ -19,6 +19,34 @@ export interface EventoServidor {
   fbc?: string;
 }
 
+/** IP, navegador y cookies del pixel de una request: Meta los necesita para atribuir eventos
+ *  "website" que salen del servidor (compras del webhook, registros con Google). */
+export function datosNavegador(req: Request): Pick<EventoServidor, "ip" | "userAgent" | "fbp" | "fbc"> {
+  const cookies = req.headers.get("cookie") ?? "";
+  const cookie = (n: string) => cookies.match(new RegExp(`(?:^|;\\s*)${n}=([^;]+)`))?.[1];
+  return {
+    ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined,
+    userAgent: req.headers.get("user-agent")?.slice(0, 450) || undefined,
+    fbp: cookie("_fbp")?.slice(0, 256),
+    fbc: cookie("_fbc")?.slice(0, 450),
+  };
+}
+
+/** Para guardar en la metadata de Stripe (solo strings, máx. 500 caracteres) y leerlo en el webhook. */
+export function navegadorAMetadata(req: Request): Record<string, string> {
+  const d = datosNavegador(req);
+  const out: Record<string, string> = {};
+  if (d.ip) out.meta_ip = d.ip;
+  if (d.userAgent) out.meta_ua = d.userAgent;
+  if (d.fbp) out.meta_fbp = d.fbp;
+  if (d.fbc) out.meta_fbc = d.fbc;
+  return out;
+}
+
+export function navegadorDeMetadata(md: Record<string, string> | null | undefined): Pick<EventoServidor, "ip" | "userAgent" | "fbp" | "fbc"> {
+  return { ip: md?.meta_ip, userAgent: md?.meta_ua, fbp: md?.meta_fbp, fbc: md?.meta_fbc };
+}
+
 export async function enviarEventoStudio(e: EventoServidor): Promise<void> {
   const token = process.env.META_CAPI_TOKEN;
   if (!token) return;

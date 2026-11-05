@@ -2,11 +2,12 @@ import { getUser, UNAUTHORIZED } from "@/app/lib/auth";
 import { BRAND, SITE_URL } from "@/app/lib/brand";
 import { PLAN } from "@/app/lib/catalog";
 import { stripe } from "@/app/lib/stripe";
+import { navegadorAMetadata } from "@/app/lib/pixel-server";
 import { isActive, readSub } from "@/app/lib/subscription";
 
 // Crea la sesión de Stripe Checkout del plan mensual. Los créditos los acredita el webhook
 // con cada factura pagada (invoice.paid), incluida la primera.
-export async function POST() {
+export async function POST(req: Request) {
   const user = await getUser();
   if (!user) return UNAUTHORIZED();
   const price = process.env.STRIPE_SUB_PRICE_ID;
@@ -23,7 +24,8 @@ export async function POST() {
       client_reference_id: user.id,
       metadata: { user_id: user.id, plan: PLAN.id },
       subscription_data: {
-        metadata: { user_id: user.id, plan: PLAN.id },
+        // Datos del navegador para el Subscribe/Purchase del pixel (el webhook lee la suscripción).
+        metadata: { user_id: user.id, plan: PLAN.id, ...navegadorAMetadata(req) },
         description: `${PLAN.name} — ${BRAND.name}`,
       },
       success_url: `${SITE_URL}/creditos?plan=ok`,

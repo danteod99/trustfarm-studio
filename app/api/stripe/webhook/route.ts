@@ -2,7 +2,7 @@ import type Stripe from "stripe";
 import { stripe } from "@/app/lib/stripe";
 import { PLAN, getPack } from "@/app/lib/catalog";
 import { addCredits } from "@/app/lib/credits";
-import { enviarEventoStudio } from "@/app/lib/pixel-server";
+import { enviarEventoStudio, navegadorDeMetadata } from "@/app/lib/pixel-server";
 import { SITE_URL } from "@/app/lib/brand";
 import { decidirRama, procesarSesionMinipc } from "@/app/lib/minipc-pedidos";
 import { pedidosStoreSupabase } from "@/app/lib/minipc-store-supabase";
@@ -98,6 +98,7 @@ export async function POST(req: Request) {
       customData: { value: pack.priceUsd, currency: "USD", content_name: `Paquete ${pack.name}` },
       email: session.customer_details?.email,
       externalId: userId,
+      ...navegadorDeMetadata(session.metadata),
     });
   }
 
@@ -126,7 +127,7 @@ async function invoicePaid(inv: Stripe.Invoice) {
     await saveSub(userId, subFields(sub));
     // Pixel: solo la primera factura cuenta como alta (las renovaciones no vienen de un anuncio).
     if (inv.billing_reason === "subscription_create") {
-      const base = { url: `${SITE_URL}/creditos`, email: inv.customer_email, externalId: userId };
+      const base = { url: `${SITE_URL}/creditos`, email: inv.customer_email, externalId: userId, ...navegadorDeMetadata(sub.metadata) };
       const customData = { value: inv.amount_paid / 100, currency: (inv.currency || "usd").toUpperCase(), content_name: PLAN.name };
       await enviarEventoStudio({ ...base, evento: "Subscribe", eventId: `stripe-sub:${inv.id}`, customData });
       await enviarEventoStudio({ ...base, evento: "Purchase", eventId: `stripe:${inv.id}`, customData });
