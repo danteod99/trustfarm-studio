@@ -2,6 +2,12 @@
 
 export interface Range { start: number; end: number }
 
+/** Duración total de las tomas, o null si alguna no se pudo leer (el navegador no la decodifica). */
+export function duracionTotal(durs: number[]): number | null {
+  if (!durs.length || durs.some((d) => !Number.isFinite(d) || d <= 0)) return null;
+  return durs.reduce((a, d) => a + d, 0);
+}
+
 /** Complemento de los cortes = tramos a CONSERVAR (con un pequeño margen). */
 export function keepSegments(cuts: Range[], duration: number, pad = 0.04): Range[] {
   const merged: Range[] = [];
