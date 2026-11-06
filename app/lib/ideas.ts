@@ -9,7 +9,7 @@ export interface Idea {
   title: string;
   hook: string;
   /** Ejemplo: imagen (y video en bucle si existe). */
-  image: string;
+  image?: string;
   video?: string;
   kind: Kind;
   model: string;
@@ -27,6 +27,9 @@ export const IDEA_CATEGORIES = [
   "Negocios y máquinas",
   "Brainrot",
   "Historias",
+  "Frutinovelas",
+  "Modelos IA",
+  "Miniseries TikTok",
   "Influencers IA",
   "Productos y anuncios",
   "Comida",
@@ -868,6 +871,209 @@ export const IDEAS: Idea[] = [
     motion: "orbita",
     prompt:
       "Una mujer hace una postura de yoga sobre un mat en la arena frente al mar al amanecer, la cámara gira lento a su alrededor, luz dorada. Sonido de olas y música relajante, sin voz.",
+  },
+
+  // Frutinovelas
+  {
+    id: "fruti-boda",
+    category: "Frutinovelas",
+    title: "La boda interrumpida",
+    hook: "Capítulo clásico: la rival entra a la iglesia justo antes del «sí, acepto».",
+    kind: "image",
+    model: "qwen-image",
+    aspect: "9:16",
+    prompt:
+      "Animación 3D estilo película animada: una iglesia decorada con flores, una novia fresa con velo blanco y ojos grandes junto a un novio plátano con traje azul frente al altar. En la puerta aparece una piña con gafas de sol y vestido negro, todos los invitados frutas se voltean sorprendidos. Iluminación dramática de telenovela. Sin humanos, sin texto.",
+  },
+  {
+    id: "fruti-suegra",
+    category: "Frutinovelas",
+    title: "La suegra chismosa",
+    hook: "Personaje fijo que da risa y mueve la trama de todos los capítulos.",
+    kind: "image",
+    model: "qwen-image",
+    aspect: "9:16",
+    prompt:
+      "Animación 3D cinematográfica: una sandía anciana con rulos, collar de perlas y delantal floreado, ojos grandes y cejas levantadas, espiando por la ventana de una cocina mientras sostiene una taza de té. Detrás, una palta joven discute en voz baja por teléfono. Colores saturados, luz cálida dramática. Sin humanos, sin texto.",
+  },
+  {
+    id: "fruti-llamada",
+    category: "Frutinovelas",
+    title: "Video: la llamada que lo cambia todo",
+    hook: "Animar la escena con diálogo corto es lo que hace que se sienta telenovela.",
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 8,
+    resolution: "720p",
+    motion: "acercamiento",
+    prompt:
+      "Animación 3D estilo película animada: una fresa con vestido rojo y aretes dorados, ojos grandes llenos de lágrimas, sostiene un celular en una cocina de noche. Dice con voz dramática y quebrada: «¿Tú sabías que él me mintió?». Música de violines de suspenso, goteo de un caño de fondo. Sin subtítulos ni texto.",
+  },
+  {
+    id: "fruti-juicio",
+    category: "Frutinovelas",
+    title: "Juicio en el mercado",
+    hook: "Un escenario peruano reconocible hace que el público se identifique y comente.",
+    kind: "image",
+    model: "z-image",
+    aspect: "9:16",
+    prompt:
+      "Animación 3D cinematográfica: un mercado limeño de frutas lleno de gente, un mango juez con peluca blanca y mazo golpea un puesto de madera, frente a él un limón acusado con cara de nervios y una naranja abogada con maletín. Luz cálida de mediodía, colores saturados, expresiones exageradas de telenovela. Sin humanos, sin texto.",
+  },
+  {
+    id: "fruti-portada",
+    category: "Frutinovelas",
+    title: "Portada de capítulo",
+    hook: "La portada decide si abren el video: tema claro, 4 palabras y colores fuertes.",
+    kind: "image",
+    model: "nano-banana-pro",
+    aspect: "9:16",
+    prompt:
+      "Portada de TikTok de telenovela animada 3D: un plátano con cara de traición en primer plano, ojos enormes y ceja arqueada, fondo rojo y negro con destellos dorados. Texto grande arriba: «ME ENGAÑASTE» y abajo la etiqueta «CAPÍTULO 7». Que dé ganas de ver el video sin revelar el giro.",
+  },
+  {
+    id: "fruti-heladeria",
+    category: "Frutinovelas",
+    title: "Cita en la heladería",
+    hook: "Escena romántica para abrir la serie y presentar a la pareja protagonista.",
+    kind: "video",
+    model: "veo-fast",
+    aspect: "9:16",
+    duration: 8,
+    resolution: "720p",
+    motion: "orbita",
+    prompt:
+      "Animación 3D estilo película animada: una pareja de frutas, una fresa con coletas y un arándano con chaqueta de cuero, comparten un helado en una heladería de colores pastel de noche. Ella se ríe con ternura y le dice con voz dulce: «Nunca había sido tan feliz». Música romántica suave. Sin subtítulos ni texto.",
+  },
+
+  // Modelos IA
+  {
+    id: "modelo-gym",
+    category: "Modelos IA",
+    title: "Creadora fitness en el gimnasio",
+    hook: "Mismo rostro y cuerpo en todas las fotos para promocionar ropa deportiva o suplementos.",
+    kind: "image",
+    model: "qwen-image",
+    aspect: "9:16",
+    prompt:
+      "Foto realista de celular de una creadora fitness latina de 26 años, cabello castaño largo recogido en cola alta, lunar sobre el labio, contextura atlética, en un gimnasio moderno de Lima con espejo grande, conjunto deportivo negro, tomándose una selfie en el espejo con el celular. Luz de gimnasio natural, piel real con textura, sin filtros. Sin texto.",
+  },
+  {
+    id: "modelo-ropa",
+    category: "Modelos IA",
+    title: "Outfit para tienda de ropa",
+    hook: "Prueba de prendas sin contratar modelo: cambia la ropa, no la cara.",
+    kind: "image",
+    model: "nano-banana-pro",
+    aspect: "9:16",
+    prompt:
+      "Foto de catálogo realista de una modelo latina de 24 años, cabello negro lacio a los hombros, cejas definidas, de pie en una calle soleada de Barranco, vistiendo el polo y el jean de la imagen de referencia, mirando a la cámara con una sonrisa leve. Luz natural de la tarde, foto de celular. Sin texto.",
+  },
+  {
+    id: "modelo-skincare",
+    category: "Modelos IA",
+    title: "Rutina de skincare",
+    hook: "Foto con producto en mano, ideal para afiliados y tiendas de belleza.",
+    kind: "image",
+    model: "qwen-image",
+    aspect: "9:16",
+    prompt:
+      "Foto realista de celular de una creadora de contenido latina de 27 años con piel natural y pecas leves, en un baño luminoso con toalla blanca en la cabeza, sosteniendo junto a su cara un frasco de sérum como el de la imagen de referencia, sonriendo. Luz suave de ventana. Sin texto adicional.",
+  },
+  {
+    id: "modelo-unboxing",
+    category: "Modelos IA",
+    title: "Unboxing hablado",
+    hook: "Video corto con voz en español para mostrar la caja del producto como si fuera real.",
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    motion: "fija",
+    prompt:
+      "Una joven peruana sentada en el sofá de su sala abre una caja de cartón con un producto y dice con voz emocionada: «Por fin llegó mi pedido, miren cómo vino». Cámara de celular en mano, luz natural de la tarde, sonido ambiente de casa y papel de la caja. Sin subtítulos.",
+  },
+  {
+    id: "modelo-barista",
+    category: "Modelos IA",
+    title: "Creador hombre: reseña en café",
+    hook: "El creador virtual también puede ser hombre: ideal para tecnología, gadgets y finanzas.",
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    motion: "fija",
+    prompt:
+      "Un joven latino de 28 años con barba corta y chompa gris, sentado en una cafetería con una laptop, mira a la cámara del celular y dice con voz tranquila: «Con esta herramienta ahorro dos horas al día». Murmullo de cafetería, taza sobre la mesa, luz cálida de ventana. Cámara en mano.",
+  },
+
+  // Miniseries TikTok
+  {
+    id: "mini-ascensor",
+    category: "Miniseries TikTok",
+    title: "Miniserie: el ascensor",
+    hook: "Un espacio cerrado es el escenario más barato para generar tensión.",
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 8,
+    resolution: "720p",
+    motion: "acercamiento",
+    prompt:
+      "Plano cinematográfico dentro de un ascensor antiguo de un edificio de oficinas de Lima: una mujer de 30 años con blazer oscuro presiona el botón del piso 13 y la luz parpadea. Una voz por el parlante susurra: «Hoy no deberías haber venido». Ella se queda inmóvil. Zumbido eléctrico, sin música. Sin subtítulos.",
+  },
+  {
+    id: "mini-enfermera",
+    category: "Miniseries TikTok",
+    title: "Miniserie: turno de noche",
+    hook: "Protagonista fija, un hospital y un secreto que se revela capítulo a capítulo.",
+    kind: "image",
+    model: "nano-banana-pro",
+    aspect: "9:16",
+    prompt:
+      "Retrato cinematográfico de una enfermera latina de 30 años, cabello recogido, ojeras leves, uniforme verde, parada en un pasillo vacío de hospital de noche con una carpeta en la mano, mirando hacia atrás con preocupación. Luz fluorescente fría con un punto de luz cálida al fondo. Sin texto.",
+  },
+  {
+    id: "mini-herencia",
+    category: "Miniseries TikTok",
+    title: "Miniserie: la herencia",
+    hook: "Familia, notario y un testamento: la receta perfecta de drama corto.",
+    kind: "video",
+    model: "veo-fast",
+    aspect: "9:16",
+    duration: 8,
+    resolution: "720p",
+    motion: "acercamiento",
+    prompt:
+      "Interior de una oficina de notario en Lima, tarde. Tres hermanos adultos sentados alrededor de una mesa de madera mientras el notario abre un sobre sellado. Uno de ellos se levanta de golpe y dice con voz furiosa: «¡Eso no puede ser cierto!». Cámara lenta de acercamiento, música tensa que se corta de golpe. Sin subtítulos.",
+  },
+  {
+    id: "mini-vecino",
+    category: "Miniseries TikTok",
+    title: "Miniserie: el vecino nuevo",
+    hook: "Comedia de suspenso: algo raro en la casa de al lado y una pregunta que obliga a ver la parte 2.",
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 8,
+    resolution: "720p",
+    motion: "fija",
+    prompt:
+      "Plano nocturno desde una ventana: una mujer joven mira a través de las cortinas la casa de su vecino nuevo, donde todas las luces se apagan de golpe. Susurra: «Hace tres días que no sale… y tiene mi nombre en el buzón». Sonido de grillos y viento. Cámara en mano, luz azulada de luna. Sin subtítulos.",
+  },
+  {
+    id: "mini-portada",
+    category: "Miniseries TikTok",
+    title: "Portada de la serie",
+    hook: "Una portada con «PARTE 2» y un solo elemento en foco retiene a los seguidores.",
+    kind: "image",
+    model: "nano-banana-pro",
+    aspect: "9:16",
+    prompt:
+      "Portada de TikTok de miniserie de suspenso: primer plano de un taxista latino de 40 años con expresión de miedo bajo la lluvia de noche, luces de neón rojas y azules reflejadas en su cara. Texto grande arriba: «¿QUIÉN LO ENVIÓ?» y abajo la etiqueta «PARTE 2». Estilo cinematográfico, contraste alto.",
   },
 ];
 
