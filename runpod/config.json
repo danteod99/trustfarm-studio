@@ -25,7 +25,8 @@
           "archivo": "trust_granja_zimage_turbo_v1.safetensors",
           "fuerza": 1.0,
           "nodo_modelo": "28",
-          "si": "dntfarm|granjas? (de|con) (\\S+ ){0,2}(celulares|celus|iphones|tel[eé]fonos|m[oó]viles|smartphones|androids?|dispositivos|bots|cuentas|likes|clics)|\\b(phone|box|bot|click|device|mobile)[ -]?farm(s|ing)?\\b|(iphones|celulares|celus|smartphones|tel[eé]fonos|m[oó]viles)[^.]{0,80}(en filas?\\b|parados|cables? usb|\\bracks?\\b|conectados (a|por))|\\b(cajas?|racks?|filas? de|pared(es)? de|estantes?)\\b[^.]{0,30}(iphones|celulares|celus|smartphones|tel[eé]fonos|m[oó]viles)|\\b(walls?|rows?|racks?|shel(f|ves)) of (\\S+ ){0,2}(phones|smartphones|iphones|devices)|\\b(phones|smartphones|iphones)[^.]{0,60}(in (a )?rows?\\b|usb cables|on (shelves|racks|stands))"
+          "si": "dntfarm|granjas? (de|con) (\\S+ ){0,2}(celulares|celus|iphones|tel[eé]fonos|m[oó]viles|smartphones|androids?|dispositivos|bots|cuentas|likes|clics)|\\b(phone|box|bot|click|device|mobile)[ -]?farm(s|ing)?\\b|(iphones|celulares|celus|smartphones|tel[eé]fonos|m[oó]viles)[^.]{0,80}(en filas?\\b|parados|cables? usb|\\bracks?\\b|conectados (a|por))|\\b(cajas?|racks?|filas? de|pared(es)? de|estantes?)\\b[^.]{0,30}(iphones|celulares|celus|smartphones|tel[eé]fonos|m[oó]viles)|\\b(walls?|rows?|racks?|shel(f|ves)) of (\\S+ ){0,2}(phones|smartphones|iphones|devices)|\\b(phones|smartphones|iphones)[^.]{0,60}(in (a )?rows?\\b|usb cables|on (shelves|racks|stands))",
+          "pista": "decenas de smartphones con pantalla encendida en filas sobre racks metálicos, interior"
         }
       ]
     },
