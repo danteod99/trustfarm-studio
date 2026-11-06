@@ -48,11 +48,6 @@ function paso(base: Omit<TemplateStep, "prompt">, params: TrustParams): Template
   };
 }
 
-/** Ideas de formato que aún no existen en el estudio (se muestran como «próximamente»). */
-export const PROXIMAMENTE = [
-  { id: "mapas-animados", name: "Videos de mapas", pitch: "Mapas animados con rutas, fronteras y datos reales (no se generan con IA; llegan como herramienta aparte)." },
-];
-
 export const TEMPLATES: TemplateGroup[] = [
   {
     id: "frutinovelas",
@@ -364,6 +359,7 @@ export const TEMPLATES: TemplateGroup[] = [
           personaje: "la protagonista con expresión de [sorpresa / tristeza]",
           escena: "texto grande arriba: «[título de máximo 4 palabras]» y abajo la etiqueta «EPISODIO [número]»",
           camara: "primer plano",
+          negativos: ["marcas de agua", "logos", "personajes de series conocidas"],
         }
       ),
     ],
