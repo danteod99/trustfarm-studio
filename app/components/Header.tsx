@@ -3,7 +3,7 @@ import Logo from "@/app/components/Logo";
 import { getUser, isAdminEmail } from "@/app/lib/auth";
 import { getBalance } from "@/app/lib/credits";
 import { paginaVisible } from "@/app/lib/minipc";
-import { Lightbulb, Menu } from "lucide-react";
+import { CircleUserRound, CreditCard, Images, Lightbulb, LogOut, Menu, Settings } from "lucide-react";
 import SaldoCreditos from "@/app/components/SaldoCreditos";
 
 export default async function Header() {
@@ -52,6 +52,28 @@ export default async function Header() {
                 </Link>
               )}
               <SaldoCreditos inicial={balance} />
+              <details className="relative">
+                <summary aria-label="Mi cuenta" className="flex cursor-pointer list-none items-center rounded-lg p-2 text-mute hover:text-ink [&::-webkit-details-marker]:hidden">
+                  <CircleUserRound size={20} />
+                </summary>
+                <div className="absolute right-0 top-full mt-2 flex w-60 flex-col rounded-xl border border-line bg-panel p-1.5 shadow-xl">
+                  <p className="truncate px-3 py-2 text-xs text-mute">{user.email}</p>
+                  {[
+                    { href: "/cuenta", label: "Mi cuenta", Icono: Settings },
+                    { href: "/galeria", label: "Mis creaciones", Icono: Images },
+                    { href: "/cuenta#pagos", label: "Métodos de pago", Icono: CreditCard },
+                  ].map(({ href, label, Icono }) => (
+                    <Link key={href} href={href} className="flex items-center gap-2 rounded-lg px-3 py-2 text-mute hover:bg-panel-2 hover:text-ink">
+                      <Icono size={15} /> {label}
+                    </Link>
+                  ))}
+                  <form action="/auth/salir" method="post" className="mt-1 border-t border-line pt-1">
+                    <button type="submit" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-mute hover:bg-panel-2 hover:text-ink">
+                      <LogOut size={15} /> Cerrar sesión
+                    </button>
+                  </form>
+                </div>
+              </details>
               {/* Debajo de lg los links secundarios van en un menú desplegable. */}
               <details className="relative lg:hidden">
                 <summary aria-label="Menú" className="flex cursor-pointer list-none items-center rounded-lg p-2 text-mute hover:text-ink [&::-webkit-details-marker]:hidden">

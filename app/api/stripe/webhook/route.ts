@@ -55,6 +55,8 @@ export async function POST(req: Request) {
       }
       return Response.json({ received: true });
     }
+    // "Agregar tarjeta" de Mi cuenta: Stripe ya la dejó guardada en el cliente, no hay nada que acreditar.
+    if (session.mode === "setup") return Response.json({ received: true });
     if (session.payment_status !== "paid") return Response.json({ received: true, pending: true });
 
     // Mini PC: rama aparte; retorna antes de leer user_id/pack de créditos.

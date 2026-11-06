@@ -1,6 +1,7 @@
 import { getUser, UNAUTHORIZED } from "@/app/lib/auth";
 import { BRAND, SITE_URL } from "@/app/lib/brand";
 import { PLAN } from "@/app/lib/catalog";
+import { clienteStripe } from "@/app/lib/cliente-stripe";
 import { stripe } from "@/app/lib/stripe";
 import { navegadorAMetadata } from "@/app/lib/pixel-server";
 import { isActive, readSub } from "@/app/lib/subscription";
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
     const session = await stripe().checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price, quantity: 1 }],
-      ...(sub?.customer ? { customer: sub.customer } : { customer_email: user.email ?? undefined }),
+      customer: await clienteStripe(user),
       client_reference_id: user.id,
       metadata: { user_id: user.id, plan: PLAN.id },
       subscription_data: {

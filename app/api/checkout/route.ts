@@ -1,6 +1,7 @@
 import { getUser, UNAUTHORIZED } from "@/app/lib/auth";
 import { getPack } from "@/app/lib/catalog";
 import { BRAND, SITE_URL } from "@/app/lib/brand";
+import { clienteStripe } from "@/app/lib/cliente-stripe";
 import { stripe } from "@/app/lib/stripe";
 import { navegadorAMetadata } from "@/app/lib/pixel-server";
 
@@ -16,7 +17,9 @@ export async function POST(req: Request) {
   try {
     const session = await stripe().checkout.sessions.create({
       mode: "payment",
-      customer_email: user.email ?? undefined,
+      // Con cliente propio Stripe muestra las tarjetas guardadas y ofrece guardar la nueva.
+      customer: await clienteStripe(user),
+      saved_payment_method_options: { payment_method_save: "enabled" },
       client_reference_id: user.id,
       line_items: [
         {
