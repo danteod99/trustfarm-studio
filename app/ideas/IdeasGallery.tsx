@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { AudioLines, Clapperboard, ImageIcon, Sparkles, Wand2 } from "lucide-react";
-import { IDEAS, IDEA_CATEGORIES, type Idea } from "@/app/lib/ideas";
+import { IDEA_CATEGORIES, type Idea } from "@/app/lib/ideas";
 import { creditCost, getModel } from "@/app/lib/catalog";
 import Aurora from "@/app/components/fx/Aurora";
 import DecryptedText from "@/app/components/fx/DecryptedText";
@@ -33,6 +33,11 @@ function IdeaCard({ idea }: { idea: Idea }) {
           <Image src={idea.image} alt={idea.title} fill sizes="(max-width: 768px) 90vw, 360px" className="object-cover transition duration-700 group-hover:scale-105" />
         )}
         <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-panel to-transparent" />
+        {idea.tendencia && (
+          <span className="absolute right-3 top-3 rounded-full border border-amber-400/40 bg-black/60 px-2.5 py-1 text-[11px] font-semibold text-amber-200">
+            🔥 Tendencia de la semana
+          </span>
+        )}
         <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full border border-white/10 bg-black/60 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
           {idea.kind === "video" ? (voice ? <AudioLines size={12} /> : <Clapperboard size={12} />) : <ImageIcon size={12} />}
           {idea.kind === "video" ? (voice ? "Video con sonido" : "Video") : "Imagen"}
@@ -42,6 +47,13 @@ function IdeaCard({ idea }: { idea: Idea }) {
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-2">{idea.category}</p>
         <h3 className="mt-1 text-lg font-semibold">{idea.title}</h3>
         <p className="mt-1 flex-1 text-sm text-mute">{idea.hook}</p>
+        {!!idea.variaciones?.length && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {idea.variaciones.map((v, k) => (
+              <Link key={k} href={`/estudio?idea=${idea.id}&v=${k}`} className="chip !px-2.5 !py-1 text-xs">{v.titulo}</Link>
+            ))}
+          </div>
+        )}
         <div className="mt-4 flex items-center justify-between gap-3">
           {c !== null && <span className="text-xs text-mute">{c} crédito{c === 1 ? "" : "s"}</span>}
           <Link href={`/estudio?idea=${idea.id}`} className="btn-primary !px-4 !py-2">
@@ -53,9 +65,20 @@ function IdeaCard({ idea }: { idea: Idea }) {
   );
 }
 
-export default function IdeasGallery() {
+const TENDENCIAS = "🔥 Tendencias";
+
+export default function IdeasGallery({ ideas }: { ideas: Idea[] }) {
   const [cat, setCat] = useState<string>("Todas");
-  const list = useMemo(() => (cat === "Todas" ? IDEAS : IDEAS.filter((i) => i.category === cat)), [cat]);
+  const list = useMemo(() => {
+    if (cat === "Todas") return ideas;
+    if (cat === TENDENCIAS) return ideas.filter((i) => i.tendencia);
+    return ideas.filter((i) => i.category === cat);
+  }, [cat, ideas]);
+  // Sin chips vacíos: una categoría sin ideas publicadas no se ofrece.
+  const filtros = useMemo(() => {
+    const conIdeas = IDEA_CATEGORIES.filter((c) => ideas.some((i) => i.category === c));
+    return ["Todas", ...(ideas.some((i) => i.tendencia) ? [TENDENCIAS] : []), ...conIdeas];
+  }, [ideas]);
 
   return (
     <div>
@@ -65,7 +88,7 @@ export default function IdeasGallery() {
         </div>
         <div className="relative mx-auto max-w-6xl px-4 pb-14 pt-20 text-center sm:pt-24">
           <span className="inline-flex items-center gap-2 rounded-full border border-brand/40 bg-bg/60 px-3 py-1 text-xs font-medium text-brand-2 backdrop-blur">
-            <Sparkles size={13} /> {IDEAS.length} ideas listas para generar
+            <Sparkles size={13} /> {ideas.length} ideas listas para generar
           </span>
           <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-extrabold tracking-tight sm:text-6xl">
             <DecryptedText text="¿Qué creamos hoy?" animateOn="view" sequential revealDirection="start" speed={45} encryptedClassName="text-brand-2" />
@@ -79,7 +102,7 @@ export default function IdeasGallery() {
 
       <div className="sticky top-16 z-20 border-b border-line bg-bg/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 py-3">
-          {["Todas", ...IDEA_CATEGORIES].map((c) => (
+          {filtros.map((c) => (
             <button key={c} onClick={() => setCat(c)} className={`chip shrink-0 ${cat === c ? "chip-on" : ""}`}>
               {c}
             </button>

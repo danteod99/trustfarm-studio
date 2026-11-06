@@ -5,6 +5,7 @@ import { MODELS } from "@/app/lib/catalog";
 import PedidosMinipc from "@/app/admin/PedidosMinipc";
 import Clientes from "@/app/admin/Clientes";
 import SoporteAdmin from "@/app/admin/SoporteAdmin";
+import IdeasAdmin from "@/app/admin/IdeasAdmin";
 
 interface Stats {
   revenueUsd: number;
@@ -606,6 +607,8 @@ export default function AdminPanel({ soporte = false }: { soporte?: boolean }) {
         </form>
         {msg && <p className="mt-3 text-sm text-mute">{msg}</p>}
       </section>
+
+      <IdeasAdmin />
 
       <PedidosMinipc />
     </div>
