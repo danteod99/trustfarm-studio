@@ -23,7 +23,11 @@ function IdeaCard({ idea }: { idea: Idea }) {
   return (
     <SpotlightCard spotlightColor="rgba(34, 211, 238, 0.22)" className="group flex h-full flex-col overflow-hidden !rounded-2xl !p-0">
       <div className="relative aspect-[4/5] overflow-hidden bg-panel-2">
-        {idea.video ? (
+        {!idea.image ? (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand/30 via-panel-2 to-brand-2/20 p-6 text-center">
+            <span className="text-sm font-semibold text-white/80">{idea.title}</span>
+          </div>
+        ) : idea.video ? (
           <video src={idea.video} poster={idea.image} autoPlay muted loop playsInline preload="metadata" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
         ) : (
           <Image src={idea.image} alt={idea.title} fill sizes="(max-width: 768px) 90vw, 360px" className="object-cover transition duration-700 group-hover:scale-105" />
