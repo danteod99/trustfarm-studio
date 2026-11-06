@@ -35,9 +35,11 @@ bajar text_encoders    Comfy-Org/Qwen-Image-2.1/resolve/main/text_encoders/qwen3
 # Z-Image base (más calidad y la mejor base para entrenar LoRAs)
 bajar diffusion_models Comfy-Org/Z-Image/resolve/main/split_files/diffusion_models/z_image_bf16.safetensors
 bajar text_encoders    Comfy-Org/Z-Image/resolve/main/split_files/text_encoders/qwen_3_4b.safetensors
-# Wan 2.2 14B texto→video e imagen→video (fp16) + LoRAs LightX2V de 4 pasos
+# Wan 2.2 14B texto→video e imagen→video + LoRAs LightX2V de 4 pasos. Los workflows usan fp8 (05-11: carga la
+# mitad y arranca más rápido); los fp16 quedan en el volumen para volver atrás si hiciera falta.
 for t in t2v i2v; do for n in high low; do
   bajar diffusion_models Comfy-Org/Wan-2.2/resolve/main/split_files/diffusion_models/wan2.2_${t}_${n}_noise_14B_fp16.safetensors
+  bajar diffusion_models Comfy-Org/Wan-2.2/resolve/main/split_files/diffusion_models/wan2.2_${t}_${n}_noise_14B_fp8_scaled.safetensors
 done; done
 bajar text_encoders Comfy-Org/Wan-2.2/resolve/main/split_files/text_encoders/umt5_xxl_fp16.safetensors
 bajar vae           Comfy-Org/Wan-2.2/resolve/main/split_files/vae/wan_2.1_vae.safetensors
