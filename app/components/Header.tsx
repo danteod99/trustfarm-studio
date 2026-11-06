@@ -3,7 +3,7 @@ import Logo from "@/app/components/Logo";
 import { getUser, isAdminEmail } from "@/app/lib/auth";
 import { getBalance } from "@/app/lib/credits";
 import { paginaVisible } from "@/app/lib/minipc";
-import { CircleUserRound, CreditCard, Images, Lightbulb, LogOut, Menu, Settings } from "lucide-react";
+import { CircleUserRound, CreditCard, Images, KeyRound, Lightbulb, LogOut, Menu, Settings } from "lucide-react";
 import SaldoCreditos from "@/app/components/SaldoCreditos";
 import CerrarMenus from "@/app/components/CerrarMenus";
 
@@ -63,6 +63,7 @@ export default async function Header() {
                     { href: "/cuenta", label: "Mi cuenta", Icono: Settings },
                     { href: "/galeria", label: "Mis creaciones", Icono: Images },
                     { href: "/cuenta#pagos", label: "Métodos de pago", Icono: CreditCard },
+                    { href: "/desarrolladores", label: "API y claves", Icono: KeyRound },
                   ].map(({ href, label, Icono }) => (
                     <Link key={href} href={href} className="flex items-center gap-2 rounded-lg px-3 py-2 text-mute hover:bg-panel-2 hover:text-ink">
                       <Icono size={15} /> {label}

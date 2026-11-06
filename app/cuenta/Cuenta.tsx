@@ -235,6 +235,17 @@ export default function Cuenta({ email, desde, conGoogle, conClave, saldo, plan,
           </Link>
         </Seccion>
 
+        <Seccion id="api" titulo="API" icono={<KeyRound size={18} className="text-brand-2" />}>
+          <p className="text-sm text-mute">
+            Usa Trust Studio desde tu propio código: genera imágenes y videos, consulta tu saldo y lanza flujos con una clave de API. Cada llamada descuenta de tus créditos.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link href="/desarrolladores" className="btn-primary">
+              <KeyRound size={15} /> Crear y gestionar claves de API
+            </Link>
+          </div>
+        </Seccion>
+
         <Seccion titulo="Sesión" icono={<LogOut size={18} className="text-brand-2" />}>
           <div className="flex flex-wrap gap-3">
             <form action="/auth/salir" method="post">
