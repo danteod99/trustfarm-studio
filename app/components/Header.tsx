@@ -5,6 +5,7 @@ import { getBalance } from "@/app/lib/credits";
 import { paginaVisible } from "@/app/lib/minipc";
 import { CircleUserRound, CreditCard, Images, Lightbulb, LogOut, Menu, Settings } from "lucide-react";
 import SaldoCreditos from "@/app/components/SaldoCreditos";
+import CerrarMenus from "@/app/components/CerrarMenus";
 
 export default async function Header() {
   const user = await getUser();
@@ -42,7 +43,7 @@ export default async function Header() {
                 Mis cajas
               </Link>
               {minipcVisible && (
-                <Link href="/minipc" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink lg:block">
+                <Link href="/minipc" className="hidden whitespace-nowrap rounded-lg px-3 py-2 text-mute hover:text-ink lg:block">
                   Mini PC
                 </Link>
               )}
@@ -52,7 +53,7 @@ export default async function Header() {
                 </Link>
               )}
               <SaldoCreditos inicial={balance} />
-              <details className="relative">
+              <details data-menu className="relative">
                 <summary aria-label="Mi cuenta" className="flex cursor-pointer list-none items-center rounded-lg p-2 text-mute hover:text-ink [&::-webkit-details-marker]:hidden">
                   <CircleUserRound size={20} />
                 </summary>
@@ -75,7 +76,7 @@ export default async function Header() {
                 </div>
               </details>
               {/* Debajo de lg los links secundarios van en un menú desplegable. */}
-              <details className="relative lg:hidden">
+              <details data-menu className="relative lg:hidden">
                 <summary aria-label="Menú" className="flex cursor-pointer list-none items-center rounded-lg p-2 text-mute hover:text-ink [&::-webkit-details-marker]:hidden">
                   <Menu size={18} />
                 </summary>
@@ -118,6 +119,7 @@ export default async function Header() {
           )}
         </nav>
       </div>
+      {user && <CerrarMenus />}
     </header>
   );
 }
