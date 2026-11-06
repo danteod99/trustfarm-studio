@@ -206,7 +206,7 @@ export default function Home() {
           {IDEAS.filter((i) => ["maquina-cascos", "brainrot-pollo", "ceviche", "depa-vista-mar"].includes(i.id)).map((i, k) => (
             <Reveal key={i.id} delay={k * 90}>
               <Link href={`/estudio?idea=${i.id}`} className="group relative block aspect-[9/16] overflow-hidden rounded-2xl border border-line">
-                {i.video ? (
+                {!i.image ? null : i.video ? (
                   <video src={i.video} poster={i.image} autoPlay muted loop playsInline preload="metadata" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
                 ) : (
                   <Image src={i.image} alt={i.title} fill sizes="(max-width: 768px) 45vw, 270px" className="object-cover transition duration-700 group-hover:scale-105" />
