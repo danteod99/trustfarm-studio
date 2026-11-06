@@ -74,6 +74,7 @@ export function trustPrompt(p: TrustParams, modelId: string): string {
 
   // Palabras clave (clips sin audio y modelos de imagen económicos)
   const claves = limpia([p.escena, p.personaje, p.estilo, p.camara, p.luz, ...(a?.ambiente ? [a.ambiente] : [])]);
-  const base = claves.join(", ") + ".";
-  return neg.length ? `${base} Sin ${neg.join(", sin ")}.` : base;
+  const base = claves.length ? claves.join(", ") + "." : "";
+  if (!neg.length) return base;
+  return base ? `${base} Sin ${neg.join(", sin ")}.` : `Sin ${neg.join(", sin ")}.`;
 }
