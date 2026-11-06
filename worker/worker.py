@@ -155,7 +155,8 @@ def rellenar(nodo, valores: dict):
 def aplicar_loras(workflow: dict, prompt: str, loras: list) -> tuple[dict, str]:
     """LoRAs de estilo propias (config "loras_estilo"): si el prompt calza con su regex "si",
     mete un LoraLoaderModelOnly después del nodo del modelo ("nodo_modelo"), reengancha a quien
-    usaba ese modelo y antepone su palabra clave al prompt. Sin coincidencia no cambia nada."""
+    usaba ese modelo, antepone su palabra clave y agrega al final su pista de escena ("pista"),
+    si las trae. Sin coincidencia no cambia nada."""
     for i, lora in enumerate(loras or []):
         if not re.search(lora["si"], prompt, re.IGNORECASE):
             continue
@@ -169,6 +170,9 @@ def aplicar_loras(workflow: dict, prompt: str, loras: list) -> tuple[dict, str]:
         palabra = lora.get("palabra")
         if palabra and palabra.lower() not in prompt.lower():
             prompt = f"{palabra}, {prompt}"
+        pista = lora.get("pista")
+        if pista:
+            prompt = prompt.rstrip(" \t\r\n.,;") + ", " + pista
         log(f"   + LoRA de estilo {lora['archivo']}")
     return workflow, prompt
 
