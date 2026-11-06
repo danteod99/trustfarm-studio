@@ -24,7 +24,7 @@ import LightRays from "@/app/components/fx/LightRays";
 import StarBorder from "@/app/components/fx/StarBorder";
 import ElectricBorder from "@/app/components/fx/ElectricBorder";
 import DecryptedText from "@/app/components/fx/DecryptedText";
-import { IDEAS } from "@/app/lib/ideas";
+import { ideasPublicas } from "@/app/lib/ideas-servidor";
 
 function exampleCost(id: string) {
   const m = MODELS.find((x) => x.id === id)!;
@@ -94,7 +94,8 @@ function Frame({ item, className = "", priority = false }: { item: Showcase; cla
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const IDEAS = await ideasPublicas();
   return (
     <div className="overflow-x-clip">
       {/* Hero */}

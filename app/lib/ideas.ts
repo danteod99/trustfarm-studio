@@ -3,6 +3,12 @@
 // Los ejemplos son generaciones reales de la plataforma (public/showcase).
 import type { Aspect, Kind } from "@/app/lib/catalog";
 
+/** Otra versión de la idea: el prompt puede llevar variables como [lugar: una oficina / un garaje]. */
+export interface Variacion {
+  titulo: string;
+  prompt: string;
+}
+
 export interface Idea {
   id: string;
   category: string;
@@ -18,6 +24,12 @@ export interface Idea {
   resolution?: "480p" | "720p" | "1080p";
   motion?: string;
   prompt: string;
+  /** De 3 a 5 versiones de la idea (/estudio?idea=<id>&v=<n>). */
+  variaciones?: Variacion[];
+  /** De qué tendencia sale. Interno: el cliente no lo ve. */
+  fuente?: string;
+  /** Muestra la etiqueta "🔥 Tendencia de la semana" y va primero. */
+  tendencia?: boolean;
 }
 
 const img = (n: string) => `/showcase/${n}.jpg`;

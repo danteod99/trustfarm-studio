@@ -17,7 +17,8 @@ import {
   type Resolution,
 } from "@/app/lib/catalog";
 import { MOTIONS, TEMPLATES, pendingFields, type TemplateGroup, type TemplateStep } from "@/app/lib/templates";
-import { getIdea } from "@/app/lib/ideas";
+import { getIdea, type Idea } from "@/app/lib/ideas";
+import { promptDeVariacion } from "@/app/lib/ideas-datos";
 import GenerationCard, { type PublicGeneration } from "@/app/components/GenerationCard";
 import { useGenerations } from "@/app/components/useGenerations";
 
@@ -133,18 +134,26 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
   useEffect(() => {
     loadPresets();
     const q = new URLSearchParams(window.location.search);
-    // /estudio?idea=<id> (desde /ideas): precarga modelo, formato y prompt.
-    const idea = getIdea(q.get("idea") || "");
-    if (idea) {
-      selectModel(idea.model, {
-        aspect: idea.aspect,
-        ...(idea.duration ? { duration: idea.duration } : {}),
-        ...(idea.resolution ? { resolution: idea.resolution } : {}),
-      });
-      setPrompt(idea.prompt);
-      setMotion(idea.motion ?? null);
-      setStepTip(`Idea: ${idea.title}. ${idea.hook} Cambia lo que quieras antes de generar.`);
+    // /estudio?idea=<id>&v=<n> (desde /ideas): precarga modelo, formato y prompt. La idea viene de la
+    // base; si no hay conexión con el servidor, del archivo. Una idea oculta responde 404 y no se abre.
+    const ideaId = q.get("idea");
+    if (ideaId) {
       window.history.replaceState(null, "", "/estudio");
+      const respaldo = () => getIdea(ideaId) ?? null;
+      fetch(`/api/ideas/${encodeURIComponent(ideaId)}`)
+        .then(async (r): Promise<Idea | null> => (r.status === 404 ? null : r.ok ? (await r.json()).idea : respaldo()))
+        .catch(respaldo)
+        .then((idea) => {
+          if (!idea || !getModel(idea.model)) return;
+          selectModel(idea.model, {
+            aspect: idea.aspect,
+            ...(idea.duration ? { duration: idea.duration } : {}),
+            ...(idea.resolution ? { resolution: idea.resolution } : {}),
+          });
+          setPrompt(promptDeVariacion(idea, q.get("v")));
+          setMotion(idea.motion ?? null);
+          setStepTip(`Idea: ${idea.title}. ${idea.hook} Cambia lo que quieras antes de generar.`);
+        });
     }
     const id = q.get("animar") || q.get("personaje");
     if (!id) return;
