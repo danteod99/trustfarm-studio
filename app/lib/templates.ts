@@ -3,6 +3,7 @@
 // Lo que va [entre corchetes] lo completa el usuario; el estudio no deja generar hasta
 // que no quede ningún corchete.
 import type { Aspect, Kind } from "@/app/lib/catalog";
+import { NEGATIVOS_BASE, trustPrompt, type TrustParams } from "@/app/lib/trust-params";
 
 export interface TemplateStep {
   id: string;
@@ -29,7 +30,22 @@ export interface TemplateGroup {
   featured?: boolean;
   /** Estilo base sugerido para guardar como estilo del canal. */
   style?: { name: string; description: string };
+  /** Estilos extra sugeridos (p. ej. géneros): cada uno se puede guardar como estilo. */
+  extraStyles?: { name: string; description: string }[];
+  /** Aviso corto que se muestra bajo el formato (p. ej. «es ficción»). */
+  notice?: string;
   steps: TemplateStep[];
+}
+
+/** Paso construido desde los parámetros Trust: el prompt se adapta al modelo del paso. */
+function paso(base: Omit<TemplateStep, "prompt">, params: TrustParams): TemplateStep {
+  return {
+    ...base,
+    prompt: trustPrompt(
+      { aspecto: base.aspect, duracion: base.duration, negativos: NEGATIVOS_BASE, ...params },
+      base.model
+    ),
+  };
 }
 
 export const TEMPLATES: TemplateGroup[] = [
@@ -44,6 +60,23 @@ export const TEMPLATES: TemplateGroup[] = [
       description:
         "animación 3D cinematográfica estilo película animada, frutas con rasgos humanos (ojos grandes expresivos, boca, brazos y piernas), iluminación cálida dramática, colores saturados, drama de telenovela",
     },
+    extraStyles: [
+      {
+        name: "Frutinovela: venganza",
+        description:
+          "animación 3D cinematográfica, frutas con rasgos humanos, ambiente de telenovela de venganza: luz roja y sombras largas, miradas frías, sonrisas calculadoras, tono de suspenso elegante, sin violencia gráfica",
+      },
+      {
+        name: "Frutinovela: familia",
+        description:
+          "animación 3D cinematográfica, frutas con rasgos humanos, drama familiar de telenovela: cocina o sala cálida, luz dorada de tarde, abuelas y tíos chismosos, secretos de familia, tono entre tierno y cómico",
+      },
+      {
+        name: "Frutinovela: romance",
+        description:
+          "animación 3D cinematográfica, frutas con rasgos humanos, romance de telenovela: colores pastel y rosados, luz de atardecer, bokeh de luces, miradas tiernas, música romántica, tono dulce",
+      },
+    ],
     steps: [
       {
         id: "personaje",
@@ -270,6 +303,99 @@ export const TEMPLATES: TemplateGroup[] = [
           "Portada de TikTok de miniserie de suspenso: primer plano del personaje con expresión de [miedo / sorpresa], luces de neón [colores] reflejadas en la cara. Texto grande arriba: «[pregunta de máximo 4 palabras]» y abajo la etiqueta «PARTE [número]». Estilo cinematográfico, contraste alto.",
         tip: "Una pregunta + el número de parte retiene a quien ya te sigue. Ejemplo: «¿QUIÉN LO ENVIÓ?».",
       },
+    ],
+  },
+  {
+    id: "anime",
+    emoji: "🌸",
+    name: "Anime novela",
+    pitch: "Drama romántico o de misterio en estilo anime, con el mismo personaje en cada capítulo.",
+    style: {
+      name: "Anime novela",
+      description:
+        "ilustración anime original de drama, ojos grandes expresivos, líneas limpias, colores suaves con acentos vivos, fondos pintados a mano, luz de atardecer, composición cinematográfica",
+    },
+    steps: [
+      paso(
+        { id: "personaje", title: "1. Crea tu protagonista", kind: "image", model: "nano-banana-pro", aspect: "9:16",
+          tip: "Estilo anime propio: describe rasgos, pelo y ropa fija. Toca «Usar como personaje» para que salga igual en todos los capítulos.",
+          saveAsCharacter: true },
+        {
+          estilo: "ilustración anime original de drama, líneas limpias, colores suaves",
+          personaje: "[personaje: una estudiante de 17 años / un joven músico] llamado [nombre], pelo [color y peinado], ojos [color], ropa fija [uniforme azul con lazo rojo]",
+          escena: "retrato de cuerpo entero sobre fondo neutro, expresión [emoción]",
+          luz: "suave de estudio",
+          negativos: ["texto", "personajes de series conocidas"],
+        }
+      ),
+      paso(
+        { id: "escena", title: "2. Escena del capítulo", kind: "image", model: "nano-banana-2", aspect: "9:16",
+          tip: "Una imagen por escena. Mantén el mismo estilo guardado y cambia solo lugar, pose y emoción." },
+        {
+          estilo: "ilustración anime original de drama, fondo pintado a mano",
+          personaje: "la protagonista elegida arriba",
+          escena: "[lugar: azotea de la escuela / estación de tren bajo la lluvia] y [acción: mira un mensaje en el celular con lágrimas]",
+          camara: "[plano medio / primer plano]",
+          luz: "[atardecer dorado / luz de neón nocturna]",
+        }
+      ),
+      paso(
+        { id: "animar", title: "3. Anima la escena", kind: "video", model: "veo-fast", aspect: "9:16", duration: 8, motion: "acercamiento",
+          tip: "Toca «Animar» en la imagen de la escena. Movimientos simples (pelo al viento, parpadeo, lluvia) se ven más anime." },
+        {
+          estilo: "animación anime original de drama",
+          personaje: "la protagonista",
+          escena: "[acción: levanta la mirada, el viento mueve su pelo]",
+          camara: "acercamiento lento",
+          audio: { dialogo: "dice en voz suave: «[frase corta, máximo 10 palabras]».", ambiente: "[lluvia suave]", musica: "piano melancólico" },
+          conReferencia: true,
+        }
+      ),
+      paso(
+        { id: "portada", title: "4. Portada del capítulo", kind: "image", model: "nano-banana-pro", aspect: "9:16",
+          tip: "Título de máximo 4 palabras y un solo rostro en primer plano." },
+        {
+          estilo: "portada de serie anime original, colores [color 1] y [color 2]",
+          personaje: "la protagonista con expresión de [sorpresa / tristeza]",
+          escena: "texto grande arriba: «[título de máximo 4 palabras]» y abajo la etiqueta «EPISODIO [número]»",
+          camara: "primer plano",
+          negativos: ["marcas de agua", "logos", "personajes de series conocidas"],
+        }
+      ),
+    ],
+  },
+  {
+    id: "what-if",
+    emoji: "🌀",
+    name: "Historias ficticias / What if",
+    pitch: "«¿Qué pasaría si...?»: escenarios imaginarios con imágenes de ambiente que cobran vida.",
+    notice: "Es ficción: pon «Historia ficticia hecha con IA» en el video y no lo presentes como noticia ni hecho real.",
+    style: {
+      name: "Qué pasaría si",
+      description:
+        "cinematográfico realista de ciencia ficción suave, paleta fría con un acento cálido, atmósfera de documental imaginario, sin personas reconocibles, sin sangre",
+    },
+    steps: [
+      paso(
+        { id: "ambiente", title: "1. Imagen de ambiente", kind: "image", model: "nano-banana-2", aspect: "9:16",
+          tip: "Parte de una pregunta: «¿Qué pasaría si [premisa]?». Una imagen potente por escena." },
+        {
+          estilo: "cinematográfico realista de ciencia ficción suave",
+          escena: "[escena de la premisa: Lima de noche con el mar subiendo hasta la Costa Verde]",
+          camara: "plano general amplio",
+          luz: "[luz de luna fría / amanecer anaranjado]",
+          negativos: ["personas reconocibles", "logos de medios o noticias", "sangre"],
+        }
+      ),
+      paso(
+        { id: "animar", title: "2. Dale vida", kind: "video", model: "wan-22", aspect: "9:16", duration: 5, motion: "acercamiento",
+          tip: "Toca «Animar» en la imagen. La narración («¿Qué pasaría si...?») la pones tú encima, con tu voz." },
+        {
+          escena: "[lo que se ve en la imagen], movimiento lento y atmosférico",
+          estilo: "cinematográfico realista",
+          camara: "acercamiento muy lento",
+        }
+      ),
     ],
   },
   {

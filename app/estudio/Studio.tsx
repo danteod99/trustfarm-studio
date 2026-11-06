@@ -336,6 +336,16 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
                   <span className="text-xs text-mute">{s.kind === "video" ? "Video" : "Imagen"}</span>
                 </button>
               ))}
+              {group.notice && <p className="text-xs text-amber-300">{group.notice}</p>}
+              {group.extraStyles?.filter((x) => !styles.some((s) => s.name === x.name)).map((x) => (
+                <button
+                  key={x.name}
+                  onClick={() => setDraft({ kind: "style", name: x.name, description: x.description })}
+                  className="flex items-center gap-1 text-xs text-brand-2 hover:underline"
+                >
+                  <Palette size={13} /> Guardar el estilo «{x.name}»
+                </button>
+              ))}
               {group.style && !groupStyleSaved && (
                 <button
                   onClick={() => setDraft({ kind: "style", name: group.style!.name, description: group.style!.description })}

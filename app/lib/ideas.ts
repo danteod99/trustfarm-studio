@@ -30,6 +30,8 @@ export const IDEA_CATEGORIES = [
   "Frutinovelas",
   "Modelos IA",
   "Miniseries TikTok",
+  "Anime novela",
+  "Historias ficticias",
   "Influencers IA",
   "Productos y anuncios",
   "Comida",
@@ -951,6 +953,129 @@ export const IDEAS: Idea[] = [
     motion: "orbita",
     prompt:
       "Animación 3D estilo película animada: una pareja de frutas, una fresa con coletas y un arándano con chaqueta de cuero, comparten un helado en una heladería de colores pastel de noche. Ella se ríe con ternura y le dice con voz dulce: «Nunca había sido tan feliz». Música romántica suave. Sin subtítulos ni texto.",
+  },
+
+  // Anime novela (estilo original, sin imitar series)
+  {
+    id: "anime-azotea",
+    category: "Anime novela",
+    title: "Confesión en la azotea",
+    hook: "Primer capítulo: una escena tranquila que deja una pregunta.",
+    kind: "image",
+    model: "nano-banana-2",
+    aspect: "9:16",
+    prompt:
+      "Ilustración anime original de drama: una estudiante de pelo castaño con lazo rojo y uniforme azul mira el atardecer desde la azotea de su escuela, un joven de espaldas con audífonos al fondo. Cielo naranja y rosado, fondos pintados a mano, colores suaves. Sin texto.",
+  },
+  {
+    id: "anime-lluvia",
+    category: "Anime novela",
+    title: "Estación bajo la lluvia",
+    hook: "La lluvia y el tren dan emoción sin necesitar movimientos complejos.",
+    kind: "video",
+    model: "veo-fast",
+    aspect: "9:16",
+    duration: 8,
+    resolution: "720p",
+    motion: "acercamiento",
+    prompt:
+      "Animación anime original de drama: una joven de pelo negro corto y paraguas transparente espera en una estación de tren bajo la lluvia, las luces de neón se reflejan en el piso mojado. Levanta la mirada y dice en voz suave: «Dijiste que vendrías». Sonido de lluvia y piano melancólico. Sin subtítulos.",
+  },
+  {
+    id: "anime-rival",
+    category: "Anime novela",
+    title: "La rival transferida",
+    hook: "Un personaje nuevo mueve la trama del siguiente capítulo.",
+    kind: "image",
+    model: "nano-banana-pro",
+    aspect: "9:16",
+    prompt:
+      "Ilustración anime original de drama: una chica de pelo largo plateado y ojos violeta, uniforme gris con chaqueta abierta, entra al salón de clases con mirada segura mientras los demás la miran sorprendidos. Luz de mañana por las ventanas, colores suaves con acento violeta. Sin texto.",
+  },
+  {
+    id: "anime-festival",
+    category: "Anime novela",
+    title: "Festival de verano",
+    hook: "Escena de romance con luces y fuegos artificiales, ideal para portada.",
+    kind: "image",
+    model: "qwen-image",
+    aspect: "9:16",
+    prompt:
+      "Ilustración anime original: una pareja de jóvenes con yukata sostiene faroles en un festival de verano de noche, fuegos artificiales rojos y dorados en el cielo, puestos de comida con luces cálidas. Composición cinematográfica, colores suaves. Sin texto.",
+  },
+  {
+    id: "anime-portada",
+    category: "Anime novela",
+    title: "Portada de episodio",
+    hook: "Un rostro en primer plano y un título corto retienen al público.",
+    kind: "image",
+    model: "nano-banana-pro",
+    aspect: "9:16",
+    prompt:
+      "Portada de serie anime original: primer plano de una protagonista de ojos grandes con lágrimas y expresión de sorpresa, fondo azul marino con destellos rosados. Texto grande arriba: «NO ERA ÉL» y abajo la etiqueta «EPISODIO 3». Que dé ganas de ver el siguiente sin revelar el giro.",
+  },
+
+  // Historias ficticias / What if (siempre ficción: avisa que es una historia hecha con IA)
+  {
+    id: "whatif-mar",
+    category: "Historias ficticias",
+    title: "¿Y si el mar llegara a Lima?",
+    hook: "Escenario imaginario espectacular. Marca el video como ficción hecha con IA.",
+    kind: "image",
+    model: "nano-banana-2",
+    aspect: "9:16",
+    prompt:
+      "Imagen cinematográfica de ciencia ficción: la costa de Lima de noche con el mar subiendo hasta los acantilados de Miraflores, edificios iluminados y calles inundadas, luz de luna fría con un acento cálido de faroles. Sin personas reconocibles, sin logos ni texto.",
+  },
+  {
+    id: "whatif-sin-internet",
+    category: "Historias ficticias",
+    title: "¿Y si todo internet se apagara un día?",
+    hook: "Pregunta que invita a comentar. Es una historia imaginaria, no una noticia.",
+    kind: "image",
+    model: "qwen-image",
+    aspect: "9:16",
+    prompt:
+      "Imagen cinematográfica realista de ciencia ficción: una avenida de Lima al mediodía donde todas las personas miran pantallas negras de celulares con cara de desconcierto, semáforos apagados, luz fría de nublado. Sin logos ni texto.",
+  },
+  {
+    id: "whatif-ciudad-flotante",
+    category: "Historias ficticias",
+    title: "¿Y si Lima fuera una ciudad flotante?",
+    hook: "Mundo imaginario fácil de animar con movimiento lento.",
+    kind: "video",
+    model: "ltx-25",
+    aspect: "9:16",
+    duration: 5,
+    resolution: "720p",
+    motion: "acercamiento",
+    prompt:
+      "Una ciudad futurista flotando sobre las nubes al amanecer con puentes de cristal y jardines colgantes, la cámara avanza lentamente entre los edificios, luz dorada. Sonido ambiente suave de viento y música instrumental de ciencia ficción. Escena imaginaria, sin texto.",
+  },
+  {
+    id: "whatif-sin-gravedad",
+    category: "Historias ficticias",
+    title: "¿Y si la gravedad fallara 10 segundos?",
+    hook: "Escena de ficción con objetos cotidianos flotando, ideal para un gancho corto.",
+    kind: "video",
+    model: "veo-fast",
+    aspect: "9:16",
+    duration: 8,
+    resolution: "720p",
+    motion: "fija",
+    prompt:
+      "Una cocina moderna donde de pronto las tazas, cucharas y frutas empiezan a flotar lentamente en el aire, una niña sonríe sorprendida y estira la mano para atrapar una manzana. Dice en voz baja: «Esto no está pasando». Sonido ambiente y música de misterio suave. Sin subtítulos.",
+  },
+  {
+    id: "whatif-sin-sol",
+    category: "Historias ficticias",
+    title: "¿Y si el sol saliera por el oeste?",
+    hook: "Pregunta curiosa; puedes explicar la ciencia real en la narración, aclarando que es hipotético.",
+    kind: "image",
+    model: "z-image",
+    aspect: "9:16",
+    prompt:
+      "Imagen cinematográfica de un amanecer sobre el mar del Pacífico visto desde una playa de Lima, el sol sale por el lado del océano con luz anaranjada, gente mirando asombrada en la orilla. Atmósfera de cine, sin logos ni texto.",
   },
 
   // Modelos IA
