@@ -87,6 +87,29 @@ export const TEMPLATES: TemplateGroup[] = [
         prompt:
           "Portada de TikTok de telenovela: el personaje con expresión de [sorpresa / traición / furia] en primer plano. Texto grande arriba: «[título de máximo 4 palabras]» y abajo la etiqueta «CAPÍTULO [número]». Colores dominantes [color 1] y [color 2]. Que dé ganas de ver el video sin revelar el giro.",
       },
+      {
+        id: "rival",
+        title: "5. Extra: el villano o la rival",
+        kind: "image",
+        model: "nano-banana-2",
+        aspect: "9:16",
+        prompt:
+          "Retrato de cuerpo entero de [fruta: una piña / un mango / un limón] con rasgos humanos llamada [nombre], [papel: la rival elegante / el galán traicionero / la suegra chismosa]. Lleva [ropa fija: vestido negro, gafas de sol y labial rojo]. Sonrisa maliciosa, mirando de reojo a cámara. Fondo [lugar: salón de baile / oficina lujosa]. Animación 3D cinematográfica. Sin humanos ni texto.",
+        tip: "Ejemplo real: una piña con gafas de sol que entra a la boda. Guárdala también como personaje para que vuelva en todos los capítulos.",
+        saveAsCharacter: true,
+      },
+      {
+        id: "dialogo-pareja",
+        title: "6. Extra: discusión de pareja",
+        kind: "video",
+        model: "veo-fast",
+        aspect: "9:16",
+        duration: 8,
+        prompt:
+          "Dos frutas con rasgos humanos, [fruta 1] y [fruta 2], discuten en [lugar: la sala de su casa]. La primera dice con voz dolida: «[reclamo de máximo 10 palabras]» y la segunda responde con voz fría: «[respuesta corta]». Música de suspenso de telenovela. Sin subtítulos ni texto en pantalla.",
+        tip: "Dos voces distintas en el mismo clip: escribe quién habla y con qué tono. Ejemplo: «¿Tú sabías que él me mintió?».",
+        motion: "fija",
+      },
     ],
   },
   {
@@ -142,6 +165,28 @@ export const TEMPLATES: TemplateGroup[] = [
         prompt:
           "La modelo habla a la cámara frontal del celular, gesticulando con una mano, movimiento natural de cabeza, y dice en español latino con tono cercano: «[guion de máximo 20 palabras]». Encuadre de medio cuerpo, video casero realista. Sin subtítulos.",
         tip: "Toca «Animar» en una de sus fotos para que sea la misma cara. Marca la cuenta como creadora virtual con IA.",
+        motion: "fija",
+      },
+      {
+        id: "espejo",
+        title: "5. Extra: selfie en el espejo (gym / probador)",
+        kind: "image",
+        model: "nano-banana-2",
+        aspect: "9:16",
+        prompt:
+          "La modelo se toma una selfie en el espejo de [lugar: un gimnasio moderno / un probador de tienda] con el celular, vistiendo [outfit]. Misma cara y cabello. Luz del lugar, foto de celular natural, piel real. Sin texto.",
+        tip: "Ejemplo real: creadora fitness en un gimnasio de Lima. Ideal para ropa deportiva y tiendas de moda.",
+      },
+      {
+        id: "unboxing",
+        title: "6. Extra: unboxing hablado",
+        kind: "video",
+        model: "veo-fast",
+        aspect: "9:16",
+        duration: 8,
+        prompt:
+          "La modelo abre una caja de cartón en el sofá de su sala y dice en español latino con voz emocionada: «[reacción corta de máximo 15 palabras]». Cámara de celular en mano, luz natural, sonido ambiente de casa y del cartón. Sin subtítulos.",
+        tip: "Ejemplo: «Por fin llegó mi pedido, miren cómo vino». Muestra el producto real; no inventes resultados.",
         motion: "fija",
       },
     ],
@@ -203,6 +248,27 @@ export const TEMPLATES: TemplateGroup[] = [
           "El personaje recibe [la revelación: una llamada / ve a alguien que creía muerto] y su cara cambia por completo. Corte en el momento exacto de la reacción. Música que sube y se corta de golpe. Sin subtítulos.",
         tip: "Corta antes de la respuesta. Escribe «Parte [número]» en la portada para que sigan la cuenta.",
         motion: "acercamiento",
+      },
+      {
+        id: "espacio-cerrado",
+        title: "5. Extra: tensión en un espacio cerrado",
+        kind: "video",
+        model: "veo-lite",
+        aspect: "9:16",
+        duration: 8,
+        prompt:
+          "Dentro de [espacio cerrado: un ascensor antiguo / un taxi de noche / un pasillo de hospital vacío], el personaje [acción: presiona un botón y la luz parpadea]. Una voz susurra: «[amenaza o pista corta]». Zumbido eléctrico, sin música. Sin subtítulos.",
+        tip: "Ejemplo: ascensor del piso 13 con una voz por el parlante. Un solo lugar abarata la serie y mantiene la tensión.",
+      },
+      {
+        id: "portada-serie",
+        title: "6. Extra: portada con «Parte 2»",
+        kind: "image",
+        model: "nano-banana-pro",
+        aspect: "9:16",
+        prompt:
+          "Portada de TikTok de miniserie de suspenso: primer plano del personaje con expresión de [miedo / sorpresa], luces de neón [colores] reflejadas en la cara. Texto grande arriba: «[pregunta de máximo 4 palabras]» y abajo la etiqueta «PARTE [número]». Estilo cinematográfico, contraste alto.",
+        tip: "Una pregunta + el número de parte retiene a quien ya te sigue. Ejemplo: «¿QUIÉN LO ENVIÓ?».",
       },
     ],
   },
