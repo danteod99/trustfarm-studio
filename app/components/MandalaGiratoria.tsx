@@ -22,19 +22,6 @@ const TAU = Math.PI * 2;
 function cadaUno(n: number, f: (ang: number, i: number) => void) {
   for (let i = 0; i < n; i++) f((i / n) * TAU, i);
 }
-function circulo(c: CanvasRenderingContext2D, r: number, ancho = 1) {
-  c.lineWidth = ancho;
-  c.beginPath();
-  c.arc(0, 0, r, 0, TAU);
-  c.stroke();
-}
-function puntos(c: CanvasRenderingContext2D, n: number, r: number, tam: number, desfase = 0) {
-  cadaUno(n, (a) => {
-    c.beginPath();
-    c.arc(Math.cos(a + desfase) * r, Math.sin(a + desfase) * r, tam, 0, TAU);
-    c.fill();
-  });
-}
 
 /**
  * Espina tribal: base angosta en r1 y lados cóncavos que terminan en una punta muy afilada en r2.
@@ -59,70 +46,110 @@ function espinas(c: CanvasRenderingContext2D, n: number, r1: number, r2: number,
   });
 }
 
+/** Estrella poligonal de n puntas (rellena o solo contorno). */
+function estrella(c: CanvasRenderingContext2D, n: number, rIn: number, rOut: number, relleno: boolean, ancho = 1) {
+  c.beginPath();
+  for (let i = 0; i < n * 2; i++) {
+    const a = (i / (n * 2)) * TAU - Math.PI / 2;
+    const r = i % 2 ? rIn : rOut;
+    c.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  c.closePath();
+  if (relleno) c.fill();
+  else {
+    c.lineWidth = ancho;
+    c.stroke();
+  }
+}
+/** Espinas con largos distintos según un patrón (rompe la forma de círculo). */
+function espinasPatron(c: CanvasRenderingContext2D, n: number, r1: number, extra: number, patron: number[], ab: number, giro = 0) {
+  for (let i = 0; i < n; i++) {
+    const r2 = r1 + extra * patron[i % patron.length];
+    c.save();
+    c.rotate((i / n) * TAU);
+    espinas(c, 1, r1, r2, ab, giro);
+    c.restore();
+  }
+}
+/** Brazo espinoso: una lanza larga con púas que salen hacia afuera a ambos lados, como rama de espino. */
+function brazos(c: CanvasRenderingContext2D, n: number, r1: number, r2: number, ab: number, pua: number, desfase = 0) {
+  cadaUno(n, (a0) => {
+    c.save();
+    c.rotate(a0 + desfase);
+    espinas(c, 1, r1, r2, ab);
+    // Púas: de la base a la punta, cada vez más chicas, alternando lado.
+    for (let k = 0; k < 5; k++) {
+      const t = 0.18 + k * 0.15;
+      const r = r1 + (r2 - r1) * t;
+      const largo = pua * (1 - t * 0.8);
+      for (const lado of [-1, 1]) {
+        c.save();
+        c.translate(r, 0);
+        c.rotate(lado * 0.75);
+        c.beginPath();
+        c.moveTo(0, -largo * 0.12);
+        c.quadraticCurveTo(largo * 0.5, -largo * 0.02 * lado, largo, 0);
+        c.quadraticCurveTo(largo * 0.5, largo * 0.02 * lado, 0, largo * 0.12);
+        c.closePath();
+        c.fill();
+        c.restore();
+      }
+    }
+    c.restore();
+  });
+}
+
 const ANILLOS: Anillo[] = [
-  // Centro: estrella de 12 espinas alrededor de un ojo.
+  // Núcleo: estrella sólida de 8 puntas con agujas entre medio.
   {
-    vpm: 2.6,
-    alpha: 0.85,
+    vpm: 2.4,
+    alpha: 0.9,
     dibujar: (c, R) => {
-      c.beginPath();
-      c.arc(0, 0, R * 0.022, 0, TAU);
-      c.fill();
-      circulo(c, R * 0.038, 1);
-      espinas(c, 12, R * 0.045, R * 0.15, 0.13);
-      espinas(c, 12, R * 0.045, R * 0.1, 0.1, 0, Math.PI / 12);
+      estrella(c, 8, R * 0.035, R * 0.13, true);
+      espinas(c, 8, R * 0.04, R * 0.19, 0.05, 0, Math.PI / 8);
     },
   },
+  // Octograma: dos cuadrados cruzados, solo contorno.
   {
-    vpm: -1.8,
-    alpha: 0.7,
-    dibujar: (c, R) => {
-      circulo(c, R * 0.165, 1.1);
-      espinas(c, 24, R * 0.17, R * 0.225, 0.07);
-      espinas(c, 24, R * 0.16, R * 0.125, 0.06, 0, Math.PI / 24);
-    },
-  },
-  {
-    vpm: 1.2,
+    vpm: -1.5,
     alpha: 0.6,
     dibujar: (c, R) => {
-      espinas(c, 16, R * 0.24, R * 0.39, 0.07, 0.32);
-      espinas(c, 16, R * 0.24, R * 0.33, 0.05, -0.28, Math.PI / 16);
+      estrella(c, 8, R * 0.17, R * 0.27, false, 1.6);
+      estrella(c, 8, R * 0.2, R * 0.24, false, 0.8);
     },
   },
+  // Corona de espinas de largos dispares.
   {
-    vpm: -0.9,
-    alpha: 0.5,
+    vpm: 1,
+    alpha: 0.55,
     dibujar: (c, R) => {
-      circulo(c, R * 0.41, 0.9);
-      espinas(c, 48, R * 0.415, R * 0.445, 0.035);
-      puntos(c, 48, R * 0.455, 0.9, Math.PI / 48);
+      espinasPatron(c, 24, R * 0.25, R * 0.26, [1, 0.35, 0.6, 0.35, 0.8, 0.35], 0.045);
     },
   },
+  // Garras curvas.
   {
-    vpm: 0.6,
-    alpha: 0.45,
+    vpm: 0.7,
+    alpha: 0.4,
     dibujar: (c, R) => {
-      espinas(c, 12, R * 0.47, R * 0.7, 0.05);
-      espinas(c, 12, R * 0.49, R * 0.63, 0.06, 0.38, Math.PI / 12);
-      espinas(c, 12, R * 0.49, R * 0.63, 0.06, -0.38, Math.PI / 12);
+      espinas(c, 12, R * 0.3, R * 0.52, 0.05, 0.42, Math.PI / 12);
     },
   },
+  // Silueta épica: 4 brazos enormes y 4 medianos, todos con púas (forma de rosa de los vientos).
   {
-    vpm: -0.45,
-    alpha: 0.38,
+    vpm: -0.35,
+    alpha: 0.7,
     dibujar: (c, R) => {
-      circulo(c, R * 0.72, 1);
-      espinas(c, 36, R * 0.725, R * 0.79, 0.04);
-      espinas(c, 36, R * 0.725, R * 0.755, 0.03, 0, Math.PI / 36);
+      brazos(c, 4, R * 0.12, R * 0.99, 0.045, R * 0.13);
+      brazos(c, 4, R * 0.12, R * 0.68, 0.04, R * 0.09, Math.PI / 4);
     },
   },
+  // Estrella fantasma de 12 puntas muy tenue detrás de todo.
   {
-    vpm: 0.3,
-    alpha: 0.28,
+    vpm: 0.2,
+    alpha: 0.22,
     dibujar: (c, R) => {
-      espinas(c, 24, R * 0.8, R * 0.98, 0.035, 0.14);
-      espinas(c, 48, R * 0.8, R * 0.85, 0.02, 0, Math.PI / 48);
+      estrella(c, 12, R * 0.42, R * 0.86, false, 1.2);
+      espinasPatron(c, 12, R * 0.6, R * 0.32, [1, 0.5], 0.03, 0);
     },
   },
 ];
