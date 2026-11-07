@@ -115,7 +115,18 @@ export default async function Home() {
               <Sparkles size={13} /> Nuevo: videos con voz en español
             </span>
             <h1 className="mt-6 text-4xl font-extrabold tracking-tight sm:text-6xl">
-              Imágenes y videos con IA, <span className="text-brand-2">en <span className="text-[#e3342f]">minutos</span></span>
+              <span className="relative inline-block">
+                {/* Gorro navideño sobre la "I" de Imágenes. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/gorro-navidad.png"
+                  alt=""
+                  aria-hidden
+                  className="pointer-events-none absolute -left-[0.27em] -top-[0.2em] w-[1em] max-w-none -rotate-[22deg] drop-shadow-[0_3px_4px_rgba(0,0,0,0.6)]"
+                />
+                Imágenes
+              </span>{" "}
+              y videos con IA, <span className="text-brand-2">en <span className="text-[#e3342f]">minutos</span></span>
             </h1>
             <p className="mt-5 max-w-xl text-lg text-mute">
               Escribe tu idea en español y obtén videos con voz, personajes que no cambian de cara y fotos de calidad de
