@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Michroma, Mrs_Saint_Delafield, Permanent_Marker } from "next/font/google";
+import { Michroma, Mrs_Saint_Delafield, Metal_Mania } from "next/font/google";
 import "./globals.css";
 import { BRAND, SITE_URL } from "@/app/lib/brand";
 import Header from "@/app/components/Header";
@@ -13,7 +13,7 @@ const michroma = Michroma({ variable: "--font-michroma", weight: "400", subsets:
 const firma = Mrs_Saint_Delafield({ variable: "--font-firma", weight: "400", subsets: ["latin"], display: "swap" });
 
 // Títulos KARIBU: letra pintada a mano, como los letreros de mercado. El texto corrido sigue en Inter.
-const titulo = Permanent_Marker({ variable: "--font-titulo", weight: "400", subsets: ["latin"], display: "swap" });
+const titulo = Metal_Mania({ variable: "--font-titulo", weight: "400", subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
