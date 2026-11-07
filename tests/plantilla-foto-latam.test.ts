@@ -65,3 +65,9 @@ test('aparece en el estudio como formato secundario, sin descuadrar los destacad
   const fuente = readFileSync(new URL('../app/lib/templates.ts', import.meta.url), 'utf8')
   assert.match(fuente, /^\s*FOTO_LATAM,$/m)
 })
+
+test('el ejemplo de comida pide un carrito: «puesto de comida» traía niños en primer plano', () => {
+  const p = paso('calle').prompt
+  assert.match(p, /carrito de comida en la vereda/)
+  assert.doesNotMatch(p, /puesto de comida/)
+})
