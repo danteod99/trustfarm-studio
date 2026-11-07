@@ -14,6 +14,7 @@ test('todos los pasos son imágenes en vertical con un modelo del catálogo', ()
   assert.ok(FOTO_LATAM.steps.length > 0)
   for (const s of FOTO_LATAM.steps) {
     assert.equal(s.kind, 'image', s.id)
+    assert.equal(s.aspect, '9:16', s.id)
     const m = MODELS.find((x) => x.id === s.model)
     assert.ok(m, `${s.id}: modelo inexistente ${s.model}`)
     assert.ok(m.aspects.includes(s.aspect), s.id)
@@ -36,19 +37,20 @@ test('usa la frase medida y evita las que fallaron en las pruebas', () => {
   }
 })
 
-test('cada rango de edad usa el modelo que lo respetó, y solo edades adultas', () => {
-  const joven = paso('persona-joven')
-  assert.equal(joven.model, 'z-image')
-  assert.match(joven.prompt, /\[edad: 18 a 30\] años/)
-  const adulta = paso('persona-adulta')
-  assert.equal(adulta.model, 'qwen-image')
-  assert.match(adulta.prompt, /\[edad: 35 a 50\] años/)
-  assert.match(adulta.prompt, /piel morena, rostro redondo, ropa casual/)
+test('las personas van en un solo paso con Qwen, que respetó mejor la edad, y solo edades adultas', () => {
+  const personas = FOTO_LATAM.steps.filter((x) => /años/.test(x.prompt))
+  assert.deepEqual(personas.map((x) => x.id), ['persona'])
+  const p = paso('persona')
+  assert.equal(p.model, 'qwen-image')
+  assert.match(p.title, /20 a 50 años/)
+  assert.match(p.prompt, /\[edad adulta: 20 a 50\] años/)
+  assert.match(p.prompt, /\[mujer latina \/ hombre latino\]/)
+  assert.match(p.prompt, /piel morena, rostro redondo, ropa casual/)
 })
 
 test('el interior pide objetos concretos y una casa habitada', () => {
   const p = paso('interior').prompt
-  assert.match(p, /\[objetos concretos:/)
+  assert.match(p, /\[objetos del ambiente:/)
   assert.match(p, /en Latinoamérica/)
   assert.match(p, /casa habitada, no es una foto de catálogo/)
   assert.match(p, /sin personas/)

@@ -1,6 +1,7 @@
 // Plantilla "Foto realista LATAM": frases medidas en imágenes de prueba con Z-Image y Qwen 2.1.
 // «Foto de celular» metía un teléfono en la escena, así que aquí se evita.
-// Cada rango de edad usa el modelo que mejor la respetó: Z-Image hasta 30 años, Qwen desde 35.
+// Las personas van en Qwen: en Z-Image las mujeres salían mucho mayores desde los 30 años.
+// El texto es fijo a propósito: no pasa por trustPrompt para conservar las frases medidas.
 import type { TemplateGroup } from "@/app/lib/templates";
 
 const FOTO_CASUAL = "Foto casual sin producción, luz natural. Sin texto.";
@@ -13,26 +14,17 @@ export const FOTO_LATAM: TemplateGroup = {
   notice: "Para personas, usa solo edades adultas. Revisa cada resultado antes de publicarlo.",
   steps: [
     {
-      id: "persona-joven",
-      title: "1. Persona joven",
-      kind: "image",
-      model: "z-image",
-      aspect: "9:16",
-      prompt: `[mujer morena / hombre moreno] de [edad: 18 a 30] años, persona común, [encuadre y lugar: retrato de medio cuerpo en la puerta de su casa]. ${FOTO_CASUAL}`,
-      tip: "Entre 18 y 30 años, Trust Foto Flash respeta bien la edad. Si necesitas 35 o más, usa el paso 2.",
-    },
-    {
-      id: "persona-adulta",
-      title: "2. Persona adulta",
+      id: "persona",
+      title: "1. Persona (20 a 50 años)",
       kind: "image",
       model: "qwen-image",
       aspect: "9:16",
-      prompt: `[mujer latina / hombre latino] de [edad: 35 a 50] años, piel morena, rostro redondo, ropa casual, [encuadre y lugar: retrato de medio cuerpo en la puerta de su casa]. ${FOTO_CASUAL}`,
-      tip: "Trust Foto respeta mejor la edad desde los 35, aunque a los 45 o más puede verse algo mayor. Suele acercar el encuadre.",
+      prompt: `[mujer latina / hombre latino] de [edad adulta: 20 a 50] años, piel morena, rostro redondo, ropa casual, [encuadre y lugar: retrato de medio cuerpo en la puerta de su casa]. ${FOTO_CASUAL}`,
+      tip: "Puede verse unos años mayor, sobre todo desde los 45. Este modelo suele acercar el encuadre, así que pide el plano y la ropa que necesitas.",
     },
     {
       id: "calle",
-      title: "3. Calle o barrio",
+      title: "2. Calle o barrio",
       kind: "image",
       model: "z-image",
       aspect: "9:16",
@@ -41,7 +33,7 @@ export const FOTO_LATAM: TemplateGroup = {
     },
     {
       id: "negocio",
-      title: "4. Negocio",
+      title: "3. Negocio",
       kind: "image",
       model: "z-image",
       aspect: "9:16",
@@ -50,12 +42,12 @@ export const FOTO_LATAM: TemplateGroup = {
     },
     {
       id: "interior",
-      title: "5. Interior de casa",
+      title: "4. Interior de casa",
       kind: "image",
       model: "z-image",
       aspect: "9:16",
-      prompt: `[ambiente: cocina / sala / dormitorio] de una casa de clase media en Latinoamérica: [objetos concretos: estufa de gas blanca, piso de cerámica, ollas de aluminio], muebles usados de distintos juegos, paredes con marcas, objetos de uso diario, algo desordenado, casa habitada, no es una foto de catálogo, sin personas. ${FOTO_CASUAL}`,
-      tip: "Cambia los objetos según el ambiente. Si el desgaste se ve exagerado, quita «paredes con marcas».",
+      prompt: `[ambiente: cocina / sala / dormitorio] de una casa de clase media en Latinoamérica: [objetos del ambiente: estufa de gas blanca, piso de cerámica, ollas de aluminio], muebles usados de distintos juegos, paredes con marcas, objetos de uso diario, algo desordenado, casa habitada, no es una foto de catálogo, sin personas. ${FOTO_CASUAL}`,
+      tip: "Usa objetos del ambiente que elegiste: en un dormitorio, cama y ropero. Si el desgaste se ve exagerado, quita «paredes con marcas».",
     },
   ],
 };
