@@ -24,7 +24,11 @@ export default async function Header() {
           </Link>
           {user ? (
             <>
-              <Link href="/estudio" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink lg:block">
+              {/* Resaltado en azul claro: es la sección principal. */}
+              <Link
+                href="/estudio"
+                className="hidden rounded-lg border border-sky-400/40 bg-sky-400/15 px-3 py-1.5 font-semibold text-sky-300 shadow-[0_0_12px_rgba(56,189,248,0.25)] transition hover:bg-sky-400/25 hover:text-sky-200 lg:block"
+              >
                 Estudio
               </Link>
               <Link href="/galeria" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink lg:block">
@@ -93,7 +97,15 @@ export default async function Header() {
                     ...(minipcVisible ? [["/minipc", "Mini PC"]] : []),
                     ...(isAdminEmail(user.email) ? [["/admin", "Admin"]] : []),
                   ].map(([href, label]) => (
-                    <Link key={href} href={href} className="rounded-lg px-3 py-2 text-mute hover:bg-panel-2 hover:text-ink">
+                    <Link
+                      key={href}
+                      href={href}
+                      className={
+                        href === "/estudio"
+                          ? "rounded-lg bg-sky-400/15 px-3 py-2 font-semibold text-sky-300 hover:bg-sky-400/25"
+                          : "rounded-lg px-3 py-2 text-mute hover:bg-panel-2 hover:text-ink"
+                      }
+                    >
                       {label}
                     </Link>
                   ))}
