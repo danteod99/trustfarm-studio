@@ -106,3 +106,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-latido { animation: none; }
 }
+
+/* Fondo KARIBU: marco ornamental fijo en las esquinas de la pantalla. */
+body {
+  background: #000 url("/fondo-karibu.jpg") center / cover no-repeat fixed;
+}
