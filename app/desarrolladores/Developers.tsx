@@ -81,7 +81,7 @@ function CopyBtn({ text }: { text: string }) {
       className="text-mute hover:text-ink"
       aria-label="Copiar"
     >
-      {ok ? <Check size={15} className="text-emerald-400" /> : <Copy size={15} />}
+      {ok ? <Check size={15} className="text-ok" /> : <Copy size={15} />}
     </button>
   );
 }
@@ -118,14 +118,14 @@ export default function Developers() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <p className="eyebrow">Desarrolladores</p>
-      <h1 className="mt-1 text-3xl font-bold tracking-tight">API de generación</h1>
+      <h1 className="mt-1 text-3xl font-black tracking-tight">API de generación</h1>
       <p className="mt-2 max-w-2xl text-mute">
         Genera imágenes y videos desde tu código, n8n, Make o Zapier. Cada llamada descuenta créditos de tu cuenta, igual que en
         el estudio, y si algo falla se devuelven solos.
       </p>
 
       {/* Claves */}
-      <section className="card mt-8 border-brand/30 p-6 shadow-[0_0_60px_-18px_rgba(34,211,238,0.4)]">
+      <section className="card mt-8 border-brand/30 p-6 resplandor">
         <h2 className="flex items-center gap-2 font-semibold">
           <KeyRound size={17} className="text-brand-2" /> Tus claves
         </h2>
@@ -139,8 +139,8 @@ export default function Developers() {
         ) : (
           <>
             {fresh && (
-              <div className="mt-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm">
-                <p className="font-semibold text-emerald-300">Copia tu clave ahora: no se vuelve a mostrar.</p>
+              <div className="mt-4 rounded-xl border border-turquesa/40 bg-turquesa/10 p-4 text-sm">
+                <p className="font-semibold text-ok">Copia tu clave ahora: no se vuelve a mostrar.</p>
                 <div className="mt-2 flex items-center gap-2 rounded-lg bg-bg px-3 py-2 font-mono text-xs">
                   <span className="flex-1 break-all">{fresh}</span>
                   <CopyBtn text={fresh} />
@@ -153,7 +153,7 @@ export default function Developers() {
                 {busy && <Loader2 size={15} className="animate-spin" />} Crear clave
               </button>
             </div>
-            {err && <p className="mt-2 text-sm text-red-300">{err}</p>}
+            {err && <p className="mt-2 text-sm text-error">{err}</p>}
             <div className="mt-4 divide-y divide-line">
               {keys?.length === 0 && <p className="py-3 text-sm text-mute">Aún no tienes claves.</p>}
               {keys?.map((k) => (
@@ -193,7 +193,7 @@ export default function Developers() {
         <div className="card mt-4 divide-y divide-line">
           {ENDPOINTS.map(([m, p, d]) => (
             <div key={p + m} className="flex flex-wrap items-center gap-3 p-3 text-sm">
-              <span className={`w-14 rounded px-2 py-0.5 text-center font-mono text-xs font-bold ${m === "GET" ? "bg-emerald-500/15 text-emerald-300" : "bg-brand/20 text-brand-2"}`}>{m}</span>
+              <span className={`w-14 rounded px-2 py-0.5 text-center font-mono text-xs font-bold ${m === "GET" ? "bg-turquesa/15 text-ok" : "bg-brand/20 text-brand-2"}`}>{m}</span>
               <code className="font-mono text-xs">{p}</code>
               <span className="text-mute">{d}</span>
             </div>

@@ -81,7 +81,7 @@ export default function Reproductor({ src, ref, autoPlay, loop, muted: mutedInic
         }
       }}
       tabIndex={0}
-      className={`group/rep relative h-full w-full overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.18),rgba(34,211,238,0.06)_45%,#05070c_80%)] outline-none ${className}`}
+      className={`group/rep relative h-full w-full overflow-hidden bg-[radial-gradient(ellipse_at_center,color-mix(in_srgb,var(--color-ocre)_16%,transparent),color-mix(in_srgb,var(--color-terracota)_8%,transparent)_45%,var(--color-cacao-3)_80%)] outline-none ${className}`}
     >
       <video
         ref={video}
@@ -112,7 +112,7 @@ export default function Reproductor({ src, ref, autoPlay, loop, muted: mutedInic
         <button
           onClick={alternar}
           aria-label="Reproducir"
-          className="absolute left-1/2 top-1/2 grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gradient-to-br from-brand to-brand-2 text-white shadow-[0_0_30px_rgba(34,211,238,0.55)] ring-4 ring-white/10 transition hover:scale-105 active:scale-95"
+          className="absolute left-1/2 top-1/2 grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gradient-to-br from-brand to-brand-2 text-on-brand shadow-[0_0_30px_color-mix(in_srgb,var(--color-ocre)_50%,transparent)] ring-4 ring-white/10 transition hover:scale-105 active:scale-95"
         >
           <Play size={26} className="ml-1" fill="currentColor" />
         </button>
@@ -151,15 +151,15 @@ export default function Reproductor({ src, ref, autoPlay, loop, muted: mutedInic
             <div className="h-full rounded-full bg-gradient-to-r from-brand to-brand-2" style={{ width: `${pct}%` }} />
           </div>
           <span
-            className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_10px_rgba(34,211,238,0.9)] transition-transform group-hover/barra:scale-125"
+            className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-hueso shadow-[0_0_10px_var(--color-ocre)] transition-transform group-hover/barra:scale-125"
             style={{ left: `${pct}%` }}
           />
         </div>
-        <div className="flex items-center gap-2 text-white">
+        <div className="flex items-center gap-2 text-hueso">
           <button onClick={alternar} aria-label={playing ? "Pausar" : "Reproducir"} className="rounded-full p-1.5 hover:bg-white/15">
             {playing ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
           </button>
-          <span className="text-xs tabular-nums text-white/85">
+          <span className="text-xs tabular-nums text-hueso/85">
             {fmt(t)} / {fmt(dur)}
           </span>
           <span className="flex-1" />

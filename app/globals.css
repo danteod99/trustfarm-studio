@@ -1,49 +1,150 @@
 @import "tailwindcss";
 
+/*
+ * Paleta "Noche Yamore" (afro house): cacao, terracota, ocre, durazno, arena, turquesa, rosa tambor y hueso.
+ * Toda la web usa estos tokens; no escribas colores sueltos en los componentes.
+ * Contraste (AA): hueso y mute sobre cacao ≥ 7:1 · cacao sobre ocre ≈ 8:1 · hueso sobre terracota ≈ 4.8:1
+ * · hueso sobre turquesa-oscuro ≈ 5.3:1 (la turquesa base solo para texto grande o adornos).
+ */
 @theme {
-  --color-bg: #07090d;
-  --color-panel: #0e121a;
-  --color-panel-2: #141a25;
-  --color-line: #1f2733;
-  --color-ink: #e8edf5;
-  --color-mute: #8a96a8;
-  --color-brand: #3b82f6;
-  --color-brand-2: #22d3ee;
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Paleta base */
+  --color-cacao: #24130d;
+  --color-cacao-2: #3a1e14;
+  --color-cacao-3: #160b07;
+  --color-brasa: #5a2a17;
+  --color-terracota: #b8462b;
+  --color-ocre: #d9a441;
+  --color-ocre-claro: #e8bb63;
+  --color-durazno: #f4a483;
+  --color-arena: #efddbe;
+  --color-turquesa: #1e8c86;
+  --color-turquesa-oscuro: #16706b;
+  --color-turquesa-claro: #5cc8bf;
+  --color-rosa: #e0507a;
+  --color-rosa-claro: #f28aa6;
+  --color-hueso: #fbf3e4;
+
+  /* Roles (los usan todos los componentes) */
+  --color-bg: var(--color-cacao);
+  --color-panel: #2f1911;
+  --color-panel-2: var(--color-cacao-2);
+  --color-line: #4d2e1f;
+  --color-ink: var(--color-hueso);
+  --color-mute: #c4ab8a;
+  --color-brand: var(--color-ocre);
+  --color-brand-2: var(--color-ocre-claro);
+  --color-on-brand: var(--color-cacao);
+  --color-ok: var(--color-turquesa-claro);
+  --color-error: var(--color-rosa-claro);
+
+  /* Tipos (cargados con next/font en app/layout.tsx) */
+  --font-sans: var(--font-bricolage), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-mano: var(--font-gochi), "Comic Sans MS", cursive;
 }
 
 html,
 body {
   overflow-x: clip;
-  background: var(--color-bg);
+  background-color: var(--color-bg);
   color: var(--color-ink);
 }
 
+/* Resplandor cálido arriba a la derecha (como la portada de Yamore) */
+body {
+  background-image: radial-gradient(110% 70% at 85% -10%, rgb(90 42 23 / 0.95) 0%, rgb(90 42 23 / 0.35) 40%, transparent 70%);
+  background-repeat: no-repeat;
+  background-size: 100% 1100px;
+}
+
+/* Grano de papel sutil en toda la página */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+  }
+  h1,
+  h2 {
+    font-weight: 900;
+  }
+  ::selection {
+    background: var(--color-ocre);
+    color: var(--color-cacao);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ocre);
+    outline-offset: 2px;
+  }
+}
+
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50;
 }
 @utility btn-primary {
-  @apply btn bg-brand text-white hover:bg-blue-500;
+  @apply btn bg-brand text-on-brand hover:bg-ocre-claro;
 }
 @utility btn-ghost {
-  @apply btn border border-line bg-panel text-ink hover:bg-panel-2;
+  @apply btn border border-hueso/20 bg-hueso/[0.07] text-ink hover:bg-hueso/[0.13];
 }
 @utility card {
   @apply rounded-2xl border border-line bg-panel;
 }
 @utility input {
-  @apply w-full rounded-xl border border-line bg-panel-2 px-3 py-2.5 text-sm text-ink outline-none placeholder:text-mute focus:border-brand;
+  @apply w-full rounded-xl border border-line bg-panel-2 px-3 py-2.5 text-sm text-ink outline-none placeholder:text-mute/80 focus:border-brand;
 }
 @utility chip {
-  @apply rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-mute transition hover:text-ink;
+  @apply rounded-full border border-line px-3 py-1.5 text-xs font-medium text-mute transition hover:text-ink;
 }
 @utility chip-on {
   @apply border-brand bg-brand/15 text-ink;
 }
 
-/* Etiqueta de sección (como "QUÉ INCLUYE" en trustmind.online) */
+/* Etiqueta de sección */
 @utility eyebrow {
-  @apply text-xs font-semibold uppercase tracking-[0.18em] text-mute;
+  @apply text-xs font-semibold uppercase tracking-[0.2em] text-brand;
+}
+
+/* Acento escrito a mano (Gochi Hand), con moderación */
+@utility mano {
+  font-family: var(--font-mano);
+  letter-spacing: 0;
+}
+
+/* Grano de papel dentro de una tarjeta o bloque */
+@utility grano {
+  position: relative;
+  isolation: isolate;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: inherit;
+    opacity: 0.16;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+}
+
+/* Piso a cuadros en perspectiva (Karibu) del hero */
+@utility piso-cuadros {
+  background: repeating-conic-gradient(var(--color-cacao) 0 25%, var(--color-ocre) 0 50%) 0 0 / 56px 56px;
+  transform: perspective(320px) rotateX(58deg);
+  transform-origin: bottom;
 }
 
 /* Cinta de ejemplos: se duplica el contenido y se desplaza la mitad. */
@@ -64,8 +165,17 @@ body {
   animation: float 7s ease-in-out infinite;
 }
 
+/* Sol del hero: late suave, como un bombo */
+@keyframes latido {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+@utility animate-latido {
+  animation: latido 4s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-marquee, .animate-float { animation: none; }
+  .animate-marquee, .animate-float, .animate-latido { animation: none; }
 }
 
 /* Muro de videos: columnas que suben y bajan sin parar (landing /personajes) */
@@ -88,4 +198,9 @@ body {
   .animate-col-down {
     animation: none;
   }
+}
+
+/* Resplandor cálido alrededor de paneles destacados (estudio, login, API) */
+@utility resplandor {
+  box-shadow: 0 0 60px -18px color-mix(in srgb, var(--color-ocre) 45%, transparent);
 }

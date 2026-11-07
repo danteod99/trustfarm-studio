@@ -217,7 +217,7 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
 
   const Toggle = ({ on, set, icon, label, hint }: { on: boolean; set: (v: boolean) => void; icon: React.ReactNode; label: string; hint: string }) => (
     <label className="flex cursor-pointer items-start gap-3 border-t border-line py-3 first:border-t-0">
-      <input type="checkbox" checked={on} disabled={running} onChange={(e) => set(e.target.checked)} className="mt-1 h-4 w-4 accent-cyan-400" />
+      <input type="checkbox" checked={on} disabled={running} onChange={(e) => set(e.target.checked)} className="mt-1 h-4 w-4 accent-ocre" />
       <span>
         <span className={`flex items-center gap-2 text-sm font-semibold ${on ? "text-brand-2" : ""}`}>{icon}{label}</span>
         <span className="block text-xs text-mute">{hint}</span>
@@ -257,7 +257,7 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
                   <button onClick={() => move(i, 1)} disabled={i === files.length - 1} className="text-mute hover:text-ink disabled:opacity-30" aria-label="Bajar"><ArrowDown size={14} /></button>
                 </>
               )}
-              {!running && <button onClick={() => setFiles((p) => p.filter((_, j) => j !== i))} className="text-mute hover:text-red-400" aria-label="Quitar"><X size={14} /></button>}
+              {!running && <button onClick={() => setFiles((p) => p.filter((_, j) => j !== i))} className="text-mute hover:text-error" aria-label="Quitar"><X size={14} /></button>}
             </li>
           ))}
         </ul>
@@ -268,7 +268,7 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
           hint={`Cuando te trabas y repites, deja solo la última versión limpia (IA · ${precios.retomas} créditos).`} />
         {cutRetakes && (
           <label className="flex cursor-pointer items-center gap-2 pb-3 pl-7 text-xs text-mute">
-            <input type="checkbox" checked={condense} disabled={running} onChange={(e) => setCondense(e.target.checked)} className="accent-cyan-400" />
+            <input type="checkbox" checked={condense} disabled={running} onChange={(e) => setCondense(e.target.checked)} className="accent-ocre" />
             Quitar también ideas repetidas (más agresivo)
           </label>
         )}
@@ -286,11 +286,11 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
             </button>
           ) : (
             <div className="flex flex-wrap items-center gap-3 text-sm">
-              <span className="max-w-[220px] truncate text-emerald-400">♪ {music.name}</span>
-              {!running && <button onClick={() => setMusic(null)} className="text-mute hover:text-red-400" aria-label="Quitar música"><X size={14} /></button>}
+              <span className="max-w-[220px] truncate text-ok">♪ {music.name}</span>
+              {!running && <button onClick={() => setMusic(null)} className="text-mute hover:text-error" aria-label="Quitar música"><X size={14} /></button>}
               <span className="text-xs text-mute">Volumen {Math.round(musicVol * 100)}%</span>
               <input type="range" min={0.05} max={0.5} step={0.01} value={musicVol} disabled={running}
-                onChange={(e) => setMusicVol(parseFloat(e.target.value))} className="min-w-[120px] flex-1 accent-cyan-400" />
+                onChange={(e) => setMusicVol(parseFloat(e.target.value))} className="min-w-[120px] flex-1 accent-ocre" />
             </div>
           )}
         </div>
@@ -301,7 +301,7 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
           {running ? <><Loader2 size={16} className="animate-spin" /> Editando…</> : <><Scissors size={16} /> {files.length > 1 ? "Unir y editar" : "Editar video"}</>}
         </button>
         <span className="text-sm">
-          {cost ? <>Costo: <span className="font-semibold text-brand-2">{cost} créditos</span></> : <span className="font-semibold text-emerald-400">{yaPagado ? "Ya pagado: no se cobra de nuevo" : "Gratis"}</span>}
+          {cost ? <>Costo: <span className="font-semibold text-brand-2">{cost} créditos</span></> : <span className="font-semibold text-ok">{yaPagado ? "Ya pagado: no se cobra de nuevo" : "Gratis"}</span>}
         </span>
         {running && <span className="text-sm text-mute">{status}</span>}
       </div>
@@ -315,9 +315,9 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
       {error && <div className="mt-4"><ErrorBox msg={error} onClose={() => setError(null)} /></div>}
 
       {result && (
-        <div className="card mt-5 border-emerald-500/40 p-5">
+        <div className="card mt-5 border-turquesa/40 p-5">
           <p className="mb-3 flex flex-wrap items-center gap-2 font-semibold">
-            <CheckCircle2 size={17} className="text-emerald-400" /> Corto editado
+            <CheckCircle2 size={17} className="text-ok" /> Corto editado
             <span className="text-xs font-normal text-mute">
               {result.origDur ? `${Math.round(result.origDur)} s → ${Math.round(result.newDur)} s · ` : ""}{result.size}
             </span>

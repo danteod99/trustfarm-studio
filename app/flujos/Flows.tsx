@@ -8,7 +8,6 @@ import { MOTIONS } from "@/app/lib/templates";
 import { FLOW_TEMPLATES } from "@/app/lib/flujos-plantillas";
 import type { FlowStep } from "@/app/lib/flujos-validar";
 import type { PublicGeneration } from "@/app/components/GenerationCard";
-import SpotlightCard from "@/app/components/fx/SpotlightCard";
 
 interface Flow { id: string; name: string; steps: FlowStep[] }
 interface Run {
@@ -72,7 +71,7 @@ function StepEditor({ s, i, onChange, onRemove }: { s: FlowStep; i: number; onCh
         <input className="input !py-1.5 text-sm" placeholder={`Paso ${i + 1}`} value={s.title} onChange={(e) => onChange({ ...s, title: e.target.value })} />
         <span className="shrink-0 text-xs text-mute">{stepCost(s)} cr</span>
         {onRemove && (
-          <button onClick={onRemove} aria-label="Quitar paso" className="text-mute hover:text-red-300">
+          <button onClick={onRemove} aria-label="Quitar paso" className="text-mute hover:text-error">
             <X size={16} />
           </button>
         )}
@@ -152,7 +151,7 @@ function RunCard({ run }: { run: Run }) {
         </p>
         <span className="flex items-center gap-1.5 text-xs">
           {run.status === "running" && <><Loader2 size={13} className="animate-spin text-brand-2" /> Paso {run.step + 1} de {run.steps.length}</>}
-          {run.status === "done" && <><CheckCircle2 size={13} className="text-emerald-400" /> Listo</>}
+          {run.status === "done" && <><CheckCircle2 size={13} className="text-ok" /> Listo</>}
           {run.status === "failed" && <><TriangleAlert size={13} className="text-amber-400" /> Falló</>}
         </span>
       </div>
@@ -257,7 +256,7 @@ export default function Flows() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Automatiza</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight">Flujos y loops</h1>
+          <h1 className="mt-1 text-3xl font-black tracking-tight">Flujos y loops</h1>
           <p className="mt-2 max-w-2xl text-mute">
             Un <b className="text-ink">flujo</b> encadena pasos: cada uno usa el resultado del anterior (personaje → escena → video con voz). Cada{" "}
             <b className="text-ink">flujo</b> se puede <b className="text-ink">programar</b>: una sola vez en la fecha y hora que elijas, o repetirlo cada
@@ -269,7 +268,7 @@ export default function Flows() {
         </Link>
       </div>
 
-      {error && <p className="mt-6 rounded-xl bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
+      {error && <p className="mt-6 rounded-xl bg-rosa/10 p-3 text-sm text-error">{error}</p>}
 
       {/* Crear */}
       {!draft ? (
@@ -277,7 +276,7 @@ export default function Flows() {
           <h2 className={label}>Empieza con una receta</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {FLOW_TEMPLATES.map((t) => (
-              <SpotlightCard key={t.id} spotlightColor="rgba(34, 211, 238, 0.2)" className="!rounded-2xl !p-0">
+              <div key={t.id} className="card grano transition hover:-translate-y-0.5 hover:border-brand/60">
                 <button onClick={() => setDraft({ name: t.name, steps: t.steps.map((s) => ({ ...s })) })} className="block h-full w-full p-5 text-left">
                   <div className="text-2xl">{t.emoji}</div>
                   <p className="mt-2 font-semibold">{t.name}</p>
@@ -286,7 +285,7 @@ export default function Flows() {
                     {t.steps.length} pasos · {flowCost(t.steps)} créditos por corrida
                   </p>
                 </button>
-              </SpotlightCard>
+              </div>
             ))}
           </div>
           <button onClick={() => setDraft({ name: "", steps: [blankStep()] })} className="btn-ghost mt-4">
@@ -294,7 +293,7 @@ export default function Flows() {
           </button>
         </section>
       ) : (
-        <section className="card mt-8 border-brand/40 p-5 shadow-[0_0_60px_-18px_rgba(34,211,238,0.45)]">
+        <section className="card mt-8 border-brand/40 p-5 resplandor">
           <div className="flex flex-wrap items-center gap-3">
             <Workflow size={18} className="text-brand-2" />
             <input className="input max-w-sm" placeholder="Nombre del flujo" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
@@ -348,7 +347,7 @@ export default function Flows() {
                       {f.steps.map((s) => s.title).join(" → ")} · {flowCost(f.steps)} créditos
                     </p>
                   </div>
-                  <button onClick={() => call(`del-${f.id}`, `/api/flows/${f.id}`, { method: "DELETE" })} className="text-mute hover:text-red-300" aria-label="Borrar flujo">
+                  <button onClick={() => call(`del-${f.id}`, `/api/flows/${f.id}`, { method: "DELETE" })} className="text-mute hover:text-error" aria-label="Borrar flujo">
                     <Trash2 size={15} />
                   </button>
                 </div>

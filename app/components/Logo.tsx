@@ -2,38 +2,17 @@ import Link from "next/link";
 import { BRAND } from "@/app/lib/brand";
 
 /**
- * Logo TRUST — el mismo wordmark de trustmind.online (Michroma ≈ Eurostile Extended, con trazo
- * para engrosarlo, en currentColor) + "Studio" como firma a mano (Mrs Saint Delafield).
+ * Logo TRUST del look afro house: sol ocre + "TRUST" en Fraunces negra + "Studio" escrito a mano (Gochi Hand).
+ * Más chico en celular para que la barra no se desborde.
  */
-export default function Logo({ size = 18 }: { size?: number }) {
+export default function Logo() {
   return (
-    <Link href="/" aria-label={BRAND.name} className="flex items-baseline gap-2 text-ink">
-      <span
-        aria-hidden
-        style={{
-          fontFamily: "var(--font-michroma), 'Eurostile', 'Orbitron', sans-serif",
-          fontSize: size,
-          fontWeight: 700,
-          letterSpacing: "0.04em",
-          lineHeight: 1,
-          WebkitTextStroke: `${Math.max(0.3, size * 0.022)}px currentColor`,
-          whiteSpace: "nowrap",
-        }}
-      >
+    <Link href="/" aria-label={BRAND.name} className="flex shrink-0 items-center gap-1 text-ink sm:gap-1.5">
+      <span aria-hidden className="block h-2.5 w-2.5 shrink-0 rounded-full bg-ocre shadow-[0_0_14px_2px_color-mix(in_srgb,var(--color-ocre)_45%,transparent)] sm:h-3 sm:w-3" />
+      <span aria-hidden className="whitespace-nowrap font-display text-[17px] font-black leading-none tracking-[0.06em] sm:text-[22px]">
         TRUST
       </span>
-      <span
-        className="text-brand-2"
-        style={{
-          fontFamily: "var(--font-firma), 'Brush Script MT', cursive",
-          fontSize: size * 1.9,
-          lineHeight: 0.6,
-          marginLeft: -size * 0.15,
-          transform: "rotate(-6deg) translateY(2px)",
-          display: "inline-block",
-          whiteSpace: "nowrap",
-        }}
-      >
+      <span aria-hidden className="mano inline-block -rotate-[5deg] whitespace-nowrap text-[16px] leading-none text-ocre sm:text-[20px]">
         Studio
       </span>
     </Link>

@@ -73,14 +73,10 @@ function BarraProgreso({ g }: { g: PublicGeneration }) {
             style={{ width: `${pct}%` }}
           />
         </div>
-        {/* La "T" de la marca avanza montada en la punta de la barra. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/carga-t.png"
-          alt=""
-          width={32}
-          height={32}
-          className="pointer-events-none absolute top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_0_8px_rgba(34,211,238,0.7)] transition-[left] duration-1000 ease-linear"
+        {/* El sol ocre de la marca avanza montado en la punta de la barra. */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ocre shadow-[0_0_14px_3px_color-mix(in_srgb,var(--color-ocre)_55%,transparent)] transition-[left] duration-1000 ease-linear"
           style={{ left: `${pct}%` }}
         />
       </div>

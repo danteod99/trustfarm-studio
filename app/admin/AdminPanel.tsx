@@ -86,7 +86,7 @@ function TopeCaja({ c, onGuardado }: { c: CajaAdmin; onGuardado: (id: string, to
       <button className="btn-ghost !px-3 !py-1.5" disabled={guardando || valor.trim() === "" || Number(valor) === c.tope_diario} onClick={guardar}>
         {guardando ? "Guardando…" : "Guardar"}
       </button>
-      {error && <span className="text-red-400">{error}</span>}
+      {error && <span className="text-error">{error}</span>}
     </span>
   );
 }
@@ -121,7 +121,7 @@ function IaCaja({ c, onCambio }: { c: CajaAdmin; onCambio: (id: string, cambios:
       {c.ia_alertas.map((a) => (
         <span key={a} role="alert" className="rounded-full border border-amber-400 px-2 py-0.5 text-amber-400">{a}</span>
       ))}
-      {c.ia_bloqueada && <span className="rounded-full border border-red-400 px-2 py-0.5 text-red-400">IA bloqueada</span>}
+      {c.ia_bloqueada && <span className="rounded-full border border-rosa px-2 py-0.5 text-error">IA bloqueada</span>}
       <span className="text-mute">Tope chats:</span>
       <input className="input !w-20 !py-1" type="number" min={0} max={10000} aria-label={`Tope diario de chats de ${c.nombre}`} value={tope} onChange={(e) => setTope(e.target.value)} />
       <button className="btn-ghost !px-3 !py-1.5" disabled={ocupado || tope.trim() === "" || Number(tope) === c.tope_diario_ia} onClick={() => enviar({ tope_diario_ia: Number(tope) })}>
@@ -130,7 +130,7 @@ function IaCaja({ c, onCambio }: { c: CajaAdmin; onCambio: (id: string, cambios:
       <button className="btn-ghost !px-3 !py-1.5" disabled={ocupado} onClick={() => enviar({ bloqueada: !c.ia_bloqueada })}>
         {c.ia_bloqueada ? "Desbloquear IA" : "Bloquear IA"}
       </button>
-      {error && <span className="text-red-400">{error}</span>}
+      {error && <span className="text-error">{error}</span>}
     </div>
   );
 }
@@ -195,7 +195,7 @@ function BuscadorCuenta({ cuenta, alElegir }: { cuenta: CuentaEncontrada | null;
         <span className="text-mute">Cuenta del cliente (busca por su correo)</span>
         <input className="input mt-1 w-full" autoComplete="off" maxLength={100} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="cliente@gmail.com" />
       </label>
-      {error && <p role="alert" className="mt-1 text-xs text-red-400">{error}</p>}
+      {error && <p role="alert" className="mt-1 text-xs text-error">{error}</p>}
       {resultados && !error && (
         <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border border-line bg-panel-2 shadow-lg">
           {resultados.map((c) => (
@@ -333,7 +333,7 @@ function CajasAdmin() {
     confirmar === c.id ? (
       <span className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-mute">¿Eliminar «{c.etiqueta ?? c.nombre}»? Se borra su túnel y su dirección.</span>
-        <button className="btn-ghost !px-3 !py-1.5 !text-red-400" disabled={quitando === c.id} onClick={() => desvincular(c.id)}>
+        <button className="btn-ghost !px-3 !py-1.5 !text-error" disabled={quitando === c.id} onClick={() => desvincular(c.id)}>
           {quitando === c.id ? "Eliminando…" : "Sí, eliminar"}
         </button>
         <button className="btn-ghost !px-3 !py-1.5" disabled={quitando === c.id} onClick={() => setConfirmar(null)}>
@@ -354,14 +354,14 @@ function CajasAdmin() {
     );
 
   const asignacion = (c: CajaAdmin) => (
-    <span className={`rounded-full border border-line px-2 py-0.5 text-xs ${c.asignacion === "preparada" ? "text-amber-400" : "text-emerald-400"}`}>
+    <span className={`rounded-full border border-line px-2 py-0.5 text-xs ${c.asignacion === "preparada" ? "text-amber-400" : "text-ok"}`}>
       {c.asignacion === "preparada" ? (c.email_asignado ? "Esperando al cliente" : c.activada ? "Preparada" : "Sin activar") : "Asignada"}
     </span>
   );
 
   const estado = (c: CajaAdmin) => (
     <span className="inline-flex items-center gap-2">
-      <span aria-hidden className={`h-2.5 w-2.5 rounded-full ${c.estado === "encendida" ? "bg-emerald-400" : "bg-red-400"}`} />
+      <span aria-hidden className={`h-2.5 w-2.5 rounded-full ${c.estado === "encendida" ? "bg-ok" : "bg-rosa"}`} />
       {c.estado === "encendida" ? "Encendida" : "Apagada"}
     </span>
   );
@@ -411,7 +411,7 @@ function CajasAdmin() {
       )}
 
       {error && (
-        <p role="alert" className="mt-2 text-sm text-red-400">
+        <p role="alert" className="mt-2 text-sm text-error">
           {error}
         </p>
       )}
@@ -520,7 +520,7 @@ export default function AdminPanel({ soporte = false }: { soporte?: boolean }) {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
-      <h1 className="text-2xl font-bold">Admin</h1>
+      <h1 className="text-2xl font-black">Admin</h1>
 
       <section className="grid gap-4 sm:grid-cols-3">
         {[
@@ -581,7 +581,7 @@ export default function AdminPanel({ soporte = false }: { soporte?: boolean }) {
           <ul className="mt-3 space-y-2 text-sm">
             {stats.workers.map((w) => (
               <li key={w.id} className="flex flex-wrap items-center gap-3">
-                <span className={`h-2.5 w-2.5 rounded-full ${w.online ? "bg-emerald-400" : "bg-red-400"}`} />
+                <span className={`h-2.5 w-2.5 rounded-full ${w.online ? "bg-ok" : "bg-rosa"}`} />
                 <span className="font-medium">{w.id}</span>
                 <span className="text-mute">{w.info?.gpu ?? ""}</span>
                 <span className="text-mute">{w.models.join(", ")}</span>

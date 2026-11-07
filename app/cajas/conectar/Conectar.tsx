@@ -48,17 +48,17 @@ export default function Conectar({ correo, vincular, caja, volver, sello }: { co
       <div className="card p-7">
         {!valido ? (
           <>
-            <h1 className="text-xl font-bold">Este enlace no es válido</h1>
+            <h1 className="text-xl font-black">Este enlace no es válido</h1>
             <p className="mt-2 text-sm text-mute">Vuelve a empezar desde la pantalla de tu mini PC.</p>
           </>
         ) : caja ? (
           <>
-            <h1 className="text-xl font-bold">Entrando a tu mini PC…</h1>
+            <h1 className="text-xl font-black">Entrando a tu mini PC…</h1>
             <p className="mt-2 break-all text-sm text-mute">Con la cuenta {correo}.</p>
           </>
         ) : (
           <>
-            <h1 className="text-xl font-bold">Vincular esta mini PC</h1>
+            <h1 className="text-xl font-black">Vincular esta mini PC</h1>
             <p className="mt-2 text-sm text-mute">
               Quedará en la cuenta <b className="break-all">{correo}</b>. Hazlo solo si estás frente a la mini PC que compraste.
             </p>
@@ -68,7 +68,7 @@ export default function Conectar({ correo, vincular, caja, volver, sello }: { co
           </>
         )}
         {error && (
-          <p role="alert" className="mt-4 text-sm text-red-400">
+          <p role="alert" className="mt-4 text-sm text-error">
             {error}
           </p>
         )}

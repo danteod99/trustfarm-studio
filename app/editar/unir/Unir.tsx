@@ -265,7 +265,7 @@ export default function Unir() {
                       <button
                         onClick={() => change(clips.filter((_, j) => j !== i))}
                         disabled={busy}
-                        className="rounded-md p-1.5 text-mute hover:text-red-300 disabled:opacity-30"
+                        className="rounded-md p-1.5 text-mute hover:text-error disabled:opacity-30"
                         aria-label="Quitar"
                         title="Quitar"
                       >
@@ -353,14 +353,14 @@ export default function Unir() {
                           className="h-full w-full object-cover"
                         />
                       </div>
-                      <span className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white group-hover:bg-brand">
+                      <span className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white group-hover:bg-brand group-hover:text-on-brand">
                         <Plus size={15} />
                       </span>
                     </button>
                     <button
                       onClick={() => verPrevia(g)}
                       disabled={busy}
-                      className="absolute bottom-1.5 right-1.5 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-[11px] font-semibold text-white hover:bg-brand-2 hover:text-black disabled:opacity-50"
+                      className="absolute bottom-1.5 right-1.5 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-[11px] font-semibold text-white hover:bg-brand-2 hover:text-on-brand disabled:opacity-50"
                       aria-label="Ver este video en el reproductor"
                     >
                       <Play size={11} /> Ver
@@ -371,7 +371,7 @@ export default function Unir() {
                       </span>
                     )}
                     {n > 0 && (
-                      <span className="absolute bottom-1.5 left-1.5 rounded bg-brand px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                      <span className="absolute bottom-1.5 left-1.5 rounded bg-brand px-1.5 py-0.5 text-[10px] font-semibold text-on-brand">
                         En la historia{n > 1 ? ` ×${n}` : ""}
                       </span>
                     )}

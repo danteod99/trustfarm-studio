@@ -151,8 +151,8 @@ function TarjetaCaja({ caja, alCambiar }: { caja: Caja; alCambiar: () => void })
       )}
 
       <p className="mt-3 flex items-center gap-2 text-sm">
-        <span aria-hidden className={`h-2.5 w-2.5 shrink-0 rounded-full ${encendida ? "bg-emerald-400" : "bg-red-400"}`} />
-        {encendida ? <span className="text-emerald-400">Encendida</span> : <span className="text-mute">Apagada · {haceCuanto(caja.ultima_senal)}</span>}
+        <span aria-hidden className={`h-2.5 w-2.5 shrink-0 rounded-full ${encendida ? "bg-ok" : "bg-rosa"}`} />
+        {encendida ? <span className="text-ok">Encendida</span> : <span className="text-mute">Apagada · {haceCuanto(caja.ultima_senal)}</span>}
       </p>
 
       {confirmando ? (
@@ -160,7 +160,7 @@ function TarjetaCaja({ caja, alCambiar }: { caja: Caja; alCambiar: () => void })
           <p>¿Quitar «{caja.nombre}» de tu cuenta?</p>
           <p className="mt-1 text-mute">Tu caja volverá a pedir un código nuevo en su pantalla. No pierde sus datos.</p>
           <div className="mt-3 flex gap-2">
-            <button className={`btn-primary !bg-red-600 !py-2 hover:!bg-red-500 ${FOCO}`} disabled={ocupado} onClick={quitar}>
+            <button className={`btn-primary !bg-terracota !py-2 !text-hueso hover:!bg-terracota/85 ${FOCO}`} disabled={ocupado} onClick={quitar}>
               {ocupado ? "Quitando…" : "Sí, quitar"}
             </button>
             <button className={`btn-ghost !py-2 ${FOCO}`} disabled={ocupado} onClick={() => setConfirmando(false)}>
@@ -183,7 +183,7 @@ function TarjetaCaja({ caja, alCambiar }: { caja: Caja; alCambiar: () => void })
         <p className="mt-2 text-xs text-mute">IA: {caja.ia_creditos_hoy ?? 0} créditos hoy · {caja.ia_creditos_mes} este mes</p>
       )}
       {error && (
-        <p role="alert" className="mt-3 text-sm text-red-400">
+        <p role="alert" className="mt-3 text-sm text-error">
           {error}
         </p>
       )}
@@ -270,7 +270,7 @@ export default function Cajas() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
-      <h1 className="text-2xl font-bold">Mis cajas</h1>
+      <h1 className="text-2xl font-black">Mis cajas</h1>
 
       {saldo !== null && (
         <section className={`card p-4 text-sm ${saldo < SALDO_BAJO ? "border-amber-400" : ""}`}>
@@ -302,7 +302,7 @@ export default function Cajas() {
             </button>
           </div>
           {errorVincular && (
-            <p role="alert" className="mt-3 text-sm text-red-400">
+            <p role="alert" className="mt-3 text-sm text-error">
               {errorVincular}
             </p>
           )}
@@ -317,7 +317,7 @@ export default function Cajas() {
 
       {errorLista && (
         <div className="card p-4 text-sm" role="alert">
-          <p className="text-red-400">{errorLista}</p>
+          <p className="text-error">{errorLista}</p>
           <button className={`btn-ghost mt-3 !py-2 ${FOCO}`} onClick={cargar}>
             Reintentar
           </button>
@@ -364,12 +364,12 @@ export default function Cajas() {
           </button>
         </form>
         {errorVincular && !delQr && (
-          <p role="alert" className="mt-3 text-sm text-red-400">
+          <p role="alert" className="mt-3 text-sm text-error">
             {errorVincular}
           </p>
         )}
         {exito && (
-          <p role="status" className="mt-3 text-sm text-emerald-400">
+          <p role="status" className="mt-3 text-sm text-ok">
             Listo: tu caja quedó vinculada.
           </p>
         )}

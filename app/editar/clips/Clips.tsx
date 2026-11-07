@@ -25,8 +25,8 @@ const STATUS: Record<string, { label: string; cls: string }> = {
   subiendo: { label: "Subiendo…", cls: "text-amber-300" },
   pendiente: { label: "En cola", cls: "text-amber-300" },
   procesando: { label: "Procesando…", cls: "text-brand-2" },
-  listo: { label: "Listo", cls: "text-emerald-400" },
-  error: { label: "Error", cls: "text-red-400" },
+  listo: { label: "Listo", cls: "text-ok" },
+  error: { label: "Error", cls: "text-error" },
 };
 const fmtDate = (iso: string) => new Date(iso).toLocaleString("es-PE", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 const fmtDur = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
@@ -166,7 +166,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
                 <div className="space-y-1.5 p-3">
                   <div className="flex items-center gap-1.5 text-xs">
                     {rank.get(c.index) && (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300">
+                      <span className="inline-flex items-center gap-1 rounded-md bg-turquesa/15 px-1.5 py-0.5 text-[10px] font-semibold text-ok">
                         <Trophy size={10} /> #{rank.get(c.index)}
                       </span>
                     )}
@@ -213,13 +213,13 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
         <div className="card space-y-4 p-5">
           <div className="flex items-center justify-between gap-3 text-sm">
             <span className="truncate">{file.name} ({(file.size / 1048576).toFixed(0)} MB)</span>
-            {!uploading && <button onClick={() => setFile(null)} className="text-mute hover:text-red-400" aria-label="Quitar"><X size={15} /></button>}
+            {!uploading && <button onClick={() => setFile(null)} className="text-mute hover:text-error" aria-label="Quitar"><X size={15} /></button>}
           </div>
           <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre del video (opcional)" disabled={uploading} className="input" />
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-sm">
               <span className="font-semibold">Clips máximos: {numClips}</span>
-              <input type="range" min={1} max={15} value={numClips} disabled={uploading} onChange={(e) => setNumClips(Number(e.target.value))} className="mt-2 block w-full accent-cyan-400" />
+              <input type="range" min={1} max={15} value={numClips} disabled={uploading} onChange={(e) => setNumClips(Number(e.target.value))} className="mt-2 block w-full accent-ocre" />
               <span className="text-xs text-mute">Puede salir menos si no hay suficientes ideas completas.</span>
             </label>
             <div className="text-sm">
@@ -230,11 +230,11 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
               </div>
             </div>
             <label className="flex cursor-pointer items-start gap-2 text-sm">
-              <input type="checkbox" checked={subs} disabled={uploading} onChange={(e) => setSubs(e.target.checked)} className="mt-1 accent-cyan-400" />
+              <input type="checkbox" checked={subs} disabled={uploading} onChange={(e) => setSubs(e.target.checked)} className="mt-1 accent-ocre" />
               <span><span className="font-semibold">Subtítulos palabra por palabra</span><span className="block text-xs text-mute">Quemados en el video y también en archivo .srt</span></span>
             </label>
             <label className="flex cursor-pointer items-start gap-2 text-sm">
-              <input type="checkbox" checked={framing === "auto"} disabled={uploading} onChange={(e) => setFraming(e.target.checked ? "auto" : "fit")} className="mt-1 accent-cyan-400" />
+              <input type="checkbox" checked={framing === "auto"} disabled={uploading} onChange={(e) => setFraming(e.target.checked ? "auto" : "fit")} className="mt-1 accent-ocre" />
               <span><span className="font-semibold">Seguir la cara de quien habla</span><span className="block text-xs text-mute">Recorta a vertical siguiendo el rostro. Apagado: muestra todo el cuadro.</span></span>
             </label>
           </div>

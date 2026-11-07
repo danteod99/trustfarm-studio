@@ -30,7 +30,7 @@ export default function ComunidadPage() {
       <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-8 pt-12 lg:grid-cols-2 lg:pt-20">
         <div>
           <p className="eyebrow">Comunidad Artificial Humans</p>
-          <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">
+          <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
             Aprende a crear y operar tu granja de celulares
           </h1>
           <p className="mt-4 text-mute">
@@ -52,7 +52,7 @@ export default function ComunidadPage() {
         />
       </section>
       <section className="mx-auto max-w-6xl px-4 py-14">
-        <h2 className="text-3xl font-bold tracking-tight">Qué hay dentro</h2>
+        <h2 className="text-3xl font-black tracking-tight">Qué hay dentro</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           {CONTENIDO.map((c) => (
             <div key={c.titulo} className="rounded-xl border border-line bg-panel p-5">
@@ -61,7 +61,7 @@ export default function ComunidadPage() {
             </div>
           ))}
         </div>
-        <h2 className="mt-10 text-2xl font-bold tracking-tight">Además</h2>
+        <h2 className="mt-10 text-2xl font-black tracking-tight">Además</h2>
         <ul className="mt-3 list-disc pl-5 text-mute">
           {BONOS.map((b) => (
             <li key={b}>{b}</li>

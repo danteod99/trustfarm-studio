@@ -108,11 +108,11 @@ export default function Cuenta({ email, desde, conGoogle, conClave, saldo, plan,
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="text-2xl font-bold">Mi cuenta</h1>
+      <h1 className="text-2xl font-black">Mi cuenta</h1>
       <p className="mt-1 text-sm text-mute">{email}</p>
 
       {(error || aviso) && (
-        <p className={`mt-4 rounded-lg border px-4 py-3 text-sm ${error ? "border-red-500/40 text-red-300" : "border-emerald-500/40 text-emerald-300"}`}>
+        <p className={`mt-4 rounded-lg border px-4 py-3 text-sm ${error ? "border-rosa/40 text-error" : "border-turquesa/40 text-ok"}`}>
           {error || aviso}
         </p>
       )}
@@ -147,7 +147,7 @@ export default function Cuenta({ email, desde, conGoogle, conClave, saldo, plan,
               <button type="submit" disabled={ocupado === "clave" || !clave} className="btn-ghost">
                 {ocupado === "clave" ? <Loader2 size={15} className="animate-spin" /> : null} Guardar contraseña
               </button>
-              {claveMsg && <span className={`text-sm ${claveMsg.ok ? "text-emerald-400" : "text-red-300"}`}>{claveMsg.texto}</span>}
+              {claveMsg && <span className={`text-sm ${claveMsg.ok ? "text-ok" : "text-error"}`}>{claveMsg.texto}</span>}
             </div>
           </form>
         </Seccion>
