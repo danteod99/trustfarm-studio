@@ -81,7 +81,7 @@ function BarraProgreso({ g }: { g: PublicGeneration }) {
         />
       </div>
       <p className="tabular-nums">
-        {p.tarde ? "Tardando un poco más de lo normal, ya casi…" : `${pct} % · quedan ${textoRestante(p.restante)}`}
+        {p.tarde ? "Estamos teniendo lentitud en tu red, la IA sigue trabajando…" : `${pct} % · quedan ${textoRestante(p.restante)}`}
       </p>
     </div>
   );
