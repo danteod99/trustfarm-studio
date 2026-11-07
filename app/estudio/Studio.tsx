@@ -106,7 +106,10 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
   const styles = presets.filter((p) => p.kind === "style");
   const character = characters.find((p) => p.id === characterId);
 
-  function selectModel(id: string, overrides: Partial<ReturnType<typeof defaultsFor>> = {}) {
+  function selectModel(pedido: string, overrides: Partial<ReturnType<typeof defaultsFor>> = {}) {
+    // Ideas o plantillas viejas pueden traer un modelo retirado: se usa su reemplazo.
+    const viejo = getModel(pedido);
+    const id = viejo?.adminOnly && !free && viejo.replacedBy ? viejo.replacedBy : pedido;
     const m = getModel(id)!;
     setModelId(id);
     setOpts({ ...defaultsFor(m), ...overrides });

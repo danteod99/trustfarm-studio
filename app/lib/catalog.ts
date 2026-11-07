@@ -40,6 +40,8 @@ export interface ModelDef {
   localCapable?: boolean;
   /** Solo admins lo ven (modelos en prueba, sin precio definitivo). */
   adminOnly?: boolean;
+  /** Modelo retirado para clientes: lo que pida este se cambia por el indicado. */
+  replacedBy?: string;
   /** Lo puede generar RunPod (desborde del servidor de casa, o único lugar si provider = "runpod"). */
   cloud?: boolean;
 }
@@ -154,6 +156,9 @@ export const MODELS: ModelDef[] = [
   {
     id: "wan-22",
     publicId: "clip",
+    // Retirado 2026-11-07: Wan 2.2 5B daba mala calidad al mismo precio que Trust Clip Pro.
+    adminOnly: true,
+    replacedBy: "wan-14b",
     kind: "video",
     provider: "fal",
     name: "Trust Clip",

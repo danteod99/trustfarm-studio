@@ -390,7 +390,7 @@ export const TEMPLATES: TemplateGroup[] = [
         }
       ),
       paso(
-        { id: "animar", title: "2. Dale vida", kind: "video", model: "wan-22", aspect: "9:16", duration: 5, motion: "acercamiento",
+        { id: "animar", title: "2. Dale vida", kind: "video", model: "wan-14b", aspect: "9:16", duration: 5, motion: "acercamiento",
           tip: "Toca «Animar» en la imagen. La narración («¿Qué pasaría si...?») la pones tú encima, con tu voz." },
         {
           escena: "[lo que se ve en la imagen], movimiento lento y atmosférico",
@@ -424,7 +424,7 @@ export const TEMPLATES: TemplateGroup[] = [
         id: "animar",
         title: "2. Movimiento lento",
         kind: "video",
-        model: "wan-22",
+        model: "wan-14b",
         aspect: "9:16",
         duration: 5,
         prompt: "[Lo que se ve en la imagen], niebla moviéndose despacio, ambiente inquietante.",

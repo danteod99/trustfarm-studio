@@ -129,7 +129,7 @@ export default async function Home() {
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-mute">
-              <span className="flex items-center gap-1.5"><Wand2 size={15} className="text-brand-2" /> {MODELS.length} modelos de IA</span>
+              <span className="flex items-center gap-1.5"><Wand2 size={15} className="text-brand-2" /> {MODELS.filter((x) => !x.adminOnly).length} modelos de IA</span>
               <span className="flex items-center gap-1.5"><Coins size={15} className="text-brand-2" /> Desde US$10, sin contratos</span>
               <span className="flex items-center gap-1.5"><Languages size={15} className="text-brand-2" /> Todo en español</span>
             </div>
@@ -337,7 +337,7 @@ export default async function Home() {
           sub="Fotos, videos con voz y clips, todos en un solo lugar. Elige según lo que necesites: calidad máxima, voz, velocidad o el menor costo."
         />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {MODELS.map((m, i) => (
+          {MODELS.filter((x) => !x.adminOnly).map((m, i) => (
             <Reveal key={m.publicId} delay={(i % 3) * 80}>
               <div className="card flex h-full flex-col p-5 transition hover:-translate-y-0.5 hover:border-brand/50">
                 <div className="flex items-center justify-between">
