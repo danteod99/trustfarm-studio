@@ -131,7 +131,7 @@ export default async function Header() {
                 className="shrink-0 transition hover:scale-105 hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.6)]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/boton-crear-cuenta.png" alt="Crear cuenta" style={{ height: 46, width: "auto" }} />
+                <img src="/boton-crear-cuenta.png" alt="Crear cuenta" className="animate-latido-suave" style={{ height: 46, width: "auto" }} />
               </Link>
             </>
           )}
