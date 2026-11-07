@@ -76,7 +76,7 @@ export default function AuthForm() {
   }, []);
 
   return (
-    <div className="card border-brand/30 bg-panel/90 p-7 shadow-[0_0_60px_-18px_rgba(34,211,238,0.45)] backdrop-blur">
+    <div className="card border-brand/30 bg-panel/90 p-7 shadow-[0_0_60px_-18px_rgba(255,255,255,0.45)] backdrop-blur">
       <h1 className="text-2xl font-bold">{mode === "login" ? "Entrar" : "Crear cuenta"}</h1>
       <p className="mt-1 text-sm text-mute">
         {mode === "login" ? "Accede a tu estudio de IA." : "Regístrate gratis y compra créditos cuando quieras generar."}

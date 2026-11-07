@@ -85,7 +85,7 @@ export default function IdeasGallery({ ideas }: { ideas: Idea[] }) {
     <div>
       <section className="relative overflow-hidden border-b border-line">
         <div className="pointer-events-none absolute inset-0 opacity-60">
-          <Aurora colorStops={["#3b82f6", "#22d3ee", "#7c3aed"]} amplitude={1.1} blend={0.6} speed={0.6} />
+          <Aurora colorStops={["#ffffff", "#d4d4d4", "#737373"]} amplitude={1.1} blend={0.6} speed={0.6} />
         </div>
         <div className="relative mx-auto max-w-6xl px-4 pb-14 pt-20 text-center sm:pt-24">
           <span className="inline-flex items-center gap-2 rounded-full border border-brand/40 bg-bg/60 px-3 py-1 text-xs font-medium text-brand-2 backdrop-blur">

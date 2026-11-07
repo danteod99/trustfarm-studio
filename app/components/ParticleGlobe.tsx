@@ -44,7 +44,7 @@ export default function ParticleGlobe({ className = "" }: { className?: string }
         z = p.y * Math.sin(tilt) + z * Math.cos(tilt);
         const depth = (z + 1) / 2; // 0 atrás · 1 adelante
         ctx.globalAlpha = 0.08 + depth * 0.75;
-        ctx.fillStyle = depth > 0.55 ? "#22d3ee" : "#3b82f6";
+        ctx.fillStyle = depth > 0.55 ? "#d4d4d4" : "#ffffff";
         ctx.beginPath();
         ctx.arc(cx + x * R, cy + y * R, p.s * (0.6 + depth * 1.4), 0, Math.PI * 2);
         ctx.fill();

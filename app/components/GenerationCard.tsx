@@ -80,7 +80,7 @@ function BarraProgreso({ g }: { g: PublicGeneration }) {
           alt=""
           width={32}
           height={32}
-          className="pointer-events-none absolute top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_0_8px_rgba(34,211,238,0.7)] transition-[left] duration-1000 ease-linear"
+          className="pointer-events-none absolute top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_0_8px_rgba(255,255,255,0.7)] transition-[left] duration-1000 ease-linear"
           style={{ left: `${pct}%` }}
         />
       </div>

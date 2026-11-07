@@ -81,7 +81,7 @@ export default function Reproductor({ src, ref, autoPlay, loop, muted: mutedInic
         }
       }}
       tabIndex={0}
-      className={`group/rep relative h-full w-full overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.18),rgba(34,211,238,0.06)_45%,#05070c_80%)] outline-none ${className}`}
+      className={`group/rep relative h-full w-full overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.18),rgba(255,255,255,0.06)_45%,#05070c_80%)] outline-none ${className}`}
     >
       <video
         ref={video}
@@ -112,7 +112,7 @@ export default function Reproductor({ src, ref, autoPlay, loop, muted: mutedInic
         <button
           onClick={alternar}
           aria-label="Reproducir"
-          className="absolute left-1/2 top-1/2 grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gradient-to-br from-brand to-brand-2 text-white shadow-[0_0_30px_rgba(34,211,238,0.55)] ring-4 ring-white/10 transition hover:scale-105 active:scale-95"
+          className="absolute left-1/2 top-1/2 grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gradient-to-br from-brand to-brand-2 text-black shadow-[0_0_30px_rgba(255,255,255,0.55)] ring-4 ring-white/10 transition hover:scale-105 active:scale-95"
         >
           <Play size={26} className="ml-1" fill="currentColor" />
         </button>
@@ -151,7 +151,7 @@ export default function Reproductor({ src, ref, autoPlay, loop, muted: mutedInic
             <div className="h-full rounded-full bg-gradient-to-r from-brand to-brand-2" style={{ width: `${pct}%` }} />
           </div>
           <span
-            className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_10px_rgba(34,211,238,0.9)] transition-transform group-hover/barra:scale-125"
+            className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.9)] transition-transform group-hover/barra:scale-125"
             style={{ left: `${pct}%` }}
           />
         </div>

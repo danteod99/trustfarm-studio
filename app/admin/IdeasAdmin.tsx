@@ -156,7 +156,7 @@ export default function IdeasAdmin() {
           <input className="input" placeholder="Video de ejemplo (/showcase/x.mp4)" value={form.video} onChange={(e) => set({ video: e.target.value })} />
           <input className="input sm:col-span-2" maxLength={300} placeholder="Fuente: de qué tendencia sale (interno)" value={form.fuente} onChange={(e) => set({ fuente: e.target.value })} />
           <label className="flex items-center gap-2 text-sm sm:col-span-2">
-            <input type="checkbox" checked={form.tendencia} onChange={(e) => set({ tendencia: e.target.checked })} className="accent-cyan-400" />
+            <input type="checkbox" checked={form.tendencia} onChange={(e) => set({ tendencia: e.target.checked })} className="accent-neutral-100" />
             🔥 Tendencia de la semana (va primero)
           </label>
           <div className="flex gap-2 sm:col-span-2">

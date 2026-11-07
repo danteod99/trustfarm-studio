@@ -374,7 +374,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
       {/* Panel de control */}
       <section
         ref={panelRef}
-        className="card h-fit scroll-mt-24 space-y-5 border-brand/30 bg-panel/90 p-5 shadow-[0_0_60px_-18px_rgba(34,211,238,0.45)] backdrop-blur lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto"
+        className="card h-fit scroll-mt-24 space-y-5 border-brand/30 bg-panel/90 p-5 shadow-[0_0_60px_-18px_rgba(255,255,255,0.45)] backdrop-blur lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto"
       >
         {/* Formatos */}
         <div>
@@ -487,7 +487,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
               key={k}
               onClick={() => k !== kind && selectModel(MODELS.find((m) => m.kind === k)!.id)}
               className={`flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold transition ${
-                kind === k ? "bg-brand text-white" : "text-mute hover:text-ink"
+                kind === k ? "bg-brand text-black" : "text-mute hover:text-ink"
               }`}
             >
               {k === "video" ? <Clapperboard size={15} /> : <ImageIcon size={15} />}

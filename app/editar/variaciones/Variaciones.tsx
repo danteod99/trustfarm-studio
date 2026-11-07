@@ -250,7 +250,7 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
             </label>
             <div className="mt-2 flex items-center gap-3">
               <input type="range" min={1} max={MAX_VARIATIONS} value={numVars} disabled={running}
-                onChange={(e) => setNumVars(parseInt(e.target.value))} className="w-full max-w-xs accent-cyan-400" />
+                onChange={(e) => setNumVars(parseInt(e.target.value))} className="w-full max-w-xs accent-neutral-100" />
               <input type="number" min={1} max={MAX_VARIATIONS} value={numVars} disabled={running}
                 onChange={(e) => setNumVars(Math.max(1, Math.min(MAX_VARIATIONS, parseInt(e.target.value) || 1)))}
                 className="input !w-20 text-center" />
@@ -282,7 +282,7 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
           </div>
 
           <label className="flex cursor-pointer items-start gap-3 border-t border-line pt-4">
-            <input type="checkbox" checked={subsOn} disabled={running} onChange={(e) => setSubsOn(e.target.checked)} className="mt-1 h-4 w-4 accent-cyan-400" />
+            <input type="checkbox" checked={subsOn} disabled={running} onChange={(e) => setSubsOn(e.target.checked)} className="mt-1 h-4 w-4 accent-neutral-100" />
             <span>
               <span className={`text-sm font-semibold ${subsOn ? "text-brand-2" : ""}`}>Subtítulos automáticos (IA)</span>
               <span className="block text-xs text-mute">

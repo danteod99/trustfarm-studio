@@ -219,7 +219,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-sm">
               <span className="font-semibold">Clips máximos: {numClips}</span>
-              <input type="range" min={1} max={15} value={numClips} disabled={uploading} onChange={(e) => setNumClips(Number(e.target.value))} className="mt-2 block w-full accent-cyan-400" />
+              <input type="range" min={1} max={15} value={numClips} disabled={uploading} onChange={(e) => setNumClips(Number(e.target.value))} className="mt-2 block w-full accent-neutral-100" />
               <span className="text-xs text-mute">Puede salir menos si no hay suficientes ideas completas.</span>
             </label>
             <div className="text-sm">
@@ -230,11 +230,11 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
               </div>
             </div>
             <label className="flex cursor-pointer items-start gap-2 text-sm">
-              <input type="checkbox" checked={subs} disabled={uploading} onChange={(e) => setSubs(e.target.checked)} className="mt-1 accent-cyan-400" />
+              <input type="checkbox" checked={subs} disabled={uploading} onChange={(e) => setSubs(e.target.checked)} className="mt-1 accent-neutral-100" />
               <span><span className="font-semibold">Subtítulos palabra por palabra</span><span className="block text-xs text-mute">Quemados en el video y también en archivo .srt</span></span>
             </label>
             <label className="flex cursor-pointer items-start gap-2 text-sm">
-              <input type="checkbox" checked={framing === "auto"} disabled={uploading} onChange={(e) => setFraming(e.target.checked ? "auto" : "fit")} className="mt-1 accent-cyan-400" />
+              <input type="checkbox" checked={framing === "auto"} disabled={uploading} onChange={(e) => setFraming(e.target.checked ? "auto" : "fit")} className="mt-1 accent-neutral-100" />
               <span><span className="font-semibold">Seguir la cara de quien habla</span><span className="block text-xs text-mute">Recorta a vertical siguiendo el rostro. Apagado: muestra todo el cuadro.</span></span>
             </label>
           </div>

@@ -125,7 +125,7 @@ export default function Developers() {
       </p>
 
       {/* Claves */}
-      <section className="card mt-8 border-brand/30 p-6 shadow-[0_0_60px_-18px_rgba(34,211,238,0.4)]">
+      <section className="card mt-8 border-brand/30 p-6 shadow-[0_0_60px_-18px_rgba(255,255,255,0.4)]">
         <h2 className="flex items-center gap-2 font-semibold">
           <KeyRound size={17} className="text-brand-2" /> Tus claves
         </h2>

@@ -17,7 +17,7 @@ const ETIQUETA: Record<EstadoPedido, string> = {
 };
 
 const COLOR: Record<EstadoPedido, string> = {
-  pagado: "bg-sky-500/15 text-sky-300",
+  pagado: "bg-neutral-300/15 text-neutral-200",
   revisar: "bg-red-500/15 text-red-400",
   enviado: "bg-amber-500/15 text-amber-300",
   entregado: "bg-emerald-500/15 text-emerald-300",
