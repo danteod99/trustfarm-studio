@@ -106,7 +106,7 @@ export default async function Home() {
         <div className="pointer-events-none absolute right-[-12%] top-[-10%] h-[720px] w-[720px] opacity-55 max-lg:right-[-40%] max-lg:opacity-30">
           <MandalaGiratoria />
         </div>
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-16 sm:pt-24 lg:pb-36 lg:grid-cols-[1.05fr_1fr]">
+        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-8 sm:pt-10 lg:items-start lg:pb-10 lg:grid-cols-[1.05fr_1fr]">
           <div>
             <p className="mb-4 text-sm font-semibold uppercase tracking-[0.35em] text-white/80">
               Karibu <span className="text-mute">· bienvenido</span>
@@ -139,7 +139,7 @@ export default async function Home() {
           </div>
 
           {/* Composición de ejemplos reales */}
-          <div className="relative mx-auto h-[520px] w-full max-w-[460px] sm:h-[580px] lg:translate-y-24">
+          <div className="relative mx-auto h-[520px] w-full max-w-[460px] sm:h-[580px]">
             <Frame item={SHOW.ltxCafe} priority className="absolute left-[18%] top-0 z-10 aspect-[9/16] w-[58%]" />
             <Frame item={SHOW.fresa} className="animate-float absolute bottom-6 left-0 aspect-[9/16] w-[38%] -rotate-6" />
             <Frame
