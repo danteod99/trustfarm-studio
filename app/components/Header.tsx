@@ -37,7 +37,7 @@ export default async function Header() {
                   aria-hidden
                   width={34}
                   height={19}
-                  className="pointer-events-none absolute -left-3 -top-3 w-[34px] -rotate-[20deg] drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]"
+                  className="pointer-events-none absolute -left-3 -top-3 w-[34px] rotate-[20deg] drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]"
                 />
                 Estudio
               </Link>
