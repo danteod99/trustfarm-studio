@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Reproductor from "@/app/components/Reproductor";
 import { Captions, CheckCircle2, Clapperboard, Download, Loader2, RefreshCw, Trash2, Trophy, Upload, X } from "lucide-react";
 import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import VideoPicker from "@/app/editar/VideoPicker";
@@ -158,7 +159,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
             return (
               <div key={c.index} className="overflow-hidden rounded-xl border border-line bg-panel-2">
                 {u?.video ? (
-                  <video src={u.video} controls preload="metadata" className="aspect-[9/16] w-full bg-black" />
+                  <div className="aspect-[9/16] w-full"><Reproductor src={u.video} /></div>
                 ) : (
                   <div className="flex aspect-[9/16] items-center justify-center text-xs text-mute">sin vista previa</div>
                 )}

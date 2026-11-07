@@ -1,5 +1,6 @@
 "use client";
 
+import Reproductor from "@/app/components/Reproductor";
 import { ArrowRight, Clapperboard, Download, Film, Loader2, TriangleAlert, UserRoundPlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -152,7 +153,7 @@ export default function GenerationCard({ g, onAnimate, onSaveCharacter, onContin
       <div className={`relative ${aspect} max-h-[520px] w-full bg-panel-2`}>
         {g.status === "done" && g.url ? (
           g.kind === "video" ? (
-            <video ref={videoRef} src={g.url} controls playsInline loop className="h-full w-full object-contain" />
+            <Reproductor ref={videoRef} src={g.url} loop />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={g.url} alt={g.prompt} className="h-full w-full object-contain" />

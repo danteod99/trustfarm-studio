@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Download, Film, GripVertical, Loader2, Play, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Download, Film, GripVertical, Loader2, Play, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
+import Reproductor from "@/app/components/Reproductor";
 import type { PublicGeneration } from "@/app/components/GenerationCard";
 import { sceneText } from "@/app/lib/escena";
 import { MAX_ESCENAS, downloadBlobUrl, mover, unirVideos } from "@/app/lib/video";
@@ -25,6 +26,8 @@ export default function Unir() {
   const [library, setLibrary] = useState<PublicGeneration[] | null>(null);
   const [clips, setClips] = useState<Clip[]>([]);
   const [playing, setPlaying] = useState<number | null>(null);
+  /** Video de la biblioteca que se está viendo en el reproductor antes de agregarlo. */
+  const [previa, setPrevia] = useState<PublicGeneration | null>(null);
   const [dragFrom, setDragFrom] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -81,7 +84,14 @@ export default function Unir() {
   // Vista previa: reproduce las escenas una tras otra en el mismo reproductor.
   function play(from = 0) {
     setResult(null);
+    setPrevia(null);
     setPlaying(from);
+  }
+
+  function verPrevia(g: PublicGeneration) {
+    setResult(null);
+    setPlaying(null);
+    setPrevia(g);
   }
   useEffect(() => {
     if (playing !== null) playerRef.current?.play().catch(() => {});
@@ -92,6 +102,7 @@ export default function Unir() {
     setError(null);
     setResult(null);
     setPlaying(null);
+    setPrevia(null);
     setPct(0);
     try {
       const blob = await unirVideos(
@@ -128,17 +139,16 @@ export default function Unir() {
           <div className="card overflow-hidden">
             <div className={`relative mx-auto ${ASPECT_CLASS[aspect] ?? "aspect-[9/16]"} max-h-[480px] w-full bg-panel-2`}>
               {result ? (
-                <video src={result.url} controls playsInline autoPlay className="h-full w-full object-contain" />
+                <Reproductor src={result.url} autoPlay />
+              ) : previa ? (
+                <Reproductor key={`previa-${previa.id}`} src={previa.url!} autoPlay />
               ) : current ? (
-                <video
+                <Reproductor
                   ref={playerRef}
                   key={current.key}
                   src={current.g.url!}
-                  controls
-                  playsInline
                   autoPlay
                   onEnded={() => setPlaying((p) => (p !== null && p + 1 < clips.length ? p + 1 : null))}
-                  className="h-full w-full object-contain"
                 />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-sm text-mute">
@@ -160,7 +170,27 @@ export default function Unir() {
                 </div>
               )}
             </div>
-            {current && !result && (
+            {previa && !result && (
+              <div className="flex flex-wrap items-center gap-2 border-t border-line px-4 py-2">
+                <p className="min-w-0 flex-1 truncate text-xs text-mute" title={sceneText(previa.prompt)}>
+                  Vista previa · {sceneText(previa.prompt)}
+                </p>
+                <button
+                  onClick={() => {
+                    add(previa);
+                    setPrevia(null);
+                  }}
+                  disabled={busy}
+                  className="btn-primary !px-3 !py-1.5 text-xs"
+                >
+                  <Plus size={14} /> Agregar a la historia
+                </button>
+                <button onClick={() => setPrevia(null)} className="btn-ghost !px-2 !py-1.5 text-xs" aria-label="Cerrar vista previa" title="Cerrar">
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+            {current && !result && !previa && (
               <p className="border-t border-line px-4 py-2 text-xs text-mute">
                 Reproduciendo escena {playing! + 1} de {clips.length}
               </p>
@@ -292,22 +322,49 @@ export default function Unir() {
             <div className="grid grid-cols-2 gap-2">
               {library.map((g) => {
                 const n = clips.filter((c) => c.g.id === g.id).length;
+                const viendo = previa?.id === g.id;
                 return (
-                  <button
+                  <div
                     key={g.id}
-                    onClick={() => add(g)}
-                    disabled={busy}
-                    title={sceneText(g.prompt)}
-                    className={`group relative overflow-hidden rounded-xl border text-left transition disabled:opacity-50 ${
-                      n ? "border-brand/60" : "border-line hover:border-mute"
+                    className={`group relative overflow-hidden rounded-xl border transition ${
+                      viendo ? "border-brand-2 ring-1 ring-brand-2" : n ? "border-brand/60" : "border-line hover:border-mute"
                     }`}
                   >
-                    <div className="aspect-[9/16] bg-panel-2">
-                      <video src={`${g.url}#t=0.5`} muted preload="metadata" playsInline className="h-full w-full object-cover" />
-                    </div>
-                    <span className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white group-hover:bg-brand">
-                      <Plus size={15} />
-                    </span>
+                    <button
+                      onClick={() => add(g)}
+                      disabled={busy}
+                      title={`Agregar: ${sceneText(g.prompt)}`}
+                      aria-label="Agregar a la historia"
+                      className="block w-full text-left disabled:opacity-50"
+                    >
+                      <div className="aspect-[9/16] bg-panel-2">
+                        {/* Vista rápida: al pasar el mouse se reproduce sin sonido. */}
+                        <video
+                          src={`${g.url}#t=0.5`}
+                          muted
+                          loop
+                          preload="metadata"
+                          playsInline
+                          onMouseEnter={(e) => void e.currentTarget.play().catch(() => {})}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.pause();
+                            e.currentTarget.currentTime = 0.5;
+                          }}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <span className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white group-hover:bg-brand">
+                        <Plus size={15} />
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => verPrevia(g)}
+                      disabled={busy}
+                      className="absolute bottom-1.5 right-1.5 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-[11px] font-semibold text-white hover:bg-brand-2 hover:text-black disabled:opacity-50"
+                      aria-label="Ver este video en el reproductor"
+                    >
+                      <Play size={11} /> Ver
+                    </button>
                     {g.params.story && (
                       <span className="absolute left-1.5 top-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                         Escena {g.params.scene ?? 1}
@@ -318,7 +375,7 @@ export default function Unir() {
                         En la historia{n > 1 ? ` ×${n}` : ""}
                       </span>
                     )}
-                  </button>
+                  </div>
                 );
               })}
             </div>
