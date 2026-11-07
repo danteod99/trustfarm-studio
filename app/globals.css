@@ -123,3 +123,10 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-bogolan { animation: none; }
 }
+
+/* Tipografía KARIBU para títulos (una sola variable: cambiar la fuente en layout.tsx). */
+h1, h2, h3 {
+  font-family: var(--font-titulo), var(--font-sans);
+  font-weight: 400 !important;
+  letter-spacing: 0.01em !important;
+}
