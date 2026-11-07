@@ -123,7 +123,7 @@ export default async function Home() {
                   src="/gorro-navidad.png"
                   alt=""
                   aria-hidden
-                  className="pointer-events-none absolute -left-[0.08em] -top-[0.22em] w-[0.95em] max-w-none rotate-[18deg] drop-shadow-[0_3px_4px_rgba(0,0,0,0.6)]"
+                  className="pointer-events-none absolute -left-[0.06em] -top-[0.1em] w-[0.95em] max-w-none rotate-[18deg] drop-shadow-[0_3px_4px_rgba(0,0,0,0.6)]"
                 />
                 m
               </span>
