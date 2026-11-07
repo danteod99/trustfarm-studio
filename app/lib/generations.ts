@@ -18,6 +18,7 @@ import { ProviderError, type InputImage, type PollResult } from "@/app/lib/provi
 import { getPreset, presetPrefix, storageImage } from "@/app/lib/presets";
 import { getMotion } from "@/app/lib/templates";
 import { marcarRegeneracion, registrarSenal } from "@/app/lib/senales";
+import { sceneText } from "@/app/lib/escena";
 
 export interface Generation {
   id: string;
@@ -25,7 +26,7 @@ export interface Generation {
   kind: "image" | "video";
   model: string;
   prompt: string;
-  params: { aspect: Aspect; duration?: number; resolution?: Resolution; withImage?: boolean };
+  params: GenParams;
   status: "queued" | "running" | "finalizing" | "done" | "failed";
   cost_credits: number;
   charged: boolean;
@@ -35,6 +36,27 @@ export interface Generation {
   created_at: string;
   updated_at: string;
 }
+
+/**
+ * Lo que se guarda de cada generación. `story`/`scene`/`continuesFrom` encadenan los videos de
+ * una misma historia (cada clip dura máx. 8 s, así que la historia se arma escena por escena);
+ * `characterId`/`styleId` permiten que la siguiente escena salga con el mismo personaje y estilo.
+ */
+export interface GenParams {
+  aspect: Aspect;
+  duration?: number;
+  resolution?: Resolution;
+  withImage?: boolean;
+  inputPath?: string;
+  characterId?: string;
+  styleId?: string;
+  continuesFrom?: string;
+  story?: string;
+  scene?: number;
+}
+
+/** Cuánto del prompt de la escena anterior se le recuerda al modelo. */
+const PREV_SCENE_CHARS = 400;
 
 const ACTIVE = ["queued", "running", "finalizing"];
 /** Si un trabajo no terminó en este tiempo se da por perdido y se reembolsa. */
@@ -62,6 +84,8 @@ export interface StartInput {
   characterId?: string;
   styleId?: string;
   motion?: string;
+  /** Video propio del que esta escena es la continuación (su último cuadro llega como `image`). */
+  continuesFrom?: string;
   /** Caja desde la que se pidió (para el tope diario por caja); null/ausente = desde la web. */
   cajaId?: string;
 }
@@ -107,6 +131,25 @@ export async function startGeneration(userId: string, free: boolean, input: Star
     image = loaded;
   }
 
+  // Continuar una historia: la escena anterior tiene que ser un video propio terminado.
+  let story: Pick<GenParams, "continuesFrom" | "story" | "scene"> = {};
+  let previousScene = "";
+  if (input.continuesFrom) {
+    if (model.kind !== "video") return { ok: false, error: "Para continuar la historia elige un modelo de video.", status: 400 };
+    const { data: prev } = await db
+      .from("ai_generations")
+      .select("id, kind, status, prompt, params")
+      .eq("id", input.continuesFrom)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!prev || prev.kind !== "video" || prev.status !== "done") {
+      return { ok: false, error: "No se encontró el video a continuar.", status: 400 };
+    }
+    const pp = (prev.params ?? {}) as GenParams;
+    story = { continuesFrom: prev.id, story: pp.story ?? prev.id, scene: (pp.scene ?? 1) + 1 };
+    previousScene = sceneText(String(prev.prompt)).slice(0, PREV_SCENE_CHARS);
+  }
+
   // Personaje y estilo guardados: se anteponen al prompt. La foto del personaje solo se
   // manda a los modelos de imagen; en video la imagen es el primer cuadro, no una referencia.
   const style = input.styleId ? await getPreset(userId, input.styleId) : null;
@@ -120,7 +163,13 @@ export async function startGeneration(userId: string, free: boolean, input: Star
     characterImage = !!image;
   }
   const motion = model.kind === "video" ? getMotion(input.motion) : undefined;
-  const finalPrompt = presetPrefix(style, character, characterImage) + prompt + (motion ? `\n${motion.text}` : "");
+  // Escena siguiente de una historia: se le recuerda al modelo que siga el mismo plano y personajes.
+  const continuity = story.continuesFrom
+    ? "Continuación directa del video anterior: arranca exactamente en el cuadro de la imagen inicial, con los mismos personajes, " +
+      "el mismo rostro, la misma ropa, el mismo lugar y la misma luz; sin cortes ni cambios de estilo. " +
+      (previousScene ? `Antes pasó: ${previousScene}\nAhora: ` : "Ahora: ")
+    : "";
+  const finalPrompt = presetPrefix(style, character, characterImage) + continuity + prompt + (motion ? `\n${motion.text}` : "");
   const { count } = await db
     .from("ai_generations")
     .select("id", { count: "exact", head: true })
@@ -145,7 +194,13 @@ export async function startGeneration(userId: string, free: boolean, input: Star
       kind: model.kind,
       model: model.id,
       prompt: finalPrompt,
-      params: { ...opts, withImage: !!image },
+      params: {
+        ...opts,
+        withImage: !!image,
+        ...(character ? { characterId: character.id } : {}),
+        ...(style ? { styleId: style.id } : {}),
+        ...story,
+      } satisfies GenParams,
       cost_credits: cost,
       // Solo si viene: así la generación web no depende de que la columna exista todavía
       ...(input.cajaId ? { caja_id: input.cajaId } : {}),
@@ -181,7 +236,7 @@ export async function startGeneration(userId: string, free: boolean, input: Star
           .upload(inputPath, Buffer.from(image.data, "base64"), { contentType: image.mime, upsert: true });
         if (error) throw new Error(`storage: ${error.message}`);
       }
-      const params = { ...opts, withImage: !!image, inputPath };
+      const params = { ...(row.params as GenParams), withImage: !!image, inputPath };
       if (route === "local") {
         // Solo es reclamable (ai_claim_job) cuando provider_ref.local = true, que se marca después de cobrar.
         await update(row.id, { params, provider_ref: { local: true } });

@@ -28,6 +28,7 @@ export async function POST(req: Request) {
     characterId: body.characterId ? String(body.characterId) : undefined,
     styleId: body.styleId ? String(body.styleId) : undefined,
     motion: body.motion ? String(body.motion) : undefined,
+    continuesFrom: body.continuesFrom ? String(body.continuesFrom) : undefined,
   });
   if (!result.ok) return Response.json({ error: result.error }, { status: result.status });
 

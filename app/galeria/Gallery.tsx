@@ -47,6 +47,7 @@ export default function Gallery() {
               g={g}
               onAnimate={(x) => router.push(`/estudio?animar=${x.id}`)}
               onSaveCharacter={(x) => router.push(`/estudio?personaje=${x.id}`)}
+              onContinue={(x) => router.push(`/estudio?continuar=${x.id}`)}
             />
           ))}
         </div>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Clapperboard, Copy, Scissors } from "lucide-react";
+import { Clapperboard, Copy, Film, Scissors } from "lucide-react";
 import SpotlightCard from "@/app/components/fx/SpotlightCard";
 import { EDITAR_PRECIOS } from "@/app/lib/editar";
 
@@ -30,6 +30,14 @@ const TOOLS = [
     price: `${EDITAR_PRECIOS.clips} créditos por video`,
     extra: "Se procesa en la nube · hasta 15 clips por video",
   },
+  {
+    href: "/editar/unir",
+    icon: <Film size={20} />,
+    title: "Unir escenas",
+    text: "Junta tus videos de 8 s en una sola historia: elige cuál va primero, cuál después, mira la vista previa y descárgala en un solo MP4.",
+    price: "Gratis · corre en tu computadora",
+    extra: "Hasta 30 escenas · ajusta solo los tamaños distintos",
+  },
 ];
 
 export default function EditarPage() {
@@ -40,7 +48,7 @@ export default function EditarPage() {
       <p className="mt-2 max-w-2xl text-mute">
         Deja tus videos listos para publicar en todas tus cuentas. Puedes subir un archivo o usar los videos que ya generaste en tu galería.
       </p>
-      <div className="mt-8 grid gap-5 md:grid-cols-3">
+      <div className="mt-8 grid gap-5 md:grid-cols-2">
         {TOOLS.map((t) => (
           <Link key={t.href} href={t.href} className="group block">
             <SpotlightCard spotlightColor="rgba(34, 211, 238, 0.22)" className="flex h-full flex-col !rounded-2xl !p-6">

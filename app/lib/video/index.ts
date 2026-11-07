@@ -50,3 +50,4 @@ export * from "./ass.ts";
 export * from "./cuts.ts";
 export * from "./cortos-cobro.ts";
 export * from "./profiles.ts";
+export * from "./unir.ts";

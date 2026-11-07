@@ -20,6 +20,9 @@ export async function GET(req: Request) {
     .limit(limit);
   const kind = q.get("kind");
   if (kind === "image" || kind === "video") query = query.eq("kind", kind);
+  // ?story=<id>: todas las escenas de una historia (la primera escena es la que da el id).
+  const story = q.get("story");
+  if (story && /^[0-9a-f-]{36}$/i.test(story)) query = query.or(`id.eq.${story},params->>story.eq.${story}`);
   const before = q.get("before");
   if (before) query = query.lt("created_at", before);
 

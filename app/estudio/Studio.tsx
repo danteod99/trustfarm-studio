@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Clapperboard, ImageIcon, ImagePlus, Loader2, Palette, Plus, Sparkles, Trash2, UserRound, X } from "lucide-react";
+import { Clapperboard, Film, ImageIcon, ImagePlus, Loader2, Palette, Plus, Sparkles, Trash2, UserRound, X } from "lucide-react";
 import {
   MAX_PROMPT,
   MODELS,
@@ -21,6 +21,8 @@ import type { Idea } from "@/app/lib/ideas";
 import { promptDeVariacion } from "@/app/lib/ideas-datos";
 import GenerationCard, { type PublicGeneration } from "@/app/components/GenerationCard";
 import { useGenerations } from "@/app/components/useGenerations";
+import { capturarFotograma, type Fotograma } from "@/app/lib/fotograma";
+import { sceneText } from "@/app/lib/escena";
 
 const ASPECT_LABEL: Record<Aspect, string> = { "9:16": "Vertical 9:16", "16:9": "Horizontal 16:9", "1:1": "Cuadrado 1:1" };
 const MAX_SIDE = 1536;
@@ -28,6 +30,8 @@ const MAX_SIDE = 1536;
 type Img = { data: string; mime: string; preview: string };
 /** Imagen de la galería usada como primer cuadro del video (no se vuelve a subir). */
 type Source = { id: string; preview: string };
+/** Video del que la próxima generación es la continuación (la escena siguiente de la historia). */
+type Continuing = { id: string; scene: number; preview: string | null };
 
 interface PresetView {
   id: string;
@@ -68,10 +72,7 @@ function defaultsFor(m: ModelDef) {
 }
 
 /** El prompt guardado lleva antepuestos el estilo y el personaje; para reusarlo solo interesa la escena. */
-function scenePart(prompt: string): string {
-  const i = prompt.lastIndexOf("Escena: ");
-  return (i >= 0 ? prompt.slice(i + 8) : prompt).split("\nCámara:")[0].trim();
-}
+const scenePart = sceneText;
 
 export default function Studio({ initialBalance, free }: { initialBalance: number; free: boolean }) {
   const [modelId, setModelId] = useState(MODELS.find((m) => m.kind === "video")!.id);
@@ -83,6 +84,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
   const [image, setImage] = useState<Img | null>(null);
   const [source, setSource] = useState<Source | null>(null);
   const [motion, setMotion] = useState<string | null>(null);
+  const [continuing, setContinuing] = useState<Continuing | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -110,11 +112,15 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
     setOpts({ ...defaultsFor(m), ...overrides });
     if (!m.acceptsImage) setImage(null);
     if (m.kind !== "video" || !m.acceptsImage) setSource(null);
+    if (m.kind !== "video") setContinuing(null);
   }
 
-  async function loadPresets() {
+  async function loadPresets(): Promise<PresetView[]> {
     const r = await fetch("/api/presets");
-    if (r.ok) setPresets((await r.json()).presets);
+    if (!r.ok) return [];
+    const list = (await r.json()).presets as PresetView[];
+    setPresets(list);
+    return list;
   }
 
   // Estado del servidor local (GPU en casa): se revisa cada minuto.
@@ -132,8 +138,22 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
 
   // Enlaces desde la galería: /estudio?animar=<id> o ?personaje=<id>.
   useEffect(() => {
-    loadPresets();
+    const presetsReady = loadPresets();
     const q = new URLSearchParams(window.location.search);
+    // /estudio?continuar=<id> (desde la galería): sigue la historia desde ese video.
+    const contId = q.get("continuar");
+    if (contId) {
+      window.history.replaceState(null, "", "/estudio");
+      fetch(`/api/generations/${encodeURIComponent(contId)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then(async (d) => {
+          const g = d?.generation as PublicGeneration | undefined;
+          if (!g || g.kind !== "video" || g.status !== "done" || !g.url) return;
+          const [frame, list] = await Promise.all([capturarFotograma(g.url, "final").catch(() => null), presetsReady]);
+          continueStory(g, frame, list);
+        });
+      return;
+    }
     // /estudio?idea=<id>&v=<n> (desde /ideas): precarga modelo, formato y prompt. La idea la da el
     // servidor (base o archivo). Una idea oculta responde 404 y no se abre; sin conexión tampoco.
     const ideaId = q.get("idea");
@@ -199,6 +219,46 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
     setSource({ id: g.id, preview: g.url! });
     setMotion((m) => m ?? "acercamiento");
     setPrompt(scenePart(g.prompt));
+    panelRef.current?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  /**
+   * Prepara la escena siguiente: mismo modelo y formato, el último cuadro del video como imagen
+   * inicial y el mismo personaje/estilo que se usó. Solo falta escribir qué pasa después.
+   */
+  function continueStory(g: PublicGeneration, frame: Fotograma | null, list: PresetView[] = presets) {
+    const aspect = g.params.aspect as Aspect;
+    const fits = (m: ModelDef) => m.kind === "video" && m.acceptsImage && m.aspects.includes(aspect) && (!m.adminOnly || free);
+    const same = getModel(g.model);
+    const m = same && fits(same) ? same : fits(model) ? model : MODELS.find(fits);
+    if (!m) return setError("No hay un modelo de video que pueda continuar este formato.");
+    selectModel(m.id, {
+      aspect,
+      ...(g.params.duration && m.durations?.includes(g.params.duration) ? { duration: g.params.duration } : {}),
+      ...(g.params.resolution && m.resolutions?.includes(g.params.resolution as Resolution)
+        ? { resolution: g.params.resolution as Resolution }
+        : {}),
+    });
+    setSource(null);
+    setImage(frame);
+    const has = (id?: string) => !!id && list.some((p) => p.id === id);
+    setCharacterId(has(g.params.characterId) ? g.params.characterId! : "");
+    setStyleId(has(g.params.styleId) ? g.params.styleId! : "");
+    const scene = (g.params.scene ?? 1) + 1;
+    setContinuing({ id: g.id, scene, preview: frame?.preview ?? null });
+    setPrompt("");
+    setMotion(null);
+    setStepTip(
+      frame
+        ? `Escena ${scene}: arranca desde el último cuadro del video anterior. Escribe solo qué pasa después (acción, diálogo entre comillas).`
+        : `Escena ${scene}: no se pudo leer el último cuadro, se continuará solo por descripción. Elige el personaje guardado para mantenerlo igual.`
+    );
+    setError(null);
+    panelRef.current?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function saveCharacterFrame(g: PublicGeneration, frame: Fotograma) {
+    setDraft({ kind: "character", name: "", description: scenePart(g.prompt), image: frame, preview: frame.preview });
     panelRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
@@ -281,6 +341,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
           characterId: characterId || undefined,
           styleId: styleId || undefined,
           motion: kind === "video" ? motion ?? undefined : undefined,
+          continuesFrom: kind === "video" ? continuing?.id : undefined,
         }),
       });
       const d = await r.json();
@@ -289,6 +350,12 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
       } else {
         prepend(d.generation);
         setBalance(d.balance);
+        if (continuing) {
+          // La escena siguiente se sigue desde la tarjeta de esta, cuando termine.
+          setContinuing(null);
+          setImage(null);
+          setStepTip("Cuando termine, toca «Seguir con la escena» debajo del video para continuar la historia.");
+        }
       }
     } catch {
       setError("Error de conexión. Intenta de nuevo.");
@@ -477,9 +544,38 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
           </p>
         )}
 
+        {continuing && (
+          <div className="flex items-center gap-3 rounded-xl border border-brand/50 bg-brand/5 p-3">
+            {continuing.preview && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={continuing.preview} alt="Último cuadro de la escena anterior" className="h-16 rounded-lg border border-line" />
+            )}
+            <div className="flex-1">
+              <p className="flex items-center gap-1 text-sm font-semibold">
+                <Film size={14} className="text-brand-2" /> Escena {continuing.scene} de tu historia
+              </p>
+              <p className="text-xs text-mute">
+                {continuing.preview ? "Arranca donde terminó el video anterior" : "Sigue al video anterior"}
+                {character ? `, con ${character.name}` : ""}.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setContinuing(null);
+                setImage(null);
+                setStepTip(null);
+              }}
+              aria-label="Dejar de continuar la historia"
+              className="text-mute hover:text-ink"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
         <div>
           <label className="mb-2 flex justify-between text-xs font-semibold uppercase tracking-wider text-mute">
-            Descripción <span className="font-normal normal-case">{prompt.length}/{MAX_PROMPT}</span>
+            {continuing ? "¿Qué pasa después?" : "Descripción"} <span className="font-normal normal-case">{prompt.length}/{MAX_PROMPT}</span>
           </label>
           <textarea
             className="input min-h-32 resize-y"
@@ -635,7 +731,14 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {items.map((g) => (
-              <GenerationCard key={g.id} g={g} onAnimate={animate} onSaveCharacter={saveCharacter} />
+              <GenerationCard
+                key={g.id}
+                g={g}
+                onAnimate={animate}
+                onSaveCharacter={saveCharacter}
+                onContinue={continueStory}
+                onSaveCharacterFrame={saveCharacterFrame}
+              />
             ))}
           </div>
         )}
