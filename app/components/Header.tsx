@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Logo from "@/app/components/Logo";
-import FranjaBogolan from "@/app/components/FranjaBogolan";
 import { getUser, isAdminEmail } from "@/app/lib/auth";
 import { getBalance } from "@/app/lib/credits";
 import { paginaVisible } from "@/app/lib/minipc";
@@ -138,7 +137,6 @@ export default async function Header() {
           )}
         </nav>
       </div>
-      <FranjaBogolan alto={10} className="!opacity-50" />
       {user && <CerrarMenus />}
     </header>
   );
