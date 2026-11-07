@@ -5,6 +5,9 @@ export const IMAGENES_PUBLICADAS: readonly string[] = [
   "selfie-cleopatra", "miniatura-lima", "producto-miniatura", "depa-maqueta", "ecom-empaquetando",
   "ecom-bolso-mercado", "navidad-producto", "gatito-travesura", "granja-afiche", "granja-revista",
   "selladora-afiche", "mascota-afiche", "ecom-envios", "black-friday-afiche",
+  "influencer-polaroid", "anuario-2085", "ecom-fondo-blanco", "anime-retrato-personaje", "afiche-combi",
+  "ceviche-afiche", "producto-afiche", "maquina-cascos-figurita", "influencer-revista", "anime-acuarela",
+  "navidad-tarjeta", "anime-fondo-ciudad",
 ];
 
 /** Cada una con su ejemplo en public/showcase/idea-<id>.jpg y .mp4. */

@@ -44,9 +44,9 @@ export const IDEAS_ANIME_TEMPORADAS: Idea[] = [
   imagen({
     id: "anime-retrato-personaje", category: ANIME, title: "Tu personaje de anime",
     hook: "Crea un protagonista propio con rasgos latinos y úsalo en toda la serie.",
-    prompt: "Retrato de personaje de anime original, de medio cuerpo: una joven latina de piel morena, cabello negro ondulado y ojos cafés grandes, chaqueta de jean, sonrisa segura, fondo de colores suaves con luz de tarde, trazos limpios. Sin texto.",
+    prompt: "Retrato de personaje de anime original, de medio cuerpo: una mujer latina adulta de 40 años, de rostro maduro con pómulos marcados, mandíbula definida y líneas de expresión junto a los ojos y la boca, piel morena, cabello negro ondulado y ojos cafés, con chaqueta de jean abotonada hasta el cuello que cubre todo el torso, sonrisa segura, fondo de colores suaves con luz de tarde, trazos limpios. Sin texto.",
     v: [
-      ["Chico", "Retrato de personaje de anime original, dibujo 2D con trazos limpios: un joven latino de piel [tono: morena / trigueña], cabello negro rizado y polo blanco, mirada decidida, fondo liso. Sin texto."],
+      ["Hombre", "Retrato de personaje de anime original, dibujo 2D con trazos limpios: un hombre latino adulto de 35 años de piel [tono: morena / trigueña], cabello negro rizado y polo blanco, mirada decidida, fondo liso. Sin texto."],
       ["Villana", "Retrato de villana de anime original: mujer elegante de cabello plateado y ojos rojos, sonrisa fría, fondo oscuro con pétalos. Sin texto."],
       ["Mascota", "Retrato de mascota de anime original, dibujo 2D con trazos limpios y colores planos: una cría de llama de cuello largo, orejas largas y lana blanca, tierna, con bufanda roja, ojos grandes, fondo pastel. Sin texto."],
     ],
