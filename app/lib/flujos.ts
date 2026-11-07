@@ -1,6 +1,11 @@
 import { supabaseAdmin } from "@/app/lib/supabase/admin";
 import { isAdminEmail } from "@/app/lib/auth";
-import { load, refreshGeneration, startGeneration, type Generation } from "@/app/lib/generations";
+import {
+  load,
+  refreshGeneration,
+  startGeneration,
+  type Generation,
+} from "@/app/lib/generations";
 import { nextRunAt } from "@/app/lib/automatizacion";
 import type { FlowStep } from "@/app/lib/flujos-validar";
 
@@ -33,7 +38,9 @@ export interface Loop {
   step: FlowStep | null;
   per_run: number;
   hour: number;
+  minute?: number; // undefined antes de correr 07_programar_una_vez.sql
   days: number[];
+  once?: boolean;
   active: boolean;
   next_run_at: string;
   last_run_at: string | null;
@@ -48,7 +55,10 @@ async function isAdminUser(userId: string): Promise<boolean> {
 }
 
 async function patchRun(id: string, patch: Partial<FlowRun>) {
-  await db().from("ai_flow_runs").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", id);
+  await db()
+    .from("ai_flow_runs")
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq("id", id);
 }
 
 /**
@@ -57,20 +67,29 @@ async function patchRun(id: string, patch: Partial<FlowRun>) {
  */
 async function launchStep(run: FlowRun): Promise<FlowRun> {
   const s = run.steps[run.step];
-  const res = await startGeneration(run.user_id, await isAdminUser(run.user_id), {
-    model: s.model,
-    prompt: s.prompt,
-    aspect: s.aspect,
-    duration: s.duration,
-    resolution: s.resolution,
-    motion: s.motion,
-    characterId: run.character_id ?? undefined,
-    styleId: run.style_id ?? undefined,
-    fromGeneration: s.input === "previous" ? run.generations[run.step - 1] : undefined,
-  });
+  const res = await startGeneration(
+    run.user_id,
+    await isAdminUser(run.user_id),
+    {
+      model: s.model,
+      prompt: s.prompt,
+      aspect: s.aspect,
+      duration: s.duration,
+      resolution: s.resolution,
+      motion: s.motion,
+      characterId: run.character_id ?? undefined,
+      styleId: run.style_id ?? undefined,
+      fromGeneration:
+        s.input === "previous" ? run.generations[run.step - 1] : undefined,
+    },
+  );
   if (!res.ok) {
     if (res.status === 429) return run;
-    const failed = { ...run, status: "failed" as const, error: `${s.title}: ${res.error}` };
+    const failed = {
+      ...run,
+      status: "failed" as const,
+      error: `${s.title}: ${res.error}`,
+    };
     await patchRun(run.id, { status: failed.status, error: failed.error });
     return failed;
   }
@@ -81,8 +100,14 @@ async function launchStep(run: FlowRun): Promise<FlowRun> {
 
 export async function startRun(
   userId: string,
-  flow: { name: string; steps: FlowStep[]; character_id?: string | null; style_id?: string | null; flow_id?: string | null },
-  loopId: string | null = null
+  flow: {
+    name: string;
+    steps: FlowStep[];
+    character_id?: string | null;
+    style_id?: string | null;
+    flow_id?: string | null;
+  },
+  loopId: string | null = null,
 ): Promise<FlowRun> {
   const { data, error } = await db()
     .from("ai_flow_runs")
@@ -97,7 +122,8 @@ export async function startRun(
     })
     .select()
     .single();
-  if (error || !data) throw new Error(`no se pudo crear la corrida: ${error?.message}`);
+  if (error || !data)
+    throw new Error(`no se pudo crear la corrida: ${error?.message}`);
   return launchStep(data as FlowRun);
 }
 
@@ -122,8 +148,16 @@ export async function advanceRun(run: FlowRun): Promise<FlowRun> {
   return launchStep(next);
 }
 
-export async function advanceActiveRuns(limit = 30, userId?: string): Promise<number> {
-  let q = db().from("ai_flow_runs").select("*").eq("status", "running").order("updated_at", { ascending: true }).limit(limit);
+export async function advanceActiveRuns(
+  limit = 30,
+  userId?: string,
+): Promise<number> {
+  let q = db()
+    .from("ai_flow_runs")
+    .select("*")
+    .eq("status", "running")
+    .order("updated_at", { ascending: true })
+    .limit(limit);
   if (userId) q = q.eq("user_id", userId);
   const { data } = await q;
   for (const r of (data ?? []) as FlowRun[]) {
@@ -136,29 +170,74 @@ export async function advanceActiveRuns(limit = 30, userId?: string): Promise<nu
   return data?.length ?? 0;
 }
 
-/** Corre los loops que ya tocan. Cada loop se reclama de forma atómica (dos ticks no lo duplican). */
+/**
+ * Corre las programaciones que ya tocan. Cada una se reclama de forma atómica (dos ticks no la duplican):
+ * las que se repiten pasan a su próxima fecha y las de una sola vez se apagan.
+ */
 export async function runDueLoops(now = new Date()): Promise<number> {
-  const { data } = await db().from("ai_loops").select("*").eq("active", true).lte("next_run_at", now.toISOString()).limit(20);
+  const { data } = await db()
+    .from("ai_loops")
+    .select("*")
+    .eq("active", true)
+    .lte("next_run_at", now.toISOString())
+    .limit(20);
   let ran = 0;
   for (const loop of (data ?? []) as Loop[]) {
-    const next = nextRunAt(loop.hour, loop.days, now).toISOString();
+    const claim = loop.once
+      ? { active: false, last_run_at: now.toISOString() }
+      : {
+          next_run_at: nextRunAt(
+            loop.hour,
+            loop.days,
+            now,
+            loop.minute ?? 0,
+          ).toISOString(),
+          last_run_at: now.toISOString(),
+        };
     const { data: claimed } = await db()
       .from("ai_loops")
-      .update({ next_run_at: next, last_run_at: now.toISOString() })
+      .update(claim)
       .eq("id", loop.id)
       .eq("next_run_at", loop.next_run_at)
+      .eq("active", true)
       .select("id");
     if (!claimed?.length) continue;
 
-    let flow: { name: string; steps: FlowStep[]; character_id: string | null; style_id: string | null; flow_id: string | null } | null = null;
+    let flow: {
+      name: string;
+      steps: FlowStep[];
+      character_id: string | null;
+      style_id: string | null;
+      flow_id: string | null;
+    } | null = null;
     if (loop.flow_id) {
-      const { data: f } = await db().from("ai_flows").select("*").eq("id", loop.flow_id).maybeSingle();
-      if (f) flow = { name: f.name, steps: f.steps, character_id: f.character_id, style_id: f.style_id, flow_id: f.id };
+      const { data: f } = await db()
+        .from("ai_flows")
+        .select("*")
+        .eq("id", loop.flow_id)
+        .maybeSingle();
+      if (f)
+        flow = {
+          name: f.name,
+          steps: f.steps,
+          character_id: f.character_id,
+          style_id: f.style_id,
+          flow_id: f.id,
+        };
     } else if (loop.step) {
-      flow = { name: loop.name, steps: [loop.step], character_id: null, style_id: null, flow_id: null };
+      flow = {
+        name: loop.name,
+        steps: [loop.step],
+        character_id: null,
+        style_id: null,
+        flow_id: null,
+      };
     }
     if (!flow) {
-      await db().from("ai_loops").update({ active: false, last_error: "El flujo ya no existe." }).eq("id", loop.id);
+      await db()
+        .from("ai_loops")
+        .update({ active: false, last_error: "El flujo ya no existe." })
+        .eq("id", loop.id);
       continue;
     }
     let lastError: string | null = null;
@@ -170,7 +249,10 @@ export async function runDueLoops(now = new Date()): Promise<number> {
         lastError = String(e);
       }
     }
-    await db().from("ai_loops").update({ last_error: lastError }).eq("id", loop.id);
+    await db()
+      .from("ai_loops")
+      .update({ last_error: lastError })
+      .eq("id", loop.id);
     ran++;
   }
   return ran;

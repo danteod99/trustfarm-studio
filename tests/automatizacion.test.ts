@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { hashApiKey, newApiKey, nextRunAt, readApiKey } from '../app/lib/automatizacion.ts'
+import { hashApiKey, limaToUtc, newApiKey, nextRunAt, readApiKey } from '../app/lib/automatizacion.ts'
 
 const h = (pairs: Record<string, string>) => ({ get: (n: string) => pairs[n.toLowerCase()] ?? null })
 
@@ -24,6 +24,24 @@ test('nextRunAt: salta a un día permitido y respeta el cambio de día en UTC', 
 test('nextRunAt: lista vacía = todos los días', () => {
   const r = nextRunAt(0, [], new Date('2026-10-30T12:00:00Z'))
   assert.equal(r.toISOString(), '2026-10-31T05:00:00.000Z')
+})
+
+test('nextRunAt: con minutos', () => {
+  // 7:30 Lima = 12:30 UTC; a las 12:29 UTC todavía toca hoy
+  assert.equal(nextRunAt(7, [], new Date('2026-10-30T12:29:00Z'), 30).toISOString(), '2026-10-30T12:30:00.000Z')
+  assert.equal(nextRunAt(7, [], new Date('2026-10-30T12:30:00Z'), 30).toISOString(), '2026-10-31T12:30:00.000Z')
+})
+
+test('limaToUtc: hora de Lima a UTC, cruzando el día', () => {
+  assert.equal(limaToUtc('2026-11-01', '19:30')?.toISOString(), '2026-11-02T00:30:00.000Z')
+  assert.equal(limaToUtc('2026-11-01', '7:05')?.toISOString(), '2026-11-01T12:05:00.000Z')
+})
+
+test('limaToUtc: rechaza fechas y horas inválidas', () => {
+  assert.equal(limaToUtc('2026-11-31', '10:00'), null)
+  assert.equal(limaToUtc('2026-13-01', '10:00'), null)
+  assert.equal(limaToUtc('2026-11-01', '24:00'), null)
+  assert.equal(limaToUtc('mañana', '10:00'), null)
 })
 
 test('newApiKey: formato, hash y prefijo', () => {
