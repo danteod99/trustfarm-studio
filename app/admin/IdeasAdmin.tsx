@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { MODELS, getModel } from "@/app/lib/catalog";
-import { IDEA_CATEGORIES } from "@/app/lib/ideas";
+import { IDEA_CATEGORIES } from "@/app/lib/ideas-categorias";
 import { parseVariaciones, variacionesATexto, type IdeaAdmin } from "@/app/lib/ideas-datos";
 
 const MOVIMIENTOS = ["", "acercamiento", "alejamiento", "fija", "orbita", "paneo"];

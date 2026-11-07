@@ -2,6 +2,11 @@
 // /estudio?idea=<id>: precarga modelo, formato, duración, movimiento y prompt.
 // Los ejemplos son generaciones reales de la plataforma (public/showcase).
 import type { Aspect, Kind } from "@/app/lib/catalog";
+import { IDEAS_ANIME_TEMPORADAS, VIDEOS_ANIME_TEMPORADAS_POR_PROBAR } from "./ideas-anime-temporadas.ts";
+import { IDEAS_ECOMMERCE, VIDEOS_ECOMMERCE_POR_PROBAR } from "./ideas-ecommerce.ts";
+import { IDEAS_GATITOS, VIDEOS_GATITOS_POR_PROBAR } from "./ideas-gatitos.ts";
+import { IMAGENES_PUBLICADAS, VIDEOS_PUBLICADOS } from "./ideas-publicadas.ts";
+import { IDEAS_TENDENCIA, VIDEOS_POR_PROBAR } from "./ideas-tendencias.ts";
 
 /** Otra versión de la idea: el prompt puede llevar variables como [lugar: una oficina / un garaje]. */
 export interface Variacion {
@@ -35,28 +40,9 @@ export interface Idea {
 const img = (n: string) => `/showcase/${n}.jpg`;
 const vid = (n: string) => `/showcase/${n}.mp4`;
 
-export const IDEA_CATEGORIES = [
-  "Negocios y máquinas",
-  "Brainrot",
-  "Historias",
-  "Frutinovelas",
-  "Modelos IA",
-  "Miniseries TikTok",
-  "Anime novela",
-  "Historias ficticias",
-  "Influencers IA",
-  "Productos y anuncios",
-  "Comida",
-  "Inmobiliaria",
-  "Tecnología y granjas",
-  "Motivación y paisajes",
-  "Mascotas",
-  "Moda y belleza",
-  "Educación y tips",
-  "Fitness y salud",
-] as const;
+export { IDEA_CATEGORIES } from "./ideas-categorias.ts";
 
-export const IDEAS: Idea[] = [
+const IDEAS_BASE: Idea[] = [
   // Negocios y máquinas
   {
     id: "maquina-cascos",
@@ -1228,6 +1214,15 @@ export const IDEAS: Idea[] = [
     prompt:
       "Portada de TikTok de miniserie de suspenso: primer plano de un taxista latino de 40 años con expresión de miedo bajo la lluvia de noche, luces de neón rojas y azules reflejadas en su cara. Texto grande arriba: «¿QUIÉN LO ENVIÓ?» y abajo la etiqueta «PARTE 2». Estilo cinematográfico, contraste alto.",
   },
+];
+
+// De las tandas nuevas solo entran las listadas en ideas-publicadas.ts. Esas tandas importan solo tipos de aquí.
+export const IDEAS: Idea[] = [
+  ...IDEAS_BASE,
+  ...[...IDEAS_TENDENCIA, ...IDEAS_ECOMMERCE, ...IDEAS_ANIME_TEMPORADAS, ...IDEAS_GATITOS].filter((i) => IMAGENES_PUBLICADAS.includes(i.id)),
+  ...[...VIDEOS_POR_PROBAR, ...VIDEOS_ECOMMERCE_POR_PROBAR, ...VIDEOS_ANIME_TEMPORADAS_POR_PROBAR, ...VIDEOS_GATITOS_POR_PROBAR]
+    .filter((v) => VIDEOS_PUBLICADOS.includes(v.id))
+    .map((v) => ({ ...v, image: img(`idea-${v.id}`), video: vid(`idea-${v.id}`) })),
 ];
 
 export function getIdea(id: string): Idea | undefined {
