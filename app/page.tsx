@@ -108,6 +108,9 @@ export default async function Home() {
         </div>
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-16 sm:pt-24 lg:grid-cols-[1.05fr_1fr]">
           <div>
+            <p className="mb-4 text-sm font-semibold uppercase tracking-[0.35em] text-white/80">
+              Karibu <span className="text-mute">· bienvenido</span>
+            </p>
             <span className="inline-flex items-center gap-2 rounded-full border border-brand/40 bg-brand/10 px-3 py-1 text-xs font-medium text-brand-2">
               <Sparkles size={13} /> Nuevo: videos con voz en español
             </span>
