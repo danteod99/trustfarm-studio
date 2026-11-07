@@ -115,7 +115,7 @@ export default async function Home() {
               <Sparkles size={13} /> Nuevo: videos con voz en español
             </span>
             <h1 className="mt-6 text-4xl font-extrabold tracking-tight sm:text-6xl">
-              Imágenes y videos con IA, <span className="text-brand-2">en minutos</span>
+              Imágenes y videos con IA, <span className="text-brand-2">en <span className="text-[#e3342f]">minutos</span></span>
             </h1>
             <p className="mt-5 max-w-xl text-lg text-mute">
               Escribe tu idea en español y obtén videos con voz, personajes que no cambian de cara y fotos de calidad de
