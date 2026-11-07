@@ -120,14 +120,6 @@ body {
   .animate-bogolan { animation: none; }
 }
 
-/* Tipografía KARIBU para títulos (una sola variable: cambiar la fuente en layout.tsx). */
-/* Solo el título principal lleva la letra KARIBU, un poco más apagada; los subtítulos van en Inter. */
-h1 {
-  font-family: var(--font-titulo), var(--font-sans);
-  font-weight: 400 !important;
-  letter-spacing: 0.03em !important;
-  color: #d9d9d9;
-}
 
 /* Latido sutil del botón "Crear cuenta" de la barra: apenas crece y brilla. */
 @keyframes latido-suave {
