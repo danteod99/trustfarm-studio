@@ -89,3 +89,20 @@ body {
     animation: none;
   }
 }
+
+/* Latido del botón principal: crece un poco y suelta un halo blanco, como un corazón. */
+@keyframes latido {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.55); }
+  14% { transform: scale(1.06); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.04); }
+  70% { box-shadow: 0 0 0 16px rgba(255, 255, 255, 0); }
+}
+@utility animate-latido {
+  border-radius: 12px;
+  animation: latido 1.8s ease-in-out infinite;
+  &:hover { animation-play-state: paused; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-latido { animation: none; }
+}

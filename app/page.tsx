@@ -119,7 +119,7 @@ export default async function Home() {
               estudio para tus anuncios, redes y canales. Pagas solo por lo que generas.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <StarBorder as="a" href="/entrar?modo=registro" color="#d4d4d4" backgroundColor="#ffffff" textColor="#ffffff" radius={12} className="!text-base !font-semibold">
+              <StarBorder as="a" href="/entrar?modo=registro" color="#d4d4d4" backgroundColor="#ffffff" textColor="#000000" radius={12} className="animate-latido !text-base !font-semibold">
                 <span className="flex items-center gap-2 px-2">
                   Empezar a crear <ArrowRight size={17} />
                 </span>
