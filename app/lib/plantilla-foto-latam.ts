@@ -28,7 +28,7 @@ export const FOTO_LATAM: TemplateGroup = {
       kind: "image",
       model: "z-image",
       aspect: "9:16",
-      prompt: `[lugar: calle de barrio popular / esquina con motos y cables / puesto de comida], en Latinoamérica, sin personas en primer plano. ${FOTO_CASUAL}`,
+      prompt: `[lugar: calle de barrio / esquina con motos / carrito de comida en la vereda], en Latinoamérica, sin personas en primer plano. ${FOTO_CASUAL}`,
       tip: "Describe lo que se ve: fachadas, cables, veredas. Los carteles pueden salir con letras falsas.",
     },
     {
