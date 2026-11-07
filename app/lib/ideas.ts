@@ -57,7 +57,7 @@ const IDEAS_BASE: Idea[] = [
     resolution: "720p",
     motion: "acercamiento",
     prompt:
-      "Una máquina de autoservicio lava cascos futurista en un centro comercial de Lima, cuerpo negro brillante con paneles azul eléctrico y luces LED cian. Dentro de la cámara de vidrio un casco de moto gira mientras lo limpian con luz UV azul y vapor. Un motociclista se acerca, mira la pantalla y sonríe. Voz masculina peruana entusiasta dice: «Este negocio cobra mientras tú duermes». Sonido ambiente de centro comercial. Sin logos ni marcas.",
+      "Video de producto de una máquina de autoservicio para lavar cascos: un quiosco fijo del tamaño de un cajero automático, de pie contra una columna en un centro comercial de Lima, cuerpo negro brillante con luces LED azules, pantalla táctil y una puerta de vidrio. Dentro de la cámara de vidrio, un casco de moto vacío gira mientras lo limpian con luz azul y vapor. Un joven sin casco, de pie al lado, mira la pantalla y sonríe. No hay motos ni motociclistas en la escena. Voz masculina peruana entusiasta dice: «Este negocio cobra mientras tú duermes». Sonido ambiente de centro comercial. Sin logos ni marcas.",
   },
   {
     id: "selladora-latas",
@@ -315,7 +315,7 @@ const IDEAS_BASE: Idea[] = [
     resolution: "720p",
     motion: "fija",
     prompt:
-      "Una joven peruana en una cafetería de Lima mira a la cámara del celular y dice con voz alegre: «Hoy les traigo el mejor café de Miraflores». Se escucha el murmullo de la cafetería y una taza sobre la mesa. Luz cálida de mañana, cámara en mano.",
+      "Video selfie grabado por ella misma con el brazo extendido: una joven peruana en una cafetería pequeña de Miraflores con paredes de ladrillo y plantas mira directo al lente, sonríe y dice con voz alegre: «Hoy les traigo el mejor café de Miraflores». No se ve ningún celular ni sus manos en el cuadro. Se escucha el murmullo de la cafetería y una taza sobre la mesa. Luz cálida de mañana, leve movimiento de cámara en mano.",
   },
   {
     id: "modelo-producto",
@@ -717,7 +717,7 @@ const IDEAS_BASE: Idea[] = [
     resolution: "720p",
     motion: "fija",
     prompt:
-      "Un perrito golden retriever con gorro y delantal de chef está de pie frente a la cocina y voltea un panqueque en la sartén con la pata. Sonido de la sartén y un ladrido feliz. Video realista, luz cálida de cocina.",
+      "Plano general de un perrito golden retriever de pie sobre sus patas traseras frente a una cocina, visto de cuerpo entero, con gorro alto blanco de chef y delantal blanco bien visible en el pecho. Sostiene con la pata una sartén y hace saltar un panqueque, que gira en el aire y vuelve a caer en la sartén. No muerde ni come el panqueque. Sonido de la sartén y un ladrido feliz. Video realista, luz cálida de cocina.",
   },
   {
     id: "gato-jefe",

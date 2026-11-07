@@ -146,7 +146,7 @@ export const IDEAS_TENDENCIA: Idea[] = [
   flash({
     id: "maquina-cascos-figurita", category: "Negocios y máquinas", title: "Figurita del lava cascos",
     hook: "La máquina convertida en juguete de colección: gracioso y fácil de recordar.",
-    prompt: "Réplica de juguete coleccionable a escala 1/7 de una máquina de autoservicio lava cascos: un gabinete negro con paneles azules lisos, sin letreros ni letras, con una cámara de vidrio y solo un casco de moto diminuto dentro, sin muñecos ni personas, sobre una base acrílica transparente, en un escritorio. Foto de producto realista, luz de estudio suave, fondo desenfocado. Sin texto.",
+    prompt: "Réplica de juguete coleccionable a escala 1/7 de una máquina de autoservicio que limpia cascos de moto: un gabinete cuadrado negro mate con el frente y el techo totalmente lisos, una franja azul lisa abajo y una gran ventana de vidrio en el centro, dentro un solo casco de moto rojo diminuto sobre un soporte, con gotas de agua en el vidrio, sobre una base acrílica transparente, en un escritorio. Foto de producto realista, luz de estudio suave, fondo desenfocado. Sin texto.",
     v: [
       ["Con su empaque", "Réplica de juguete 1/7 de una máquina de autoservicio lava cascos, un gabinete negro con paneles azules lisos, sin letreros, con una cámara de vidrio y solo un casco diminuto dentro, sin muñecos, junto a una caja de cartón de juguete vacía de color [color: rojo / azul], base acrílica, foto de producto. Sin texto."],
       ["En la mano", "Mano real con la palma abierta sosteniendo una réplica de juguete diminuta de una máquina de autoservicio lava cascos, un gabinete negro y azul liso con una cámara de vidrio y un casco diminuto dentro, sin muñecos, fondo de un mall desenfocado, foto realista. Sin texto."],
@@ -202,21 +202,21 @@ export const IDEAS_TENDENCIA: Idea[] = [
   flash({
     id: "influencer-polaroid", category: "Influencers IA", title: "Polaroid de tu creadora virtual",
     hook: "Estética de foto instantánea: da cercanía real a una cuenta de IA.",
-    prompt: "Foto instantánea estilo Polaroid de una joven latina de 24 años riendo en una azotea de Lima al atardecer, grano de película, colores cálidos y desvaídos, flash suave, marco blanco de la foto. Sin texto.",
+    prompt: "Foto instantánea estilo Polaroid de una mujer latina de 38 años, adulta, con arrugas de expresión en los ojos, riendo en una azotea de Lima al atardecer, con suéter holgado de manga larga y cuello alto, grano de película, colores cálidos y desvaídos, flash suave, marco blanco de la foto. Sin texto.",
     v: [
-      ["En la playa", "Foto estilo Polaroid de una joven latina en [lugar: Máncora / Cartagena] con el viento en el pelo, grano de película, marco blanco. Sin texto."],
-      ["Con amigas", "Foto estilo Polaroid de tres amigas latinas riendo en una cafetería, flash directo, grano de película, marco blanco. Sin texto."],
-      ["De noche", "Foto estilo Polaroid de una joven latina de piel morena en una calle de Lima de noche con luces de neón sin letras, flash directo, colores desvaídos, marco blanco. Sin texto."],
+      ["En la playa", "Foto estilo Polaroid de una mujer latina de 38 años, con camisa holgada de manga larga abotonada hasta el cuello y pantalón largo de lino, en [lugar: Máncora / Cartagena] con el viento en el pelo, grano de película, marco blanco. Sin texto."],
+      ["Con amigas", "Foto estilo Polaroid de tres amigas latinas de unos 40 años riendo en una cafetería, flash directo, grano de película, marco blanco. Sin texto."],
+      ["De noche", "Foto estilo Polaroid de una mujer latina de 38 años de piel morena, con suéter holgado de manga larga y cuello alto, en una calle de Lima de noche con luces de neón sin letras, flash directo, colores desvaídos, marco blanco. Sin texto."],
     ],
   }, F.polaroid),
   conTexto({
     id: "influencer-revista", category: "Influencers IA", title: "Portada de revista de tu creadora",
     hook: "Una portada da estatus de marca a tu personaje: ideal para perfil y destacados.",
-    prompt: "Portada de una revista de moda con una mujer latina de 26 años, cabello negro, traje color crema, mirando a la cámara sobre fondo liso. Título grande arriba: \"VISTA\". Texto al costado: \"La nueva cara de Lima\".",
+    prompt: "Portada de una revista de moda con una mujer latina de 35 años, cabello negro, traje color crema con saco abotonado y blusa blanca de cuello alto debajo, mirando a la cámara sobre fondo liso. Título grande arriba: \"VISTA\". Texto al costado: \"La nueva cara de Lima\".",
     v: [
-      ["Fitness", "Portada de revista de deporte con una mujer latina con ropa deportiva en un parque. Título grande: \"FUERTE\". Texto: \"Rutina de 15 minutos\"."],
+      ["Fitness", "Portada de revista de deporte con una mujer latina de 35 años con ropa deportiva de manga larga y pantalón largo, que cubre torso y vientre, en un parque. Título grande: \"FUERTE\". Texto: \"Rutina de 15 minutos\"."],
       ["Negocios", "Portada de revista de negocios con un hombre latino de [edad: 30 / 45] años con saco. Título grande: \"LÍDER\". Texto: \"Empezó sin capital\"."],
-      ["Retro", "Portada de revista de moda de los 80 con una mujer latina y colores neón. Título grande: \"DIVA\". Ningún otro texto."],
+      ["Retro", "Portada de revista de moda de los 80 con una mujer latina de 35 años, con ropa de manga larga que cubre torso y vientre, y colores neón. Título grande: \"DIVA\". Ningún otro texto."],
     ],
   }, F.revista),
 
@@ -255,12 +255,12 @@ export const IDEAS_TENDENCIA: Idea[] = [
   }, F.selfie),
   flash({
     id: "anuario-2085", category: "Historias ficticias", title: "Tu foto del anuario 2085",
-    hook: "Así se vería el anuario escolar del futuro: nostalgia al revés.",
-    prompt: "Foto de anuario escolar del año 2085: retrato de estudio de una adolescente latina con peinado futurista plateado y chaqueta metálica, fondo azul moteado clásico de foto escolar, sonrisa tímida, grano de película. Sin texto.",
+    hook: "Así se vería el anuario de exalumnos del futuro: nostalgia al revés.",
+    prompt: "Foto de anuario de exalumnos del año 2085: retrato de estudio de una mujer latinoamericana mestiza de 35 años, adulta, piel morena oscura, rostro ancho, pómulos anchos y nariz ancha, con peinado futurista plateado en forma de cresta geométrica brillante y chaqueta metálica holgada de manga larga y cuello alto cerrada, fondo azul moteado clásico de foto escolar, sonrisa tímida, grano de película. Sin texto.",
     v: [
-      ["Chico", "Foto de anuario escolar del futuro: retrato de estudio de un adolescente latino con visor [color: azul / rojo] y peinado futurista plateado, fondo azul moteado clásico de foto escolar, sonrisa tímida, grano de película. Sin texto."],
+      ["Hombre", "Foto de anuario de exalumnos del futuro: retrato de estudio de un exalumno latino de 40 años con visor [color: azul / rojo] y peinado futurista plateado, fondo azul moteado clásico de foto escolar, sonrisa tímida, grano de película. Sin texto."],
       ["Profesor robot", "Foto de anuario escolar de 2085: un profesor androide con rostro sintético, foto de medio cuerpo, con saco y corbata, sonrisa amable, fondo azul moteado clásico de foto escolar. Sin texto."],
-      ["Foto de clase", "Foto grupal de anuario de 2085: treinta estudiantes con trajes plateados futuristas en gradas de un colegio en Marte, detrás una cúpula de vidrio y el paisaje rojo de Marte. Sin texto."],
+      ["Foto de promoción", "Foto grupal de anuario de 2085: treinta exalumnos adultos con trajes plateados futuristas en gradas de un auditorio en Marte, detrás una cúpula de vidrio y el paisaje rojo de Marte. Sin texto."],
     ],
   }, F.anuario),
   flash({
@@ -276,7 +276,7 @@ export const IDEAS_TENDENCIA: Idea[] = [
   conTexto({
     id: "afiche-combi", category: "Historias", title: "La combi, la película",
     hook: "Lo cotidiano como superproducción de Hollywood: humor local que se comparte solo.",
-    prompt: "Afiche de película de acción de Hollywood protagonizado por una combi de transporte público de Lima saltando sobre un bache con chispas y polvo, luz dramática de atardecer. Título grande arriba: \"LA COMBI\". Abajo, en letras pequeñas: \"BAJA EN LA ESQUINA\".",
+    prompt: "Afiche de película de acción de Hollywood protagonizado por una combi de transporte público de Lima, una minivan vieja genérica pintada de blanco y azul, vista de perfil, con el frente liso sin emblema ni parrilla y sin logos, saltando sobre un bache con chispas y polvo, luz dramática de atardecer. Título grande arriba: \"LA COMBI\". Abajo, en letras pequeñas: \"BAJA EN LA ESQUINA\".",
     v: [
       ["El mototaxi", "Afiche de película épica con un mototaxi peruano, una moto de tres ruedas con cabina y techo de lona, en un desierto al atardecer. Título grande: \"EL ÚLTIMO MOTOTAXI\"."],
       ["La lavadora", "Afiche de terror con una lavadora vieja temblando en un cuarto oscuro. Título grande: \"ÚLTIMO CICLO\"."],
@@ -310,10 +310,10 @@ export const IDEAS_TENDENCIA: Idea[] = [
   flash({
     id: "anime-acuarela", category: "Anime novela", title: "Tu escena en animación clásica japonesa",
     hook: "Estética de película animada de los 90: cálida, nostálgica y muy compartida.",
-    prompt: "Ilustración estilo animación japonesa clásica de los años 90, acuarela suave y fondos pintados a mano: una joven latina toma café en una azotea de una ciudad con ropa tendida, luz dorada de tarde, nubes grandes. Sin texto.",
+    prompt: "Ilustración estilo animación japonesa clásica de los años 90, acuarela suave y fondos pintados a mano, plano general: una mujer latina de 40 años, de rostro maduro con suaves líneas de expresión, con blusa cerrada de manga larga y falda larga, sentada en una silla, toma café en una azotea de una ciudad con ropa tendida en cordeles a su lado, luz dorada de tarde, nubes grandes. Sin texto.",
     v: [
-      ["Pueblo", "Ilustración de animación japonesa clásica: un niño corre por un pueblo andino de casas de adobe junto a [animal: una alpaca blanca / un perro], montañas de los Andes y fondos en acuarela. Sin texto."],
-      ["Lluvia", "Ilustración de animación japonesa clásica: dos amigos esperan el bus bajo la lluvia en una calle de Lima, luz gris suave. Sin texto."],
+      ["Pueblo", "Ilustración de animación japonesa clásica: un hombre adulto de 35 años corre por un pueblo andino de casas de adobe junto a [animal: una alpaca blanca / un perro], montañas de los Andes y fondos en acuarela. Sin texto."],
+      ["Lluvia", "Ilustración de animación japonesa clásica: dos amigos adultos de unos 40 años esperan el bus bajo la lluvia en una calle de Lima, luz gris suave. Sin texto."],
       ["Cocina", "Ilustración de animación japonesa clásica: una abuela cocina en una cocina cálida llena de ollas, vapor y luz de ventana. Sin texto."],
     ],
   }, F.anime),
@@ -322,7 +322,7 @@ export const IDEAS_TENDENCIA: Idea[] = [
   conTexto({
     id: "ceviche-afiche", category: "Comida", title: "El ceviche, la película",
     hook: "Tu plato estrella como superproducción: ideal para restaurantes con humor.",
-    prompt: "Afiche de película épica de Hollywood protagonizado por un plato de ceviche peruano, cubos de pescado blanco crudo marinado en limón con cebolla roja en juliana, camote naranja y choclo, en el centro, olas de mar y rayos de luz dorada detrás. Título grande arriba: \"EL CEVICHE\". Abajo, en letras pequeñas: \"HOY EN TU MESA\".",
+    prompt: "Afiche de película épica de Hollywood protagonizado por un plato hondo de ceviche peruano en primer plano, abundantes cubos de pescado blanco crudo, húmedos y brillantes, marinados en limón, con tiras de cebolla morada en juliana y hojas de culantro encima, una rodaja redonda de camote cocido, naranja y lisa, a un lado, y un trozo de choclo con granos grandes de color amarillo pálido al otro, en el centro, olas de mar y rayos de luz dorada detrás. Título grande arriba: \"EL CEVICHE\". Abajo, en letras pequeñas: \"HOY EN TU MESA\".",
     v: [
       ["Pollo a la brasa", "Afiche de acción con un pollo a la brasa: un pollo asado entero, ya cocido, dorado y crujiente, sin cabeza ni plumas, servido en una bandeja con papas fritas, con llamas detrás. Título grande: \"A LA BRASA\"."],
       ["Terror", "Afiche de terror con un plato de [plato: lentejas / sopa] en una cocina oscura. Título grande: \"OTRA VEZ\"."],

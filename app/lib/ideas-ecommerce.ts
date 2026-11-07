@@ -22,7 +22,7 @@ export const IDEAS_ECOMMERCE: Idea[] = [
   imagen({
     id: "ecom-fondo-blanco", title: "Foto limpia para tu catálogo",
     hook: "Fondo blanco parejo, como exigen los marketplaces. Cambia el producto por el tuyo.",
-    prompt: "Fotografía de catálogo de una licuadora de cocina con base de acero cepillado totalmente lisa, con una sola perilla redonda y sin ninguna marca, palabra ni letra, sobre fondo blanco puro, luz de estudio pareja, sombra suave debajo, producto centrado y nítido, sin objetos alrededor. Sin texto.",
+    prompt: "Fotografía de catálogo de una licuadora de cocina con base de acero cepillado totalmente lisa, con una sola perilla redonda y sin ninguna marca, palabra ni letra, aislada sobre fondo blanco puro #FFFFFF, imagen de producto recortada y sin sombra, producto centrado y nítido, sin objetos alrededor. Sin texto.",
     v: [
       ["Zapatillas", "Fotografía de catálogo de unas zapatillas [color: blancas / negras] sobre fondo blanco puro, vista lateral, sombra suave, producto nítido. Sin texto."],
       ["Bolso", "Fotografía de catálogo de un bolso de cuero marrón sobre fondo blanco puro, vista frontal, luz pareja, sombra suave. Sin texto."],

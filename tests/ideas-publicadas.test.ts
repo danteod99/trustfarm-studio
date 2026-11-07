@@ -14,15 +14,15 @@ const videos = [...VIDEOS_POR_PROBAR, ...VIDEOS_ECOMMERCE_POR_PROBAR, ...VIDEOS_
 const enPublic = (ruta: string) => existsSync(new URL(`../public${ruta}`, import.meta.url))
 const publicada = (id: string) => IDEAS.find((i) => i.id === id)
 
-test('son 28 sin repetir: 19 imágenes y 9 videos, cada una de su tanda', () => {
-  assert.equal(IMAGENES_PUBLICADAS.length, 19)
+test('son 40 sin repetir: 31 imágenes y 9 videos, cada una de su tanda', () => {
+  assert.equal(IMAGENES_PUBLICADAS.length, 31)
   assert.equal(VIDEOS_PUBLICADOS.length, 9)
-  assert.equal(new Set(IDS_PUBLICADOS).size, 28)
+  assert.equal(new Set(IDS_PUBLICADOS).size, 40)
   for (const id of IMAGENES_PUBLICADAS) assert.ok(imagenes.some((i) => i.id === id), id)
   for (const id of VIDEOS_PUBLICADOS) assert.ok(videos.some((v) => v.id === id), id)
 })
 
-test('IDEAS no repite ids y trae las 28', () => {
+test('IDEAS no repite ids y trae las 40', () => {
   const ids = IDEAS.map((i) => i.id)
   assert.equal(new Set(ids).size, ids.length)
   for (const id of IDS_PUBLICADOS) assert.ok(publicada(id), id)
@@ -37,9 +37,9 @@ test('las ideas no listadas no están en IDEAS', () => {
 
 test('las reservas y las imágenes rechazadas siguen fuera', () => {
   for (const id of [
-    'granja-figurita', 'granja-antes-despues', 'granja-ia-vs-real', 'granja-escritorio-noche', 'influencer-polaroid',
-    'anuario-2085', 'afiche-combi', 'ceviche-afiche', 'ecom-fondo-blanco', 'ecom-cocina-real', 'anime-pelea-lima',
-    'anime-retrato-personaje', 'gatito-chef',
+    'granja-figurita', 'granja-antes-despues', 'granja-ia-vs-real', 'granja-escritorio-noche', 'ecom-cocina-real',
+    'anime-pelea-lima', 'gatito-chef', 'machu-picchu-miniatura', 'comida-miniatura', 'selladora-antes-despues',
+    'moda-figurita', 'moda-polaroid', 'gatito-abrazo', 'gatito-taza', 'anime-comida', 'ecom-flatlay',
   ]) assert.equal(publicada(id), undefined, id)
 })
 
@@ -78,7 +78,7 @@ test('el código de cliente no importa las ideas: las tandas sin publicar no lle
   }
 })
 
-test('supabase/15 trae las 28', () => {
+test('supabase/15 trae las 40', () => {
   const sql = readFileSync(new URL('../supabase/15_ideas.sql', import.meta.url), 'utf8')
   for (const id of IDS_PUBLICADOS) assert.ok(sql.includes(`  ('${id}', `), id)
 })

@@ -143,6 +143,20 @@ export function combinarIdeas(archivo: Idea[], filas: FilaIdea[]): { publicas: I
   return { publicas, todas };
 }
 
+/** /api/ideas/<id>: una idea oculta solo la abre un admin; sin serlo ni siquiera se leen las ocultas. */
+export async function ideaParaEstudio(
+  id: string,
+  publicas: Idea[],
+  esAdmin: () => Promise<boolean>,
+  todas: () => Promise<Idea[]>,
+): Promise<Idea | null> {
+  const publica = publicas.find((i) => i.id === id);
+  if (publica) return publica;
+  if (!(await esAdmin())) return null;
+  const oculta = (await todas()).find((i) => i.id === id);
+  return oculta ? ideaPublica(oculta) : null;
+}
+
 /** /estudio?idea=<id>&v=<n>: el prompt de esa variación, o el principal si no existe. */
 export function promptDeVariacion(idea: Idea, v: string | null): string {
   if (!v || !/^\d+$/.test(v)) return idea.prompt;
