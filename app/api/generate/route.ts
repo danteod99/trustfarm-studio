@@ -1,6 +1,7 @@
 import { getUser, isAdminEmail, UNAUTHORIZED } from "@/app/lib/auth";
 import { publicGeneration, signedUrls, startGeneration } from "@/app/lib/generations";
 import { getBalance } from "@/app/lib/credits";
+import { etasPara } from "@/app/lib/eta";
 
 // Nano Banana responde en la misma request (10-40 s).
 export const maxDuration = 120;
@@ -30,9 +31,9 @@ export async function POST(req: Request) {
   });
   if (!result.ok) return Response.json({ error: result.error }, { status: result.status });
 
-  const urls = await signedUrls([result.generation]);
+  const [urls, etas] = await Promise.all([signedUrls([result.generation]), etasPara([result.generation])]);
   return Response.json({
-    generation: publicGeneration(result.generation, urls[result.generation.id]),
+    generation: publicGeneration(result.generation, urls[result.generation.id], etas[result.generation.id]),
     balance: await getBalance(user.id),
   });
 }

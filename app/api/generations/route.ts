@@ -1,6 +1,7 @@
 import { getUser, UNAUTHORIZED } from "@/app/lib/auth";
 import { supabaseAdmin } from "@/app/lib/supabase/admin";
 import { publicGeneration, refreshGeneration, signedUrls, type Generation } from "@/app/lib/generations";
+import { etasPara } from "@/app/lib/eta";
 
 export const maxDuration = 60;
 
@@ -26,6 +27,6 @@ export async function GET(req: Request) {
   let gens = (data ?? []) as Generation[];
   // De paso avanza los trabajos en curso.
   gens = await Promise.all(gens.map((g) => (g.status === "done" || g.status === "failed" ? g : refreshGeneration(g))));
-  const urls = await signedUrls(gens);
-  return Response.json({ generations: gens.map((g) => publicGeneration(g, urls[g.id])) });
+  const [urls, etas] = await Promise.all([signedUrls(gens), etasPara(gens)]);
+  return Response.json({ generations: gens.map((g) => publicGeneration(g, urls[g.id], etas[g.id])) });
 }

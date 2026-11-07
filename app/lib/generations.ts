@@ -387,7 +387,8 @@ export async function signedUrls(gens: Generation[]): Promise<Record<string, str
 }
 
 /** Lo que ve el usuario de una generación (sin referencias internas del proveedor). */
-export function publicGeneration(g: Generation, url?: string) {
+export function publicGeneration(g: Generation, url?: string, etaSec?: number) {
+  const enCurso = ACTIVE.includes(g.status);
   return {
     id: g.id,
     kind: g.kind,
@@ -399,6 +400,10 @@ export function publicGeneration(g: Generation, url?: string) {
     error: g.status === "failed" ? clientError(g.error) : null,
     url: url ?? null,
     createdAt: g.created_at,
+    // Para la barra de progreso: medido en el servidor para no depender del reloj del cliente.
+    ...(enCurso && etaSec
+      ? { etaSec, elapsedSec: Math.max(0, Math.round((Date.now() - new Date(g.created_at).getTime()) / 1000)) }
+      : {}),
   };
 }
 

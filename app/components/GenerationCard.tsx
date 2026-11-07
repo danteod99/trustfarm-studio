@@ -1,7 +1,9 @@
 "use client";
 
 import { Clapperboard, Download, Loader2, TriangleAlert, UserRoundPlus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { getModel } from "@/app/lib/catalog";
+import { progreso, textoRestante } from "@/app/lib/eta-progreso";
 
 export interface PublicGeneration {
   id: string;
@@ -14,6 +16,63 @@ export interface PublicGeneration {
   error: string | null;
   url: string | null;
   createdAt: string;
+  /** Solo mientras está en curso: tiempo estimado según las últimas generaciones reales del modelo. */
+  etaSec?: number;
+  /** Segundos transcurridos, medidos en el servidor al responder. */
+  elapsedSec?: number;
+}
+
+/** Barra que avanza cada segundo entre consultas al servidor (que llegan cada ~8 s). */
+function BarraProgreso({ g }: { g: PublicGeneration }) {
+  // Punto de partida: lo que dijo el servidor y cuándo lo recibimos. Se reinicia con cada respuesta nueva.
+  const base = useRef({ elapsed: g.elapsedSec ?? 0, at: Date.now() });
+  useEffect(() => {
+    if (g.elapsedSec !== undefined) base.current = { elapsed: g.elapsedSec, at: Date.now() };
+  }, [g.elapsedSec]);
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => tick((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const transcurrido = base.current.elapsed + (Date.now() - base.current.at) / 1000;
+  const p = progreso(transcurrido, g.etaSec ?? 60);
+  const pct = Math.round(p.fraccion * 100);
+  const que = g.kind === "video" ? "video" : "imagen";
+
+  return (
+    <div className="flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center text-sm text-mute">
+      <p className="text-ink">Generando {que}…</p>
+      <div
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={pct}
+        aria-label={`Progreso del ${que}`}
+        className="relative my-3 w-full max-w-[240px]"
+      >
+        <div className="h-2 overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-brand to-brand-2 transition-[width] duration-1000 ease-linear"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        {/* La "T" de la marca avanza montada en la punta de la barra. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/carga-t.png"
+          alt=""
+          width={32}
+          height={32}
+          className="pointer-events-none absolute top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_0_8px_rgba(34,211,238,0.7)] transition-[left] duration-1000 ease-linear"
+          style={{ left: `${pct}%` }}
+        />
+      </div>
+      <p className="tabular-nums">
+        {p.tarde ? "Tardando un poco más de lo normal, ya casi…" : `${pct} % · quedan ${textoRestante(p.restante)}`}
+      </p>
+    </div>
+  );
 }
 
 const ASPECT_CLASS: Record<string, string> = {
@@ -50,6 +109,8 @@ export default function GenerationCard({ g, onAnimate, onSaveCharacter }: Props)
             <p>{g.error || "La generación falló."}</p>
             {g.cost > 0 && <p className="text-xs">Te devolvimos {g.cost} créditos.</p>}
           </div>
+        ) : g.etaSec ? (
+          <BarraProgreso g={g} />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-mute">
             <Loader2 className="animate-spin text-brand-2" />
