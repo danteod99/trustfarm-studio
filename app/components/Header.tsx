@@ -125,8 +125,13 @@ export default async function Header() {
               <Link href="/entrar" className="rounded-lg px-2 py-2 text-mute hover:text-ink sm:px-3">
                 Entrar
               </Link>
-              <Link href="/entrar?modo=registro" className="btn-primary !py-2">
-                Crear cuenta
+              <Link
+                href="/entrar?modo=registro"
+                aria-label="Crear cuenta"
+                className="shrink-0 transition hover:scale-105 hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.6)]"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/boton-crear-cuenta.png" alt="Crear cuenta" style={{ height: 46, width: "auto" }} />
               </Link>
             </>
           )}
