@@ -246,7 +246,7 @@ const IDEAS_BASE: Idea[] = [
     resolution: "720p",
     motion: "acercamiento",
     prompt:
-      "Plano cinematográfico de noche dentro de un taxi en Lima: un taxista de cuarenta años abre un sobre con su nombre escrito, lee y su cara se congela. Dice en voz baja: «¿Cómo sabían que era yo?». Reflejos de neón en el parabrisas mojado, sonido de lluvia. Sin subtítulos.",
+      "Primer plano del rostro de un taxista de 40 años, de noche, visto desde el asiento del copiloto. Detrás de él solo se ve la ventana lateral oscura, cubierta de gotas de lluvia. Mira un sobre blanco liso que sostiene en la mano y su cara se congela. Dice en voz baja en español latino: \"¿Cómo sabían que era yo?\". Sonido constante de lluvia sobre el techo del auto.",
   },
   {
     id: "fabula-zorro",
@@ -843,7 +843,7 @@ const IDEAS_BASE: Idea[] = [
     resolution: "720p",
     motion: "fija",
     prompt:
-      "Una entrenadora latina con ropa deportiva en un gimnasio moderno mira a la cámara y dice con energía: «Tres series de esto y me cuentas mañana». Sonido de pesas al fondo. Video realista, luz de gimnasio.",
+      "Primer plano del rostro y los hombros de una entrenadora latina de 35 años con sudadera gris gruesa de manga larga, lisa y cerrada hasta el cuello. Detrás solo hay una pared lisa de gimnasio, desenfocada, sin máquinas. Mira a la cámara y dice con energía en español latino: \"Tres series de esto y me cuentas mañana\". Cámara fija, luz de gimnasio, sonido de pesas al fondo.",
   },
   {
     id: "bowl-saludable",
@@ -911,7 +911,7 @@ const IDEAS_BASE: Idea[] = [
     resolution: "720p",
     motion: "acercamiento",
     prompt:
-      "Animación 3D estilo película animada: una fresa con vestido rojo y aretes dorados, ojos grandes llenos de lágrimas, sostiene un celular en una cocina de noche. Dice con voz dramática y quebrada: «¿Tú sabías que él me mintió?». Música de violines de suspenso, goteo de un caño de fondo. Sin subtítulos ni texto.",
+      "Animación 3D estilo película animada: una fresa elegante de aspecto adulto, con vestido rojo largo y aretes dorados, ojos grandes llenos de lágrimas, en una cocina de noche, sostiene junto a la oreja el auricular de un teléfono fijo antiguo de color rojo, con cable. Dice con voz dramática y quebrada en español latino: \"¿Tú sabías que él me mintió?\". Música de violines de suspenso. La imagen no lleva ninguna letra.",
   },
   {
     id: "fruti-juicio",
@@ -1158,7 +1158,7 @@ const IDEAS_BASE: Idea[] = [
     resolution: "720p",
     motion: "acercamiento",
     prompt:
-      "Plano cinematográfico dentro de un ascensor antiguo de un edificio de oficinas de Lima: una mujer de 30 años con blazer oscuro presiona el botón del piso 13 y la luz parpadea. Una voz por el parlante susurra: «Hoy no deberías haber venido». Ella se queda inmóvil. Zumbido eléctrico, sin música. Sin subtítulos.",
+      "Plano cinematográfico dentro de un ascensor antiguo de paredes de madera: una mujer de 30 años con blazer oscuro, de pie y con la boca cerrada, mira hacia arriba, asustada. La luz del techo parpadea. Se oye una voz susurrante por el parlante, fuera de cuadro: \"Hoy no deberías haber venido\". Ella no habla. Zumbido eléctrico, sin música. Sin subtítulos.",
   },
   {
     id: "mini-enfermera",
