@@ -107,10 +107,6 @@ body {
   .animate-latido { animation: none; }
 }
 
-/* Fondo KARIBU: marco ornamental fijo en las esquinas de la pantalla. */
-body {
-  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), #000 url("/fondo-karibu.jpg") center / cover no-repeat fixed;
-}
 
 /* Franja bogolan: se desliza de forma continua (un módulo por vuelta, sin saltos). */
 @keyframes bogolan {
