@@ -100,7 +100,7 @@ export default async function Home() {
     <div className="overflow-x-clip">
       {/* Hero */}
       <section className="relative">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[760px] opacity-70">
+        <div className="pointer-events-none absolute left-[-25%] right-[25%] top-0 h-[760px] opacity-40">
           <LightRays raysOrigin="top-center" raysColor="#d4d4d4" raysSpeed={0.8} lightSpread={0.9} rayLength={1.4} followMouse mouseInfluence={0.08} noiseAmount={0.05} distortion={0.04} />
         </div>
         <div className="pointer-events-none absolute right-[-12%] top-[-10%] h-[720px] w-[720px] opacity-55 max-lg:right-[-40%] max-lg:opacity-30">
