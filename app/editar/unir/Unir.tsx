@@ -6,23 +6,7 @@ import { ArrowDown, ArrowUp, Download, Film, GripVertical, Loader2, Play, Plus, 
 import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import type { PublicGeneration } from "@/app/components/GenerationCard";
 import { sceneText } from "@/app/lib/escena";
-import {
-  MAX_ESCENAS,
-  argsConcat,
-  argsNormalizar,
-  downloadBlobUrl,
-  execLogged,
-  fetchAsFile,
-  getVideoInfo,
-  listaConcat,
-  loadEngine,
-  mover,
-  onProgress,
-  readBlob,
-  safeDelete,
-  tamanoSalida,
-  writeInput,
-} from "@/app/lib/video";
+import { MAX_ESCENAS, downloadBlobUrl, mover, unirVideos } from "@/app/lib/video";
 
 /** Una escena en la línea de tiempo. `key` permite usar el mismo video dos veces. */
 interface Clip {
@@ -109,40 +93,15 @@ export default function Unir() {
     setResult(null);
     setPlaying(null);
     setPct(0);
-    const off = onProgress((r) => setPct(r));
-    let ffmpeg: Awaited<ReturnType<typeof loadEngine>>["ffmpeg"] | null = null;
-    const nombres: string[] = [];
     try {
-      ffmpeg = (await loadEngine(setStatus)).ffmpeg;
-      // El tamaño de la primera escena manda; las demás se ajustan con bandas negras si difieren.
-      const first = await getVideoInfo(clips[0].g.url!);
-      const { w, h } = tamanoSalida(first.w, first.h);
-      for (const [i, c] of clips.entries()) {
-        setStatus(`Descargando escena ${i + 1} de ${clips.length}…`);
-        setPct(0);
-        const file = await fetchAsFile(c.g.url!, `e${i}.mp4`, setPct);
-        await writeInput(ffmpeg, "in.mp4", file);
-        setStatus(`Preparando escena ${i + 1} de ${clips.length}…`);
-        setPct(0);
-        const out = `n${i}.mp4`;
-        // Primero con su audio; si no tiene (p. ej. Wan), con silencio.
-        let { code } = await execLogged(ffmpeg, argsNormalizar("in.mp4", out, w, h, true));
-        if (code !== 0) ({ code } = await execLogged(ffmpeg, argsNormalizar("in.mp4", out, w, h, false)));
-        await safeDelete(ffmpeg, "in.mp4");
-        if (code !== 0) throw new Error(`No se pudo preparar la escena ${i + 1}.`);
-        nombres.push(out);
-      }
-      setStatus("Uniendo escenas…");
-      await writeInput(ffmpeg, "lista.txt", listaConcat(nombres));
-      const { code } = await execLogged(ffmpeg, argsConcat("lista.txt", "historia.mp4"));
-      if (code !== 0) throw new Error("No se pudieron unir las escenas.");
-      const blob = await readBlob(ffmpeg, "historia.mp4");
+      const blob = await unirVideos(
+        clips.map((c) => c.g.url!),
+        { onStatus: setStatus, onPct: setPct }
+      );
       setResult({ url: URL.createObjectURL(blob), size: blob.size });
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo unir el video.");
     } finally {
-      off();
-      if (ffmpeg) await safeDelete(ffmpeg, ...nombres, "lista.txt", "historia.mp4", "in.mp4");
       setStatus(null);
     }
   }
