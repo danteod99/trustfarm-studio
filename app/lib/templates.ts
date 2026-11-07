@@ -3,6 +3,7 @@
 // Lo que va [entre corchetes] lo completa el usuario; el estudio no deja generar hasta
 // que no quede ningún corchete.
 import type { Aspect, Kind } from "@/app/lib/catalog";
+import { FOTO_LATAM } from "@/app/lib/plantilla-foto-latam";
 import { NEGATIVOS_BASE, trustPrompt, type TrustParams } from "@/app/lib/trust-params";
 
 export interface TemplateStep {
@@ -305,6 +306,7 @@ export const TEMPLATES: TemplateGroup[] = [
       },
     ],
   },
+  FOTO_LATAM,
   {
     id: "anime",
     emoji: "🌸",
