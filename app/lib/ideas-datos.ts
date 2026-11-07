@@ -3,7 +3,8 @@
 // id, agrega ideas nuevas u oculta alguna. Sin filas (tabla vacía, sin crear o caída), quedan las del archivo.
 
 import { getModel } from "./catalog.ts";
-import { IDEA_CATEGORIES, type Idea, type Variacion } from "./ideas.ts";
+import { IDEA_CATEGORIES } from "./ideas-categorias.ts";
+import type { Idea, Variacion } from "./ideas.ts";
 
 export interface FilaIdea {
   id: string;

@@ -1,0 +1,25 @@
+// Categorías de /ideas. Aparte de ideas.ts para que el navegador no reciba las tandas sin publicar:
+// el código de cliente importa de aquí, y de ideas.ts solo tipos.
+export const IDEA_CATEGORIES = [
+  "Ecommerce y tiendas",
+  "Navidad y temporadas",
+  "Negocios y máquinas",
+  "Brainrot",
+  "Historias",
+  "Frutinovelas",
+  "Modelos IA",
+  "Miniseries TikTok",
+  "Anime",
+  "Anime novela",
+  "Historias ficticias",
+  "Influencers IA",
+  "Productos y anuncios",
+  "Comida",
+  "Inmobiliaria",
+  "Tecnología y granjas",
+  "Motivación y paisajes",
+  "Mascotas",
+  "Moda y belleza",
+  "Educación y tips",
+  "Fitness y salud",
+] as const;
