@@ -16,7 +16,7 @@ import {
 import { MODELS, PACKS, PLAN, creditCost } from "@/app/lib/catalog";
 import { BRAND } from "@/app/lib/brand";
 import { BRAINROT, MARQUEE, SHOW, type Showcase } from "@/app/lib/showcase";
-import ParticleGlobe from "@/app/components/ParticleGlobe";
+import MandalaGiratoria from "@/app/components/MandalaGiratoria";
 import Reveal from "@/app/components/Reveal";
 import Media from "@/app/components/Media";
 import SoundReel from "@/app/components/SoundReel";
@@ -104,7 +104,7 @@ export default async function Home() {
           <LightRays raysOrigin="top-center" raysColor="#d4d4d4" raysSpeed={0.8} lightSpread={0.9} rayLength={1.4} followMouse mouseInfluence={0.08} noiseAmount={0.05} distortion={0.04} />
         </div>
         <div className="pointer-events-none absolute right-[-12%] top-[-10%] h-[720px] w-[720px] opacity-70 max-lg:right-[-40%] max-lg:opacity-40">
-          <ParticleGlobe />
+          <MandalaGiratoria />
         </div>
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-16 sm:pt-24 lg:grid-cols-[1.05fr_1fr]">
           <div>
