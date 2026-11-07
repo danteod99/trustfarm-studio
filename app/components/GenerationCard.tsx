@@ -34,6 +34,9 @@ export interface PublicGeneration {
   elapsedSec?: number;
 }
 
+/** Pasado el tiempo estimado, el aviso de lentitud solo aparece si lleva más de 3 min 30 s en total. */
+const AVISO_LENTITUD_SEG = 210;
+
 /** Barra que avanza cada segundo entre consultas al servidor (que llegan cada ~8 s). */
 function BarraProgreso({ g }: { g: PublicGeneration }) {
   // Punto de partida: lo que dijo el servidor y cuándo lo recibimos. Se reinicia con cada respuesta nueva.
@@ -81,7 +84,11 @@ function BarraProgreso({ g }: { g: PublicGeneration }) {
         />
       </div>
       <p className="tabular-nums">
-        {p.tarde ? "Estamos teniendo lentitud en tu red, la IA sigue trabajando…" : `${pct} % · quedan ${textoRestante(p.restante)}`}
+        {!p.tarde
+          ? `${pct} % · quedan ${textoRestante(p.restante)}`
+          : transcurrido >= AVISO_LENTITUD_SEG
+            ? "Estamos teniendo lentitud en tu red, la IA sigue trabajando…"
+            : "Ya casi listo…"}
       </p>
     </div>
   );
