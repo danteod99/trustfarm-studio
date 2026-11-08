@@ -128,7 +128,7 @@ export default function Gallery() {
                 >
                   <span
                     className={`absolute left-3 top-3 grid h-9 w-9 place-items-center rounded-full border-2 text-base font-bold tabular-nums shadow-lg ${
-                      n > 0 ? "border-brand-2 bg-brand text-black" : "border-white/70 bg-black/40"
+                      n > 0 ? "border-brand-2 bg-brand text-white" : "border-white/70 bg-black/40"
                     }`}
                   >
                     {n > 0 ? n : ""}

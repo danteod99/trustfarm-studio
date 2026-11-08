@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #000000;
-  --color-panel: #0a0a0a;
-  --color-panel-2: #151515;
-  --color-line: #2a2a2a;
-  --color-ink: #ffffff;
-  --color-mute: #a3a3a3;
-  --color-brand: #ffffff;
-  --color-brand-2: #d4d4d4;
+  --color-bg: #07090d;
+  --color-panel: #0e121a;
+  --color-panel-2: #141a25;
+  --color-line: #1f2733;
+  --color-ink: #e8edf5;
+  --color-mute: #8a96a8;
+  --color-brand: #3b82f6;
+  --color-brand-2: #22d3ee;
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
@@ -23,7 +23,7 @@ body {
   @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
 }
 @utility btn-primary {
-  @apply btn bg-brand text-black hover:bg-neutral-200;
+  @apply btn bg-brand text-white hover:bg-blue-500;
 }
 @utility btn-ghost {
   @apply btn border border-line bg-panel text-ink hover:bg-panel-2;
@@ -88,50 +88,4 @@ body {
   .animate-col-down {
     animation: none;
   }
-}
-
-/* Latido del botón principal: crece un poco y suelta un halo blanco, como un corazón. */
-@keyframes latido {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.55); }
-  14% { transform: scale(1.06); }
-  28% { transform: scale(1); }
-  42% { transform: scale(1.04); }
-  70% { box-shadow: 0 0 0 16px rgba(255, 255, 255, 0); }
-}
-@utility animate-latido {
-  border-radius: 12px;
-  animation: latido 1.8s ease-in-out infinite;
-  &:hover { animation-play-state: paused; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .animate-latido { animation: none; }
-}
-
-
-/* Franja bogolan: se desliza de forma continua (un módulo por vuelta, sin saltos). */
-@keyframes bogolan {
-  from { background-position-x: 0; }
-  to { background-position-x: calc(var(--tile) * -10); }
-}
-@utility animate-bogolan {
-  animation: bogolan 20s linear infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .animate-bogolan { animation: none; }
-}
-
-
-/* Latido sutil del botón "Crear cuenta" de la barra: apenas crece y brilla. */
-@keyframes latido-suave {
-  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0)); }
-  15% { transform: scale(1.035); filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.35)); }
-  30% { transform: scale(1); }
-  45% { transform: scale(1.02); filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.25)); }
-  70% { filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0)); }
-}
-@utility animate-latido-suave {
-  animation: latido-suave 2.6s ease-in-out infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .animate-latido-suave { animation: none; }
 }

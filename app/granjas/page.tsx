@@ -165,7 +165,7 @@ export default async function GranjasPage() {
       {/* Hero */}
       <section className="relative">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[760px] opacity-70">
-          <LightRays raysOrigin="top-center" raysColor="#d4d4d4" raysSpeed={0.8} lightSpread={0.9} rayLength={1.4} followMouse mouseInfluence={0.08} noiseAmount={0.05} distortion={0.04} />
+          <LightRays raysOrigin="top-center" raysColor="#22d3ee" raysSpeed={0.8} lightSpread={0.9} rayLength={1.4} followMouse mouseInfluence={0.08} noiseAmount={0.05} distortion={0.04} />
         </div>
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-16 sm:pt-24 lg:grid-cols-[1.1fr_1fr]">
           <div>
@@ -180,7 +180,7 @@ export default async function GranjasPage() {
               granja, todos los días.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <StarBorder as="a" href={suscribir} color="#d4d4d4" backgroundColor="#ffffff" textColor="#ffffff" radius={12} className="!text-base !font-semibold">
+              <StarBorder as="a" href={suscribir} color="#22d3ee" backgroundColor="#3b82f6" textColor="#ffffff" radius={12} className="!text-base !font-semibold">
                 <span className="flex items-center justify-center gap-2 px-2">
                   <Repeat size={17} /> {textoSuscribir}
                 </span>

@@ -27,18 +27,8 @@ export default async function Header() {
               {/* Resaltado en azul claro: es la sección principal. */}
               <Link
                 href="/estudio"
-                className="hidden rounded-lg border border-neutral-100/40 bg-neutral-100/15 px-3 py-1.5 font-semibold text-neutral-200 shadow-[0_0_12px_rgba(255,255,255,0.25)] transition hover:bg-neutral-100/25 hover:text-neutral-200 lg:relative lg:block"
+                className="hidden rounded-lg border border-sky-400/40 bg-sky-400/15 px-3 py-1.5 font-semibold text-sky-300 shadow-[0_0_12px_rgba(56,189,248,0.25)] transition hover:bg-sky-400/25 hover:text-sky-200 lg:block"
               >
-                {/* Gorro navideño sobre la esquina del botón. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/gorro-navidad.png"
-                  alt=""
-                  aria-hidden
-                  width={34}
-                  height={19}
-                  className="pointer-events-none absolute -left-3 -top-3 w-[34px] rotate-[20deg] drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]"
-                />
                 Estudio
               </Link>
               <Link href="/galeria" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink lg:block">
@@ -112,7 +102,7 @@ export default async function Header() {
                       href={href}
                       className={
                         href === "/estudio"
-                          ? "rounded-lg bg-neutral-100/15 px-3 py-2 font-semibold text-neutral-200 hover:bg-neutral-100/25"
+                          ? "rounded-lg bg-sky-400/15 px-3 py-2 font-semibold text-sky-300 hover:bg-sky-400/25"
                           : "rounded-lg px-3 py-2 text-mute hover:bg-panel-2 hover:text-ink"
                       }
                     >
@@ -135,13 +125,8 @@ export default async function Header() {
               <Link href="/entrar" className="rounded-lg px-2 py-2 text-mute hover:text-ink sm:px-3">
                 Entrar
               </Link>
-              <Link
-                href="/entrar?modo=registro"
-                aria-label="Crear cuenta"
-                className="shrink-0 transition hover:scale-105 hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.6)]"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/boton-crear-cuenta.png" alt="Crear cuenta" className="animate-latido-suave" style={{ height: 46, width: "auto" }} />
+              <Link href="/entrar?modo=registro" className="btn-primary !py-2">
+                Crear cuenta
               </Link>
             </>
           )}

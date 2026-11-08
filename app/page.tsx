@@ -16,7 +16,7 @@ import {
 import { MODELS, PACKS, PLAN, creditCost } from "@/app/lib/catalog";
 import { BRAND } from "@/app/lib/brand";
 import { BRAINROT, MARQUEE, SHOW, type Showcase } from "@/app/lib/showcase";
-import MandalaGiratoria from "@/app/components/MandalaGiratoria";
+import ParticleGlobe from "@/app/components/ParticleGlobe";
 import Reveal from "@/app/components/Reveal";
 import Media from "@/app/components/Media";
 import SoundReel from "@/app/components/SoundReel";
@@ -100,42 +100,26 @@ export default async function Home() {
     <div className="overflow-x-clip">
       {/* Hero */}
       <section className="relative">
-        <div className="pointer-events-none absolute left-[-25%] right-[25%] top-0 h-[760px] opacity-40">
-          <LightRays raysOrigin="top-center" raysColor="#d4d4d4" raysSpeed={0.8} lightSpread={0.9} rayLength={1.4} followMouse mouseInfluence={0.08} noiseAmount={0.05} distortion={0.04} />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[760px] opacity-70">
+          <LightRays raysOrigin="top-center" raysColor="#22d3ee" raysSpeed={0.8} lightSpread={0.9} rayLength={1.4} followMouse mouseInfluence={0.08} noiseAmount={0.05} distortion={0.04} />
         </div>
-        <div className="pointer-events-none absolute right-[-12%] top-[-10%] h-[720px] w-[720px] opacity-55 max-lg:right-[-40%] max-lg:opacity-30">
-          <MandalaGiratoria />
+        <div className="pointer-events-none absolute right-[-12%] top-[-10%] h-[720px] w-[720px] opacity-70 max-lg:right-[-40%] max-lg:opacity-40">
+          <ParticleGlobe />
         </div>
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-8 sm:pt-10 lg:items-start lg:pb-10 lg:grid-cols-[1.05fr_1fr]">
+        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-16 sm:pt-24 lg:grid-cols-[1.05fr_1fr]">
           <div>
-            <p className="mb-4 text-sm font-semibold uppercase tracking-[0.35em] text-white/80">
-              Karibu <span className="text-mute">· bienvenido</span>
-            </p>
             <span className="inline-flex items-center gap-2 rounded-full border border-brand/40 bg-brand/10 px-3 py-1 text-xs font-medium text-brand-2">
               <Sparkles size={13} /> Nuevo: videos con voz en español
             </span>
             <h1 className="mt-6 text-4xl font-extrabold tracking-tight sm:text-6xl">
-              I
-              <span className="relative inline-block">
-                {/* Gorro navideño sobre la "m" de Imágenes. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/gorro-navidad.png"
-                  alt=""
-                  aria-hidden
-                  className="pointer-events-none absolute -left-[0.06em] -top-[0.04em] w-[0.95em] max-w-none rotate-[18deg] drop-shadow-[0_3px_4px_rgba(0,0,0,0.6)]"
-                />
-                m
-              </span>
-              ágenes{" "}
-              y videos con IA, <span className="text-brand-2">en <span className="text-[#e3342f]">minutos</span></span>
+              Imágenes y videos con IA, <span className="text-brand-2">en minutos</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg text-mute">
               Escribe tu idea en español y obtén videos con voz, personajes que no cambian de cara y fotos de calidad de
               estudio para tus anuncios, redes y canales. Pagas solo por lo que generas.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <StarBorder as="a" href="/entrar?modo=registro" color="#d4d4d4" backgroundColor="#ffffff" textColor="#000000" radius={12} className="animate-latido !text-base !font-semibold">
+              <StarBorder as="a" href="/entrar?modo=registro" color="#22d3ee" backgroundColor="#3b82f6" textColor="#ffffff" radius={12} className="!text-base !font-semibold">
                 <span className="flex items-center gap-2 px-2">
                   Empezar a crear <ArrowRight size={17} />
                 </span>
@@ -411,7 +395,7 @@ export default async function Home() {
           sub="Plan mensual con más créditos o paquetes sueltos. En dólares, los créditos no vencen."
         />
         <Reveal className="mb-6">
-          <ElectricBorder color="#d4d4d4" speed={0.8} chaos={0.4} thickness={2} borderRadius={16}>
+          <ElectricBorder color="#22d3ee" speed={0.8} chaos={0.4} thickness={2} borderRadius={16}>
           <div className="card grid items-center gap-6 border-transparent bg-gradient-to-br from-brand/15 to-panel p-6 sm:grid-cols-[1fr_auto] sm:p-8">
             <div>
               <p className="eyebrow !text-brand-2">{PLAN.name} · el que más rinde</p>
@@ -435,7 +419,7 @@ export default async function Home() {
             <Reveal key={p.id} delay={i * 80}>
               <div className={`card relative flex h-full flex-col p-6 ${p.popular ? "border-brand shadow-lg shadow-brand/20" : ""}`}>
                 {p.popular && (
-                  <span className="absolute -top-3 left-6 rounded-full bg-brand px-3 py-0.5 text-xs font-semibold text-black">
+                  <span className="absolute -top-3 left-6 rounded-full bg-brand px-3 py-0.5 text-xs font-semibold text-white">
                     Más elegido
                   </span>
                 )}

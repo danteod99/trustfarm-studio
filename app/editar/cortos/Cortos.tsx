@@ -217,7 +217,7 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
 
   const Toggle = ({ on, set, icon, label, hint }: { on: boolean; set: (v: boolean) => void; icon: React.ReactNode; label: string; hint: string }) => (
     <label className="flex cursor-pointer items-start gap-3 border-t border-line py-3 first:border-t-0">
-      <input type="checkbox" checked={on} disabled={running} onChange={(e) => set(e.target.checked)} className="mt-1 h-4 w-4 accent-neutral-100" />
+      <input type="checkbox" checked={on} disabled={running} onChange={(e) => set(e.target.checked)} className="mt-1 h-4 w-4 accent-cyan-400" />
       <span>
         <span className={`flex items-center gap-2 text-sm font-semibold ${on ? "text-brand-2" : ""}`}>{icon}{label}</span>
         <span className="block text-xs text-mute">{hint}</span>
@@ -268,7 +268,7 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
           hint={`Cuando te trabas y repites, deja solo la última versión limpia (IA · ${precios.retomas} créditos).`} />
         {cutRetakes && (
           <label className="flex cursor-pointer items-center gap-2 pb-3 pl-7 text-xs text-mute">
-            <input type="checkbox" checked={condense} disabled={running} onChange={(e) => setCondense(e.target.checked)} className="accent-neutral-100" />
+            <input type="checkbox" checked={condense} disabled={running} onChange={(e) => setCondense(e.target.checked)} className="accent-cyan-400" />
             Quitar también ideas repetidas (más agresivo)
           </label>
         )}
@@ -290,7 +290,7 @@ export default function Cortos({ precios }: { precios: { transcripcion: number; 
               {!running && <button onClick={() => setMusic(null)} className="text-mute hover:text-red-400" aria-label="Quitar música"><X size={14} /></button>}
               <span className="text-xs text-mute">Volumen {Math.round(musicVol * 100)}%</span>
               <input type="range" min={0.05} max={0.5} step={0.01} value={musicVol} disabled={running}
-                onChange={(e) => setMusicVol(parseFloat(e.target.value))} className="min-w-[120px] flex-1 accent-neutral-100" />
+                onChange={(e) => setMusicVol(parseFloat(e.target.value))} className="min-w-[120px] flex-1 accent-cyan-400" />
             </div>
           )}
         </div>

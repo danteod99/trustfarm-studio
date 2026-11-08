@@ -294,7 +294,7 @@ export default function Flows() {
           </button>
         </section>
       ) : (
-        <section className="card mt-8 border-brand/40 p-5 shadow-[0_0_60px_-18px_rgba(255,255,255,0.45)]">
+        <section className="card mt-8 border-brand/40 p-5 shadow-[0_0_60px_-18px_rgba(34,211,238,0.45)]">
           <div className="flex flex-wrap items-center gap-3">
             <Workflow size={18} className="text-brand-2" />
             <input className="input max-w-sm" placeholder="Nombre del flujo" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />

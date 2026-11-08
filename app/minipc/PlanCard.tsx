@@ -12,7 +12,7 @@ export default function PlanCard({ plan, ventaAbierta }: { plan: Plan; ventaAbie
       className={`card relative flex flex-col p-6 ${plan.recomendado ? "border-brand shadow-xl shadow-brand/10" : ""}`}
     >
       {plan.recomendado && (
-        <span className="absolute -top-3 left-6 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-black">
+        <span className="absolute -top-3 left-6 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-white">
           Recomendado
         </span>
       )}

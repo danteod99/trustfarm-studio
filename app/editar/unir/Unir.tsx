@@ -353,7 +353,7 @@ export default function Unir() {
                           className="h-full w-full object-cover"
                         />
                       </div>
-                      <span className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-black group-hover:bg-brand">
+                      <span className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white group-hover:bg-brand">
                         <Plus size={15} />
                       </span>
                     </button>
@@ -371,7 +371,7 @@ export default function Unir() {
                       </span>
                     )}
                     {n > 0 && (
-                      <span className="absolute bottom-1.5 left-1.5 rounded bg-brand px-1.5 py-0.5 text-[10px] font-semibold text-black">
+                      <span className="absolute bottom-1.5 left-1.5 rounded bg-brand px-1.5 py-0.5 text-[10px] font-semibold text-white">
                         En la historia{n > 1 ? ` ×${n}` : ""}
                       </span>
                     )}
