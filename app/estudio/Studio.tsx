@@ -374,7 +374,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
       {/* Panel de control */}
       <section
         ref={panelRef}
-        className="card h-fit scroll-mt-24 space-y-5 border-brand/30 bg-panel/90 p-5 shadow-[0_0_60px_-18px_rgba(34,211,238,0.45)] backdrop-blur lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto"
+        className="card h-fit scroll-mt-24 space-y-5 border-brand/30 bg-panel/90 p-5 resplandor backdrop-blur lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto"
       >
         {/* Formatos */}
         <div>
@@ -487,7 +487,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
               key={k}
               onClick={() => k !== kind && selectModel(MODELS.find((m) => m.kind === k)!.id)}
               className={`flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold transition ${
-                kind === k ? "bg-brand text-white" : "text-mute hover:text-ink"
+                kind === k ? "bg-brand text-on-brand" : "text-mute hover:text-ink"
               }`}
             >
               {k === "video" ? <Clapperboard size={15} /> : <ImageIcon size={15} />}
@@ -695,7 +695,7 @@ export default function Studio({ initialBalance, free }: { initialBalance: numbe
             {model.name} no está disponible en este momento. Elige otro modelo o intenta más tarde.
           </p>
         )}
-        {error && <p className="rounded-xl bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
+        {error && <p className="rounded-xl bg-rosa/10 p-3 text-sm text-error">{error}</p>}
 
         <div className="sticky bottom-0 z-10 -mx-5 -mb-5 space-y-2 rounded-b-2xl border-t border-line bg-panel/95 px-5 pb-4 pt-3 backdrop-blur">
         {notEnough ? (
@@ -785,7 +785,7 @@ function PresetSelect(props: {
             <img src={selected.imageUrl} alt="" className="h-9 w-9 rounded-md border border-line object-cover" />
           )}
           <p className="line-clamp-2 flex-1 text-[11px] text-mute">{selected.description}</p>
-          <button onClick={() => props.onDelete(selected.id)} className="text-mute hover:text-red-300" aria-label="Borrar" title="Borrar">
+          <button onClick={() => props.onDelete(selected.id)} className="text-mute hover:text-error" aria-label="Borrar" title="Borrar">
             <Trash2 size={13} />
           </button>
         </div>

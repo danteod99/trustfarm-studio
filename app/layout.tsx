@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Michroma, Mrs_Saint_Delafield } from "next/font/google";
+import { Bricolage_Grotesque, Fraunces, Gochi_Hand } from "next/font/google";
 import "./globals.css";
 import { BRAND, SITE_URL } from "@/app/lib/brand";
 import Header from "@/app/components/Header";
@@ -7,10 +7,11 @@ import Footer from "@/app/components/Footer";
 import PageBackdrop from "@/app/components/PageBackdrop";
 import PixelStudio from "@/app/components/PixelStudio";
 
-// Wordmark "TRUST": Michroma ≈ Eurostile Extended, la misma fuente del logo de trustmind.online.
-const michroma = Michroma({ variable: "--font-michroma", weight: "400", subsets: ["latin"], display: "swap" });
-// "Studio" del logo, como firma a mano.
-const firma = Mrs_Saint_Delafield({ variable: "--font-firma", weight: "400", subsets: ["latin"], display: "swap" });
+// Look "Noche Yamore" (afro house): Fraunces para títulos y logo, Bricolage Grotesque para texto e interfaz,
+// Gochi Hand para acentos escritos a mano (con moderación). Tokens en app/globals.css.
+const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], display: "swap", axes: ["opsz"] });
+const bricolage = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: ["latin"], display: "swap" });
+const gochi = Gochi_Hand({ variable: "--font-gochi", weight: "400", subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -23,12 +24,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
-      </head>
-      <body className={`${michroma.variable} ${firma.variable} min-h-screen antialiased`}>
+    <html lang="es" className={`${fraunces.variable} ${bricolage.variable} ${gochi.variable}`}>
+      <body className="min-h-screen font-sans antialiased">
         <Header />
         <main className="relative isolate">
           <PageBackdrop />

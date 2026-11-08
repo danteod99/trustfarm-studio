@@ -93,10 +93,10 @@ function Tarjeta({ it }: { it: Item }) {
         <img src={it.poster} alt={it.tag} loading="lazy" className="h-full w-full object-cover" />
       )}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-3 pt-10">
-        <span className="text-[11px] font-semibold text-[#d4ff3a]">{it.tag}</span>
+        <span className="text-[11px] font-semibold text-ocre">{it.tag}</span>
       </div>
       {it.video && (
-        <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#d4ff3a] backdrop-blur">
+        <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ocre backdrop-blur">
           ▶ video
         </span>
       )}
@@ -131,25 +131,25 @@ export default async function PersonajesPage() {
 
       {/* Hero con muro de videos */}
       <section className="relative">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_75%_30%,rgba(212,255,58,0.10),transparent_70%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_75%_30%,color-mix(in_srgb,var(--color-ocre)_14%,transparent),transparent_70%)]" />
         <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 pb-16 pt-14 sm:pt-20 lg:grid-cols-[1fr_1fr]">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#d4ff3a]/40 bg-[#d4ff3a]/10 px-3 py-1 text-xs font-semibold text-[#d4ff3a]">
+            <span className="inline-flex items-center gap-2 rounded-full border border-ocre/40 bg-ocre/10 px-3 py-1 text-xs font-semibold text-ocre">
               <Sparkles size={13} /> Personajes IA + video en movimiento
             </span>
-            <h1 className="mt-6 text-4xl font-extrabold tracking-tight sm:text-6xl">
-              Un personaje, <span className="text-[#d4ff3a]">mil videos</span> con vida
+            <h1 className="mt-6 text-4xl font-black tracking-tight sm:text-6xl">
+              Un personaje, <span className="text-ocre">mil videos</span> con vida
             </h1>
             <p className="mt-5 max-w-xl text-lg text-mute">
               Crea personajes con IA y hazlos hablar, caminar y moverse. Recrea el mismo video con la cara de cada cuenta de
               tu granja, en {BRAND.short}.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href={estudio} className="btn !bg-[#d4ff3a] !px-7 !py-3 text-base !text-black hover:!bg-[#e2ff6b]">
+              <Link href={estudio} className="btn !bg-ocre !px-7 !py-3 text-base !text-cacao hover:!bg-ocre-claro">
                 <Wand2 size={17} /> Crear mi personaje
               </Link>
               <Link href={suscribir} className="btn-ghost !px-6 !py-3 text-base">
-                <Repeat size={17} className="text-[#d4ff3a]" /> {textoSuscribir}
+                <Repeat size={17} className="text-ocre" /> {textoSuscribir}
               </Link>
             </div>
             <p className="mt-3 text-sm text-mute">
@@ -158,7 +158,7 @@ export default async function PersonajesPage() {
             <ul className="mt-8 space-y-2 text-sm text-mute">
               {["Voz y lip-sync en español", "Misma cara en todos los videos", "Hasta un video distinto por cuenta"].map((t) => (
                 <li key={t} className="flex items-center gap-2">
-                  <Check size={15} className="text-[#d4ff3a]" /> {t}
+                  <Check size={15} className="text-ocre" /> {t}
                 </li>
               ))}
             </ul>
@@ -175,8 +175,8 @@ export default async function PersonajesPage() {
       {/* Casos */}
       <section className="mx-auto mt-16 max-w-6xl px-4">
         <Reveal className="mb-8">
-          <p className="eyebrow !text-[#d4ff3a]">Para reels</p>
-          <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Crea videos virales o recrea los que ya funcionan</h2>
+          <p className="eyebrow !text-ocre">Para reels</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Crea videos virales o recrea los que ya funcionan</h2>
           <p className="mt-3 max-w-2xl text-mute">Con tu personaje, tu voz y tu estilo. Toca una idea y se abre en el estudio.</p>
         </Reveal>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -186,7 +186,7 @@ export default async function PersonajesPage() {
                 <div className="relative aspect-[9/16] overflow-hidden rounded-2xl border border-line">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={`/showcase/${c.img}.jpg`} alt={c.t} loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
-                  <span className="absolute inset-x-3 bottom-3 flex items-center justify-center gap-1.5 rounded-xl bg-white py-2 text-xs font-bold text-black opacity-0 transition group-hover:opacity-100">
+                  <span className="absolute inset-x-3 bottom-3 flex items-center justify-center gap-1.5 rounded-xl bg-hueso py-2 text-xs font-bold text-cacao opacity-0 transition group-hover:opacity-100">
                     Recrear <ArrowRight size={13} />
                   </span>
                 </div>
@@ -201,18 +201,18 @@ export default async function PersonajesPage() {
       {/* Cómo funciona */}
       <section className="mx-auto mt-28 max-w-6xl px-4">
         <Reveal className="mb-8">
-          <p className="eyebrow !text-[#d4ff3a]">Cómo funciona</p>
-          <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">De una foto a un video en 3 pasos</h2>
+          <p className="eyebrow !text-ocre">Cómo funciona</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">De una foto a un video en 3 pasos</h2>
         </Reveal>
         <div className="grid gap-4 md:grid-cols-3">
           {PASOS.map(({ icon: Icon, n, t, d }, i) => (
             <Reveal key={n} delay={i * 110}>
               <div className="card h-full p-6">
                 <div className="flex items-center justify-between">
-                  <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#d4ff3a]/15 text-[#d4ff3a]">
+                  <span className="grid h-11 w-11 place-items-center rounded-xl bg-ocre/15 text-ocre">
                     <Icon size={20} />
                   </span>
-                  <span className="font-mono text-sm text-[#d4ff3a]">{n}</span>
+                  <span className="font-mono text-sm text-ocre">{n}</span>
                 </div>
                 <h3 className="mt-4 text-lg font-semibold">{t}</h3>
                 <p className="mt-1 text-sm text-mute">{d}</p>
@@ -228,7 +228,7 @@ export default async function PersonajesPage() {
           {FEATURES.map(({ icon: Icon, t, d }, i) => (
             <Reveal key={t} delay={i * 80}>
               <div className="card flex h-full gap-4 p-6">
-                <Icon size={22} className="mt-0.5 shrink-0 text-[#d4ff3a]" />
+                <Icon size={22} className="mt-0.5 shrink-0 text-ocre" />
                 <div>
                   <h3 className="font-semibold">{t}</h3>
                   <p className="mt-1 text-sm text-mute">{d}</p>
@@ -238,12 +238,12 @@ export default async function PersonajesPage() {
           ))}
         </div>
         <Reveal className="mt-4">
-          <Link href="/granjas" className="card flex flex-col gap-3 p-5 transition hover:border-[#d4ff3a]/50 sm:flex-row sm:items-center sm:justify-between">
+          <Link href="/granjas" className="card flex flex-col gap-3 p-5 transition hover:border-ocre/50 sm:flex-row sm:items-center sm:justify-between">
             <span>
               <span className="font-semibold">¿Manejas muchas cuentas?</span>
               <span className="block text-sm text-mute">Con Modo Granja multiplicas cada video en versiones únicas, una por cuenta.</span>
             </span>
-            <span className="flex items-center gap-1 text-sm text-[#d4ff3a]">
+            <span className="flex items-center gap-1 text-sm text-ocre">
               Ver Modo Granja <ArrowRight size={15} />
             </span>
           </Link>
@@ -253,15 +253,15 @@ export default async function PersonajesPage() {
       {/* Cierre */}
       <section className="mx-auto mb-8 mt-28 max-w-6xl px-4">
         <Reveal>
-          <div className="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-[#d4ff3a]/10 to-panel p-8 text-center sm:p-14">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-5xl">Dale vida a tu primer personaje hoy</h2>
+          <div className="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-ocre/10 to-panel p-8 text-center sm:p-14">
+            <h2 className="text-3xl font-black tracking-tight sm:text-5xl">Dale vida a tu primer personaje hoy</h2>
             <p className="mx-auto mt-3 max-w-xl text-mute">Créditos desde US${DESDE}. Pago seguro con Stripe, sin contratos.</p>
             <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-              <Link href={estudio} className="btn !bg-[#d4ff3a] !px-7 !py-3 text-base !text-black hover:!bg-[#e2ff6b]">
+              <Link href={estudio} className="btn !bg-ocre !px-7 !py-3 text-base !text-cacao hover:!bg-ocre-claro">
                 <Wand2 size={17} /> Crear mi personaje
               </Link>
               <Link href={recargar} className="btn-ghost !px-6 !py-3 text-base">
-                <Coins size={17} className="text-[#d4ff3a]" /> Recargar créditos
+                <Coins size={17} className="text-ocre" /> Recargar créditos
               </Link>
             </div>
           </div>

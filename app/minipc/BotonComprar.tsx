@@ -78,7 +78,7 @@ export default function BotonComprar({
         {cargando ? "Abriendo la reserva…" : etiqueta}
       </button>
       {error && (
-        <p role="alert" className="mt-2 text-sm text-red-400">
+        <p role="alert" className="mt-2 text-sm text-error">
           {error}
         </p>
       )}

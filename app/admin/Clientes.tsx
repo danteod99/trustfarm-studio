@@ -113,7 +113,7 @@ export default function Clientes({ onRegalar }: { onRegalar: (email: string) => 
       </div>
 
       {error && (
-        <p role="alert" className="mt-3 text-sm text-red-400">
+        <p role="alert" className="mt-3 text-sm text-error">
           {error}
         </p>
       )}

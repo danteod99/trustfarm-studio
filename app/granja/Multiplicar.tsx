@@ -344,7 +344,7 @@ export default function Multiplicar({ accounts, characters, goToAccounts }: { ac
                 <span className="truncate"><span className="text-brand-2">Base {i + 1}</span> · {b.file.name}</span>
                 <span className="flex shrink-0 items-center gap-3 text-xs text-mute">
                   {b.info.w}×{b.info.h} · {b.info.dur.toFixed(1)} s · {fmtMB(b.file.size)}
-                  {!running && <button onClick={() => setBases((p) => p.filter((_, k) => k !== i))} aria-label="Quitar" className="hover:text-red-400"><X size={15} /></button>}
+                  {!running && <button onClick={() => setBases((p) => p.filter((_, k) => k !== i))} aria-label="Quitar" className="hover:text-error"><X size={15} /></button>}
                 </span>
               </li>
             ))}
@@ -438,7 +438,7 @@ export default function Multiplicar({ accounts, characters, goToAccounts }: { ac
           )}
           <span className="text-xs text-mute">1 crédito cada 20 ganchos · o escríbelos tú gratis abajo <PenLine size={11} className="inline" /></span>
         </div>
-        {hookMsg && <p className="text-sm text-emerald-400">{hookMsg}</p>}
+        {hookMsg && <p className="text-sm text-ok">{hookMsg}</p>}
 
         {targets.length > 0 && (
           <div className="max-h-[520px] space-y-3 overflow-y-auto rounded-xl border border-line bg-panel-2 p-3">
@@ -470,14 +470,14 @@ export default function Multiplicar({ accounts, characters, goToAccounts }: { ac
         <StepTitle n={4} title="Crear videos" sub="Se hacen en tu computadora, uno por uno. Deja esta pestaña abierta hasta que termine." />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm">
-            {total} video{total === 1 ? "" : "s"} · <span className="font-semibold text-emerald-400">Render gratis</span>
+            {total} video{total === 1 ? "" : "s"} · <span className="font-semibold text-ok">Render gratis</span>
             {bases.length > 0 && total > 0 && <span className="text-mute"> · tiempo estimado ≈ {fmtTime(estimate)}</span>}
             {total > VIDEOS_POR_ZIP && <span className="text-mute"> · se entrega en {splitParts(buildPlan(targets.length, perAccount, 1), VIDEOS_POR_ZIP).length} ZIP de hasta {VIDEOS_POR_ZIP} videos</span>}
           </p>
           {!running ? (
             <button onClick={run} disabled={!bases.length || !total} className="btn-primary"><Sparkles size={16} /> Crear {total} video{total === 1 ? "" : "s"}</button>
           ) : (
-            <button onClick={() => { cancelRef.current = true; setStatus("Cancelando al terminar el video en curso…"); }} className="btn-ghost text-red-400"><X size={15} /> Cancelar</button>
+            <button onClick={() => { cancelRef.current = true; setStatus("Cancelando al terminar el video en curso…"); }} className="btn-ghost text-error"><X size={15} /> Cancelar</button>
           )}
         </div>
         {!bases.length && <p className="text-xs text-amber-300">Primero elige al menos un video base (paso 1).</p>}
@@ -500,7 +500,7 @@ export default function Multiplicar({ accounts, characters, goToAccounts }: { ac
 
         {zips.length > 0 && (
           <div className="space-y-2 border-t border-line pt-4">
-            {uniqueOk && <p className="flex items-center gap-2 text-sm text-emerald-400"><CheckCircle2 size={15} /> {uniqueOk}</p>}
+            {uniqueOk && <p className="flex items-center gap-2 text-sm text-ok"><CheckCircle2 size={15} /> {uniqueOk}</p>}
             {zips.map((z) => (
               <div key={z.name} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-panel-2 p-3 text-sm">
                 <span>{z.name} <span className="text-xs text-mute">· {z.accounts} cuenta{z.accounts === 1 ? "" : "s"} · {z.videos} video{z.videos === 1 ? "" : "s"} · {fmtMB(z.size)}</span></span>

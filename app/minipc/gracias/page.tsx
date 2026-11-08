@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function GraciasPage() {
   return (
     <div className="mx-auto max-w-xl px-4 py-20">
-      <h1 className="text-3xl font-bold tracking-tight">Tu equipo está reservado</h1>
+      <h1 className="text-3xl font-black tracking-tight">Tu equipo está reservado</h1>
       <p className="mt-4 text-mute">
         Recibimos tu reserva de ${RESERVA_USD}, que se descuenta del precio de tu plan. Te escribiremos por WhatsApp para
         coordinar el pago del saldo y la configuración de tu caja (rubro, catálogo y número de WhatsApp). Entrega

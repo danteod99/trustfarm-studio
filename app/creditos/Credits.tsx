@@ -95,7 +95,7 @@ export default function Credits() {
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Créditos</h1>
+          <h1 className="text-2xl font-black">Créditos</h1>
           <p className="mt-1 text-mute">Plan mensual o paquetes sueltos. Los créditos no vencen.</p>
         </div>
         <div className="card px-5 py-3 text-right">
@@ -105,12 +105,12 @@ export default function Credits() {
       </div>
 
       {paid && (
-        <p className="mt-6 flex items-center gap-2 rounded-xl bg-emerald-500/10 p-3 text-sm text-emerald-300">
+        <p className="mt-6 flex items-center gap-2 rounded-xl bg-turquesa/10 p-3 text-sm text-ok">
           <CheckCircle2 size={16} />{" "}
           {planOk ? "¡Bienvenido al plan mensual! Tus 260 créditos se acreditan en unos segundos." : "¡Pago recibido! Tus créditos se acreditan en unos segundos."}
         </p>
       )}
-      {error && <p className="mt-6 rounded-xl bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
+      {error && <p className="mt-6 rounded-xl bg-rosa/10 p-3 text-sm text-error">{error}</p>}
 
       {/* Plan mensual */}
       <div id="plan" className="card mt-8 grid scroll-mt-24 items-center gap-6 border-brand/60 bg-gradient-to-br from-brand/15 to-transparent p-6 sm:grid-cols-[1fr_auto]">
@@ -127,7 +127,7 @@ export default function Credits() {
             vencen · cancelas cuando quieras
           </p>
           {subActive && (
-            <p className="mt-3 flex items-center gap-2 text-sm text-emerald-300">
+            <p className="mt-3 flex items-center gap-2 text-sm text-ok">
               <CalendarClock size={15} />
               {sub!.cancelAtPeriodEnd
                 ? `Cancelado: sigue activo hasta el ${fecha(sub!.periodEnd)} y no se renueva.`
@@ -178,7 +178,7 @@ export default function Credits() {
                 <p>{reasonLabel(l.reason)}</p>
                 <p className="text-xs text-mute">{new Date(l.created_at).toLocaleString("es")}</p>
               </div>
-              <span className={l.delta > 0 ? "font-semibold text-emerald-400" : "text-mute"}>
+              <span className={l.delta > 0 ? "font-semibold text-ok" : "text-mute"}>
                 {l.delta > 0 ? "+" : ""}
                 {l.delta}
               </span>

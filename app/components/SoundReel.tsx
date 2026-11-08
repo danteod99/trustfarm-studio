@@ -50,9 +50,9 @@ export default function SoundReel({ items }: { items: (Showcase & { title: strin
             className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
           />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 pt-10">
-            <p className="text-sm font-bold text-white">{it.title}</p>
+            <p className="text-sm font-bold text-hueso">{it.title}</p>
           </div>
-          <span className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/60 text-white backdrop-blur">
+          <span className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/60 text-hueso backdrop-blur">
             {playing === i ? <Volume2 size={15} /> : <VolumeX size={15} />}
           </span>
         </button>

@@ -137,7 +137,7 @@ export default function SoporteAdmin() {
       <h2 className="font-semibold">Soporte</h2>
       <p className="mt-1 text-sm text-mute">Solo se entra a una caja con el permiso de su dueño, por el tiempo que él eligió. El tiempo empieza a correr al aceptar.</p>
 
-      {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+      {error && <p className="mt-3 text-sm text-error">{error}</p>}
 
       {comando && (
         <div className="mt-4 rounded-lg border border-line p-3">

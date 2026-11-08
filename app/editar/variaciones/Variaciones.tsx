@@ -235,7 +235,7 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
                 <span className="flex shrink-0 items-center gap-3 text-xs text-mute">
                   {fmtMB(f.size)}
                   {!running && (
-                    <button onClick={() => setFiles((p) => p.filter((x) => x.name !== f.name))} aria-label="Quitar" className="hover:text-red-400">
+                    <button onClick={() => setFiles((p) => p.filter((x) => x.name !== f.name))} aria-label="Quitar" className="hover:text-error">
                       <X size={15} />
                     </button>
                   )}
@@ -250,7 +250,7 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
             </label>
             <div className="mt-2 flex items-center gap-3">
               <input type="range" min={1} max={MAX_VARIATIONS} value={numVars} disabled={running}
-                onChange={(e) => setNumVars(parseInt(e.target.value))} className="w-full max-w-xs accent-cyan-400" />
+                onChange={(e) => setNumVars(parseInt(e.target.value))} className="w-full max-w-xs accent-ocre" />
               <input type="number" min={1} max={MAX_VARIATIONS} value={numVars} disabled={running}
                 onChange={(e) => setNumVars(Math.max(1, Math.min(MAX_VARIATIONS, parseInt(e.target.value) || 1)))}
                 className="input !w-20 text-center" />
@@ -267,8 +267,8 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
               </button>
             ) : (
               <>
-                <span className="max-w-[220px] truncate text-sm text-emerald-400">✓ {logo.name}</span>
-                {!running && <button onClick={() => setLogo(null)} className="text-mute hover:text-red-400" aria-label="Quitar logo"><X size={14} /></button>}
+                <span className="max-w-[220px] truncate text-sm text-ok">✓ {logo.name}</span>
+                {!running && <button onClick={() => setLogo(null)} className="text-mute hover:text-error" aria-label="Quitar logo"><X size={14} /></button>}
                 <div className="flex flex-wrap gap-1.5">
                   {(Object.keys(LOGO_POSITIONS) as LogoPos[]).map((k) => (
                     <button key={k} onClick={() => setLogoPos(k)} disabled={running} className={`chip ${logoPos === k ? "chip-on" : ""}`}>
@@ -282,7 +282,7 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
           </div>
 
           <label className="flex cursor-pointer items-start gap-3 border-t border-line pt-4">
-            <input type="checkbox" checked={subsOn} disabled={running} onChange={(e) => setSubsOn(e.target.checked)} className="mt-1 h-4 w-4 accent-cyan-400" />
+            <input type="checkbox" checked={subsOn} disabled={running} onChange={(e) => setSubsOn(e.target.checked)} className="mt-1 h-4 w-4 accent-ocre" />
             <span>
               <span className={`text-sm font-semibold ${subsOn ? "text-brand-2" : ""}`}>Subtítulos automáticos (IA)</span>
               <span className="block text-xs text-mute">
@@ -298,10 +298,10 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
                 <button onClick={pickFolder} disabled={running} className="btn-ghost !py-2 text-xs">
                   <FolderDown size={14} className="text-brand-2" /> {dir ? "Cambiar carpeta" : "Guardar directo en una carpeta"}
                 </button>
-                <span className={dir ? "text-emerald-400" : ""}>
+                <span className={dir ? "text-ok" : ""}>
                   {dir ? `✓ Se guardan en "${dir.name}"` : "Opcional: si no eliges, cada variación se descarga con su botón."}
                 </span>
-                {dir && !running && <button onClick={() => setDir(null)} className="hover:text-red-400" aria-label="Quitar carpeta"><X size={14} /></button>}
+                {dir && !running && <button onClick={() => setDir(null)} className="hover:text-error" aria-label="Quitar carpeta"><X size={14} /></button>}
               </>
             ) : (
               <span>Tu navegador no deja elegir carpeta (usa Chrome o Edge): las variaciones se descargan a Descargas.</span>
@@ -311,14 +311,14 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
             <p className="text-sm">
               {total} variacion{total === 1 ? "" : "es"} ·{" "}
-              {cost ? <span className="font-semibold text-brand-2">{cost} créditos</span> : <span className="font-semibold text-emerald-400">Gratis</span>}
+              {cost ? <span className="font-semibold text-brand-2">{cost} créditos</span> : <span className="font-semibold text-ok">Gratis</span>}
             </p>
             {!running ? (
               <button onClick={run} className="btn-primary">
                 <Copy size={16} /> Hacer {total} variacion{total === 1 ? "" : "es"}
               </button>
             ) : (
-              <button onClick={() => { cancelRef.current = true; setStatus("Cancelando al terminar la variación en curso…"); }} className="btn-ghost text-red-400">
+              <button onClick={() => { cancelRef.current = true; setStatus("Cancelando al terminar la variación en curso…"); }} className="btn-ghost text-error">
                 <X size={15} /> Cancelar
               </button>
             )}
@@ -350,7 +350,7 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
         <div className="card mt-4 p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <p className="flex items-center gap-2 font-semibold">
-              <CheckCircle2 size={17} className="text-emerald-400" /> {made} variaciones listas
+              <CheckCircle2 size={17} className="text-ok" /> {made} variaciones listas
             </p>
             <div className="flex gap-2">
               {results.some((v) => v.items.some((i) => i.url)) && (
@@ -370,7 +370,7 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
                       <span className="text-xs font-semibold">Versión {label ?? ""}</span>
                       <span className="flex items-center justify-between text-[11px] text-mute">
                         {it.size}
-                        {it.saved ? <CheckCircle2 size={13} className="text-emerald-400" /> : <Download size={13} className="text-brand-2" />}
+                        {it.saved ? <CheckCircle2 size={13} className="text-ok" /> : <Download size={13} className="text-brand-2" />}
                       </span>
                     </>
                   );

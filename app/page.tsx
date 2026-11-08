@@ -16,14 +16,10 @@ import {
 import { MODELS, PACKS, PLAN, creditCost } from "@/app/lib/catalog";
 import { BRAND } from "@/app/lib/brand";
 import { BRAINROT, MARQUEE, SHOW, type Showcase } from "@/app/lib/showcase";
-import ParticleGlobe from "@/app/components/ParticleGlobe";
 import Reveal from "@/app/components/Reveal";
 import Media from "@/app/components/Media";
 import SoundReel from "@/app/components/SoundReel";
-import LightRays from "@/app/components/fx/LightRays";
-import StarBorder from "@/app/components/fx/StarBorder";
-import ElectricBorder from "@/app/components/fx/ElectricBorder";
-import DecryptedText from "@/app/components/fx/DecryptedText";
+import Rombos from "@/app/components/Rombos";
 import { ideasPublicas } from "@/app/lib/ideas-servidor";
 
 function exampleCost(id: string) {
@@ -76,10 +72,9 @@ const FORMATS: { t: string; d: string; item: Showcase }[] = [
 function SectionHead({ eyebrow, title, sub }: { eyebrow: string; title: string; sub?: string }) {
   return (
     <Reveal className="mb-10">
-      <p className="eyebrow">
-        <DecryptedText text={eyebrow} animateOn="view" sequential speed={35} encryptedClassName="text-brand-2" />
-      </p>
-      <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">{title}</h2>
+      <Rombos n={3} size={7} className="mb-3 text-ocre" />
+      <p className="eyebrow">{eyebrow}</p>
+      <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">{title}</h2>
       {sub && <p className="mt-3 max-w-2xl text-mute">{sub}</p>}
     </Reveal>
   );
@@ -98,60 +93,64 @@ export default async function Home() {
   const IDEAS = await ideasPublicas();
   return (
     <div className="overflow-x-clip">
-      {/* Hero */}
-      <section className="relative">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[760px] opacity-70">
-          <LightRays raysOrigin="top-center" raysColor="#22d3ee" raysSpeed={0.8} lightSpread={0.9} rayLength={1.4} followMouse mouseInfluence={0.08} noiseAmount={0.05} distortion={0.04} />
-        </div>
-        <div className="pointer-events-none absolute right-[-12%] top-[-10%] h-[720px] w-[720px] opacity-70 max-lg:right-[-40%] max-lg:opacity-40">
-          <ParticleGlobe />
-        </div>
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-16 sm:pt-24 lg:grid-cols-[1.05fr_1fr]">
+      {/* Hero "Noche Yamore": resplandor cálido, arco con sol ocre y piso a cuadros (Karibu) */}
+      <section className="grano relative overflow-hidden bg-[radial-gradient(120%_90%_at_80%_0%,var(--color-brasa)_0%,var(--color-cacao)_58%)]">
+        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-14 sm:pt-20 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-brand/40 bg-brand/10 px-3 py-1 text-xs font-medium text-brand-2">
+            <Rombos className="text-ocre" />
+            <span className="mt-6 inline-flex items-center gap-2 rounded-full border border-brand/40 bg-brand/10 px-3 py-1 text-xs font-medium text-brand-2">
               <Sparkles size={13} /> Nuevo: videos con voz en español
             </span>
-            <h1 className="mt-6 text-4xl font-extrabold tracking-tight sm:text-6xl">
-              Imágenes y videos con IA, <span className="text-brand-2">en minutos</span>
+            <h1 className="mt-5 text-[2.6rem] font-black leading-[1.02] tracking-tight sm:text-6xl lg:text-[4.25rem]">
+              Imágenes y videos con IA, <em className="italic text-ocre">en minutos</em>
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-mute">
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-hueso/85">
               Escribe tu idea en español y obtén videos con voz, personajes que no cambian de cara y fotos de calidad de
               estudio para tus anuncios, redes y canales. Pagas solo por lo que generas.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <StarBorder as="a" href="/entrar?modo=registro" color="#22d3ee" backgroundColor="#3b82f6" textColor="#ffffff" radius={12} className="!text-base !font-semibold">
-                <span className="flex items-center gap-2 px-2">
-                  Empezar a crear <ArrowRight size={17} />
-                </span>
-              </StarBorder>
-              <Link href="/ideas" className="btn-ghost !px-6 !py-3 text-base">
+              <Link href="/entrar?modo=registro" className="btn-primary !px-7 !py-3.5 text-base">
+                Empezar a crear <ArrowRight size={17} />
+              </Link>
+              <Link href="/ideas" className="btn-ghost !px-7 !py-3.5 text-base">
                 Ver ideas
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-mute">
-              <span className="flex items-center gap-1.5"><Wand2 size={15} className="text-brand-2" /> {MODELS.filter((x) => !x.adminOnly).length} modelos de IA</span>
-              <span className="flex items-center gap-1.5"><Coins size={15} className="text-brand-2" /> Desde US$10, sin contratos</span>
-              <span className="flex items-center gap-1.5"><Languages size={15} className="text-brand-2" /> Todo en español</span>
+              <span className="flex items-center gap-1.5"><Wand2 size={15} className="text-ocre" /> {MODELS.filter((x) => !x.adminOnly).length} modelos de IA</span>
+              <span className="flex items-center gap-1.5"><Coins size={15} className="text-ocre" /> Desde US$10, sin contratos</span>
+              <span className="flex items-center gap-1.5"><Languages size={15} className="text-ocre" /> Todo en español</span>
             </div>
           </div>
 
-          {/* Composición de ejemplos reales */}
-          <div className="relative mx-auto h-[520px] w-full max-w-[460px] sm:h-[580px]">
-            <Frame item={SHOW.ltxCafe} priority className="absolute left-[18%] top-0 z-10 aspect-[9/16] w-[58%]" />
-            <Frame item={SHOW.fresa} className="animate-float absolute bottom-6 left-0 aspect-[9/16] w-[38%] -rotate-6" />
+          {/* Arco con sol y piso a cuadros, con ejemplos reales encima */}
+          <div className="relative mx-auto w-full max-w-[440px] pb-6">
+            <div
+              className="grano relative mx-auto aspect-[4/5] w-[84%] overflow-hidden rounded-b-[18px] rounded-t-[240px] border border-ocre/25"
+              style={{ background: "linear-gradient(180deg, var(--color-brasa) 0, var(--color-terracota) 55%, var(--color-cacao-2) 55%)" }}
+            >
+              <div className="absolute inset-x-0 top-[6%] flex justify-center">
+                <div className="animate-latido h-28 w-28 rounded-full bg-ocre shadow-[0_0_80px_10px_color-mix(in_srgb,var(--color-ocre)_50%,transparent)] sm:h-32 sm:w-32" />
+              </div>
+              <div className="absolute inset-x-0 bottom-[46%] h-[38%] bg-[repeating-linear-gradient(0deg,transparent_0_14px,rgb(0_0_0/0.14)_14px_16px)]" />
+              <div className="piso-cuadros absolute -inset-x-[30%] -bottom-[6%] h-[46%]" />
+              <Frame item={SHOW.ltxCafe} priority className="absolute bottom-[9%] left-1/2 z-10 aspect-[9/16] w-[40%] -translate-x-1/2 !border-ocre/40" />
+            </div>
+            <Frame item={SHOW.fresa} className="animate-float absolute bottom-16 left-0 z-20 aspect-[9/16] w-[30%] -rotate-6" />
             <Frame
               item={SHOW.ltxGranja}
-              className="animate-float absolute right-0 top-16 aspect-[9/16] w-[38%] rotate-6 [animation-delay:-3s]"
+              className="animate-float absolute right-0 top-[18%] z-20 aspect-[9/16] w-[30%] rotate-6 [animation-delay:-3s]"
             />
-            <div className="absolute bottom-0 right-4 z-20 flex items-center gap-2 rounded-xl border border-line bg-panel/90 px-3 py-2 text-xs backdrop-blur">
-              <AudioLines size={15} className="text-brand-2" />
+            <div className="absolute bottom-0 left-1/2 z-30 flex w-max max-w-[92%] -translate-x-1/2 items-center gap-2.5 rounded-2xl border border-ocre/35 bg-cacao/80 px-4 py-2.5 text-xs backdrop-blur-md">
+              <AudioLines size={16} className="shrink-0 text-ocre" />
               <span>
-                «Hoy les traigo el mejor café de Miraflores»
+                <span className="mano block text-[15px] leading-tight text-ocre-claro">«Hoy les traigo el mejor café de Miraflores»</span>
                 <span className="block text-mute">Video con voz generado con IA</span>
               </span>
             </div>
           </div>
         </div>
+        <Rombos n={14} size={7} className="absolute bottom-3 left-1/2 -translate-x-1/2 text-ocre/40" />
       </section>
 
       {/* Cinta de ejemplos */}
@@ -173,7 +172,7 @@ export default async function Home() {
         <Reveal>
           <Link
             href="/granjas"
-            className="card group grid items-center gap-6 overflow-hidden bg-gradient-to-br from-brand/15 to-panel p-6 transition hover:border-brand/60 sm:grid-cols-[auto_1fr_auto] sm:p-8"
+            className="card grano group grid items-center gap-6 overflow-hidden bg-gradient-to-br from-terracota/40 via-panel to-panel p-6 transition hover:border-brand/60 sm:grid-cols-[auto_1fr_auto] sm:p-8"
           >
             <div className="flex -space-x-6">
               {["/showcase/granja-iphones.jpg", "/showcase/ltx-granja.jpg", "/showcase/idea-estudio-40-iphones.jpg"].map((src, i) => (
@@ -184,7 +183,7 @@ export default async function Home() {
             </div>
             <div>
               <p className="eyebrow !text-brand-2">Nuevo · Modo Granja</p>
-              <h2 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Un video distinto para cada cuenta de tu granja</h2>
+              <h2 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">Un video distinto para cada cuenta de tu granja</h2>
               <p className="mt-2 text-sm text-mute">
                 Generas 1 a 5 videos y salen 100 versiones únicas, cada una con su propio gancho. Descarga por carpeta de cuenta.
               </p>
@@ -215,7 +214,7 @@ export default async function Home() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-4">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-2">{i.category}</p>
-                  <p className="mt-0.5 font-semibold text-white">{i.title}</p>
+                  <p className="mt-0.5 font-semibold text-hueso">{i.title}</p>
                 </div>
               </Link>
             </Reveal>
@@ -273,7 +272,7 @@ export default async function Home() {
         <div className="card grid items-center gap-10 overflow-hidden p-6 sm:p-10 lg:grid-cols-2">
           <Reveal>
             <p className="eyebrow">Personajes</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight">El mismo personaje en todas las escenas</h2>
+            <h2 className="mt-2 text-3xl font-black tracking-tight">El mismo personaje en todas las escenas</h2>
             <p className="mt-3 text-mute">
               Guarda tu personaje una vez —una fruta, una modelo, un narrador— y úsalo en cada imagen y video. Misma cara,
               misma ropa, capítulo tras capítulo.
@@ -316,7 +315,7 @@ export default async function Home() {
           </Reveal>
           <Reveal delay={150} className="lg:order-2">
             <p className="eyebrow">Texto perfecto</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight">Afiches y carteles con el texto bien escrito</h2>
+            <h2 className="mt-2 text-3xl font-black tracking-tight">Afiches y carteles con el texto bien escrito</h2>
             <p className="mt-3 text-mute">
               Trust Foto Pro escribe en la imagen exactamente lo que le pides: el nombre de tu negocio, una promoción o un
               letrero dentro de la escena. Sin letras inventadas.
@@ -339,16 +338,19 @@ export default async function Home() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {MODELS.filter((x) => !x.adminOnly).map((m, i) => (
             <Reveal key={m.publicId} delay={(i % 3) * 80}>
-              <div className="card flex h-full flex-col p-5 transition hover:-translate-y-0.5 hover:border-brand/50">
+              <div
+                className={`card grano flex h-full flex-col p-5 transition hover:-translate-y-0.5 hover:border-brand/60 ${
+                  m.kind === "video" ? "bg-gradient-to-br from-terracota/30 to-panel" : "border-ocre/25 bg-cacao-2"
+                }`}
+              >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-mute">
+                  <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-mute">
+                    <Rombos n={3} size={6} className={m.kind === "video" ? "text-durazno" : "text-ocre"} />
                     {m.kind === "video" ? "Video" : "Imagen"}
                   </span>
-                  {m.badge && (
-                    <span className="rounded-full bg-brand/15 px-2 py-0.5 text-xs font-medium text-brand-2">{m.badge}</span>
-                  )}
+                  {m.badge && <span className="mano text-base leading-none text-ocre-claro">{m.badge}</span>}
                 </div>
-                <h3 className="mt-2 text-lg font-semibold">{m.name}</h3>
+                <h3 className="mt-3 text-xl font-black">{m.name}</h3>
                 <p className="mt-1 flex-1 text-sm text-mute">{m.tagline}</p>
                 <p className="mt-4 text-sm font-medium text-ink">{exampleCost(m.id)}</p>
               </div>
@@ -377,7 +379,7 @@ export default async function Home() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/70 to-transparent" />
                 <div className="relative flex h-full flex-col justify-end p-6">
-                  <span className="font-mono text-sm text-brand-2">{s.n}</span>
+                  <span className="font-display text-2xl font-black italic text-ocre">{s.n}</span>
                   <h3 className="mt-1 text-xl font-semibold">{s.t}</h3>
                   <p className="mt-1 text-sm text-mute">{s.d}</p>
                 </div>
@@ -395,8 +397,7 @@ export default async function Home() {
           sub="Plan mensual con más créditos o paquetes sueltos. En dólares, los créditos no vencen."
         />
         <Reveal className="mb-6">
-          <ElectricBorder color="#22d3ee" speed={0.8} chaos={0.4} thickness={2} borderRadius={16}>
-          <div className="card grid items-center gap-6 border-transparent bg-gradient-to-br from-brand/15 to-panel p-6 sm:grid-cols-[1fr_auto] sm:p-8">
+          <div className="card grano resplandor grid items-center gap-6 border-ocre/50 bg-gradient-to-br from-ocre/15 via-cacao-2 to-panel p-6 sm:grid-cols-[1fr_auto] sm:p-8">
             <div>
               <p className="eyebrow !text-brand-2">{PLAN.name} · el que más rinde</p>
               <p className="mt-2 text-4xl font-extrabold">
@@ -412,14 +413,13 @@ export default async function Home() {
               Suscribirme <ArrowRight size={17} />
             </Link>
           </div>
-          </ElectricBorder>
         </Reveal>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {PACKS.map((p, i) => (
             <Reveal key={p.id} delay={i * 80}>
               <div className={`card relative flex h-full flex-col p-6 ${p.popular ? "border-brand shadow-lg shadow-brand/20" : ""}`}>
                 {p.popular && (
-                  <span className="absolute -top-3 left-6 rounded-full bg-brand px-3 py-0.5 text-xs font-semibold text-white">
+                  <span className="absolute -top-3 left-6 rounded-full bg-brand px-3 py-0.5 text-xs font-semibold text-on-brand">
                     Más elegido
                   </span>
                 )}
@@ -468,7 +468,7 @@ export default async function Home() {
             <Image src={SHOW.machu.src} alt="" fill sizes="100vw" className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/85 to-bg/30" />
             <div className="relative max-w-xl p-8 sm:p-14">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Tu próxima idea, en video</h2>
+              <h2 className="text-3xl font-black tracking-tight sm:text-4xl">Tu próxima idea, en video</h2>
               <p className="mt-3 text-mute">
                 Crea tu cuenta gratis, recarga desde US$10 y empieza a generar con {BRAND.name}. Esta imagen de Machu
                 Picchu también la hizo la IA.

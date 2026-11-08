@@ -13,7 +13,7 @@ export default function ToolHeader({ icon, title, subtitle }: { icon: React.Reac
           {icon}
         </div>
         <div>
-          <h1 className="text-2xl font-bold">{title}</h1>
+          <h1 className="text-2xl font-black">{title}</h1>
           <p className="mt-1 text-sm text-mute">{subtitle}</p>
         </div>
       </div>
@@ -25,7 +25,7 @@ export default function ToolHeader({ icon, title, subtitle }: { icon: React.Reac
 export function ErrorBox({ msg, onClose }: { msg: string; onClose?: () => void }) {
   const credits = /cr[eé]ditos insuficientes/i.test(msg);
   return (
-    <div className="card flex items-start gap-3 border-red-500/50 bg-red-500/5 p-4 text-sm text-red-300">
+    <div className="card flex items-start gap-3 border-rosa/50 bg-rosa/5 p-4 text-sm text-error">
       <span className="flex-1">
         {msg}{" "}
         {credits && (

@@ -70,7 +70,7 @@ function Seccion({
     <section id={id} aria-labelledby={id ? `${id}-t` : undefined} className="mx-auto max-w-6xl scroll-mt-20 px-4 py-14">
       <Reveal className="mb-8">
         <p className="eyebrow">{eyebrow}</p>
-        <h2 id={id ? `${id}-t` : undefined} className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+        <h2 id={id ? `${id}-t` : undefined} className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
           {titulo}
         </h2>
         {sub && <p className="mt-3 max-w-2xl text-mute">{sub}</p>}
@@ -96,7 +96,7 @@ export default function MinipcPage() {
       <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-8 pt-12 lg:grid-cols-2 lg:pt-20">
         <div>
           <p className="eyebrow">Catálogo 2026 · Inteligencia artificial</p>
-          <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">TRUST Assistant</h1>
+          <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">TRUST Assistant</h1>
           <p className="mt-4 text-xl text-ink sm:text-2xl">{PROMESA}</p>
           <p className="mt-4 text-mute">Vende · toma pedidos · agenda citas · edita tus videos.</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -384,7 +384,7 @@ export default function MinipcPage() {
             className="h-auto w-full"
           />
           <div className="p-6">
-            <h2 id="contacto-t" className="text-3xl font-bold tracking-tight">
+            <h2 id="contacto-t" className="text-3xl font-black tracking-tight">
               Quiero mi asistente
             </h2>
             <p className="mt-3 text-mute">

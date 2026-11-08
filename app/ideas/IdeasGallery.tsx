@@ -7,10 +7,8 @@ import { AudioLines, Clapperboard, ImageIcon, Sparkles, Wand2 } from "lucide-rea
 import { IDEA_CATEGORIES } from "@/app/lib/ideas-categorias";
 import type { Idea } from "@/app/lib/ideas";
 import { creditCost, getModel } from "@/app/lib/catalog";
-import Aurora from "@/app/components/fx/Aurora";
-import DecryptedText from "@/app/components/fx/DecryptedText";
-import SpotlightCard from "@/app/components/fx/SpotlightCard";
 import Reveal from "@/app/components/Reveal";
+import Rombos from "@/app/components/Rombos";
 
 function cost(i: Idea) {
   const m = getModel(i.model);
@@ -22,11 +20,11 @@ function IdeaCard({ idea }: { idea: Idea }) {
   const c = cost(idea);
   const voice = idea.kind === "video" && idea.model === "ltx-25";
   return (
-    <SpotlightCard spotlightColor="rgba(34, 211, 238, 0.22)" className="group flex h-full flex-col overflow-hidden !rounded-2xl !p-0">
+    <div className="card group flex h-full flex-col overflow-hidden transition hover:-translate-y-0.5 hover:border-brand/60">
       <div className="relative aspect-[4/5] overflow-hidden bg-panel-2">
         {!idea.image ? (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand/30 via-panel-2 to-brand-2/20 p-6 text-center">
-            <span className="text-sm font-semibold text-white/80">{idea.title}</span>
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-terracota/50 via-panel-2 to-ocre/25 p-6 text-center">
+            <span className="text-sm font-semibold text-hueso">{idea.title}</span>
           </div>
         ) : idea.video ? (
           <video src={idea.video} poster={idea.image} autoPlay muted loop playsInline preload="metadata" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
@@ -62,7 +60,7 @@ function IdeaCard({ idea }: { idea: Idea }) {
           </Link>
         </div>
       </div>
-    </SpotlightCard>
+    </div>
   );
 }
 
@@ -84,15 +82,18 @@ export default function IdeasGallery({ ideas }: { ideas: Idea[] }) {
   return (
     <div>
       <section className="relative overflow-hidden border-b border-line">
-        <div className="pointer-events-none absolute inset-0 opacity-60">
-          <Aurora colorStops={["#3b82f6", "#22d3ee", "#7c3aed"]} amplitude={1.1} blend={0.6} speed={0.6} />
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute left-1/2 top-[-140px] h-72 w-72 -translate-x-1/2 rounded-full bg-ocre/35 blur-3xl" />
+          <div className="absolute -left-20 bottom-0 h-56 w-56 rounded-full bg-terracota/25 blur-3xl" />
+          <div className="absolute -right-16 top-10 h-48 w-48 rounded-full bg-turquesa/20 blur-3xl" />
         </div>
         <div className="relative mx-auto max-w-6xl px-4 pb-14 pt-20 text-center sm:pt-24">
+          <Rombos className="mx-auto mb-6 w-max text-ocre" />
           <span className="inline-flex items-center gap-2 rounded-full border border-brand/40 bg-bg/60 px-3 py-1 text-xs font-medium text-brand-2 backdrop-blur">
             <Sparkles size={13} /> {ideas.length} ideas listas para generar
           </span>
-          <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-extrabold tracking-tight sm:text-6xl">
-            <DecryptedText text="¿Qué creamos hoy?" animateOn="view" sequential revealDirection="start" speed={45} encryptedClassName="text-brand-2" />
+          <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-black tracking-tight sm:text-6xl">
+            ¿Qué creamos <em className="italic text-ocre">hoy</em>?
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-mute">
             Elige una idea, tócala y se abre el estudio con todo listo: modelo, formato y prompt. Solo cambias lo que quieras y

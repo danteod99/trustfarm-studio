@@ -24,9 +24,7 @@ import { PACKS, PLAN, creditCost, getModel } from "@/app/lib/catalog";
 import { BRAND } from "@/app/lib/brand";
 import { getUser } from "@/app/lib/auth";
 import Reveal from "@/app/components/Reveal";
-import LightRays from "@/app/components/fx/LightRays";
-import StarBorder from "@/app/components/fx/StarBorder";
-import DecryptedText from "@/app/components/fx/DecryptedText";
+import Rombos from "@/app/components/Rombos";
 import MultiplicarDemo from "./MultiplicarDemo";
 import { EventoAlVer } from "@/app/components/PixelStudio";
 
@@ -143,10 +141,9 @@ const FAQ = [
 function SectionHead({ eyebrow, title, sub }: { eyebrow: string; title: string; sub?: string }) {
   return (
     <Reveal className="mb-10">
-      <p className="eyebrow">
-        <DecryptedText text={eyebrow} animateOn="view" sequential speed={35} encryptedClassName="text-brand-2" />
-      </p>
-      <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">{title}</h2>
+      <Rombos n={3} size={7} className="mb-3 text-ocre" />
+      <p className="eyebrow">{eyebrow}</p>
+      <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">{title}</h2>
       {sub && <p className="mt-3 max-w-2xl text-mute">{sub}</p>}
     </Reveal>
   );
@@ -164,27 +161,26 @@ export default async function GranjasPage() {
       <EventoAlVer evento="ViewContent" datos={{ content_name: "Modo Granja" }} />
       {/* Hero */}
       <section className="relative">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[760px] opacity-70">
-          <LightRays raysOrigin="top-center" raysColor="#22d3ee" raysSpeed={0.8} lightSpread={0.9} rayLength={1.4} followMouse mouseInfluence={0.08} noiseAmount={0.05} distortion={0.04} />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[760px] overflow-hidden">
+          <div className="absolute right-[10%] top-[-120px] h-96 w-96 rounded-full bg-ocre/25 blur-3xl" />
+          <div className="absolute -left-24 top-40 h-72 w-72 rounded-full bg-terracota/20 blur-3xl" />
         </div>
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-16 sm:pt-24 lg:grid-cols-[1.1fr_1fr]">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-brand/40 bg-brand/10 px-3 py-1 text-xs font-medium text-brand-2">
               <Sparkles size={13} /> Nuevo: Modo Granja
             </span>
-            <h1 className="mt-6 text-4xl font-extrabold tracking-tight sm:text-6xl">
-              Un video distinto para <span className="text-brand-2">cada cuenta</span> de tu granja
+            <h1 className="mt-6 text-4xl font-black tracking-tight sm:text-6xl">
+              Un video distinto para <em className="italic text-ocre">cada cuenta</em> de tu granja
             </h1>
             <p className="mt-5 max-w-xl text-lg text-mute">
               Otros generadores te hacen un video. {BRAND.short} te hace 100 videos distintos, uno para cada cuenta de tu
               granja, todos los días.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <StarBorder as="a" href={suscribir} color="#22d3ee" backgroundColor="#3b82f6" textColor="#ffffff" radius={12} className="!text-base !font-semibold">
-                <span className="flex items-center justify-center gap-2 px-2">
-                  <Repeat size={17} /> {textoSuscribir}
-                </span>
-              </StarBorder>
+              <Link href={suscribir} className="btn-primary !px-7 !py-3 text-base">
+                <Repeat size={17} /> {textoSuscribir}
+              </Link>
               <Link href={recargar} className="btn-ghost !px-6 !py-3 text-base">
                 <Coins size={17} className="text-brand-2" /> Recargar créditos
               </Link>
@@ -295,7 +291,7 @@ export default async function GranjasPage() {
         <div className="card grid items-center gap-8 overflow-hidden p-6 sm:p-10 lg:grid-cols-2">
           <Reveal>
             <p className="eyebrow">Mis cuentas</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight">Cada cuenta con su propia cara</h2>
+            <h2 className="mt-2 text-3xl font-black tracking-tight">Cada cuenta con su propia cara</h2>
             <p className="mt-3 text-mute">
               Registra las cuentas de tu granja y fija un personaje IA a cada una. Sus videos siempre muestran a la misma
               persona: cada cuenta con su identidad y su estilo propios.
@@ -465,7 +461,7 @@ export default async function GranjasPage() {
             <Image src="/showcase/idea-estudio-40-iphones.jpg" alt="" fill sizes="100vw" className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/85 to-bg/40" />
             <div className="relative max-w-xl p-8 sm:p-14">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Que cada cuenta publique algo distinto hoy</h2>
+              <h2 className="text-3xl font-black tracking-tight sm:text-4xl">Que cada cuenta publique algo distinto hoy</h2>
               <p className="mt-3 text-mute">
                 Suscríbete o recarga créditos, genera tus videos base y multiplícalos para toda tu granja.
               </p>

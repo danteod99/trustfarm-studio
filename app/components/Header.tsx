@@ -12,22 +12,22 @@ export default async function Header() {
   const balance = user ? await getBalance(user.id) : 0;
   const minipcVisible = paginaVisible({ NEXT_PUBLIC_MINIPC_VISIBLE: process.env.NEXT_PUBLIC_MINIPC_VISIBLE });
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-bg/85 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
+    <header className="sticky top-0 z-30 border-b border-line/80 bg-cacao/85 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-4">
         <Logo />
-        <nav className="flex items-center gap-1 text-sm sm:gap-2">
+        <nav className="flex items-center gap-0.5 text-sm sm:gap-2">
           <Link href="/ideas" aria-label="Ideas" className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-mute hover:text-ink sm:px-3">
-            <Lightbulb size={15} className="text-brand-2" /> <span className="hidden sm:inline">Ideas</span>
+            <Lightbulb size={15} className="text-ocre" /> <span className="hidden sm:inline">Ideas</span>
           </Link>
           <Link href="/granjas" className="hidden rounded-lg px-3 py-2 text-mute hover:text-ink lg:block">
             Granjas
           </Link>
           {user ? (
             <>
-              {/* Resaltado en azul claro: es la sección principal. */}
+              {/* Resaltado en ocre: es la sección principal. */}
               <Link
                 href="/estudio"
-                className="hidden rounded-lg border border-sky-400/40 bg-sky-400/15 px-3 py-1.5 font-semibold text-sky-300 shadow-[0_0_12px_rgba(56,189,248,0.25)] transition hover:bg-sky-400/25 hover:text-sky-200 lg:block"
+                className="hidden rounded-full border border-ocre/50 bg-ocre/15 px-3.5 py-1.5 font-semibold text-ocre-claro transition hover:bg-ocre/25 hover:text-hueso lg:block"
               >
                 Estudio
               </Link>
@@ -61,7 +61,7 @@ export default async function Header() {
                 <summary aria-label="Mi cuenta" className="flex cursor-pointer list-none items-center rounded-lg p-2 text-mute hover:text-ink [&::-webkit-details-marker]:hidden">
                   <CircleUserRound size={20} />
                 </summary>
-                <div className="absolute right-0 top-full mt-2 flex w-60 flex-col rounded-xl border border-line bg-panel p-1.5 shadow-xl">
+                <div className="absolute right-0 top-full mt-2 flex w-60 flex-col rounded-xl border border-line bg-panel p-1.5 shadow-xl shadow-black/40">
                   <p className="truncate px-3 py-2 text-xs text-mute">{user.email}</p>
                   {[
                     { href: "/cuenta", label: "Mi cuenta", Icono: Settings },
@@ -85,7 +85,7 @@ export default async function Header() {
                 <summary aria-label="Menú" className="flex cursor-pointer list-none items-center rounded-lg p-2 text-mute hover:text-ink [&::-webkit-details-marker]:hidden">
                   <Menu size={18} />
                 </summary>
-                <div className="absolute right-0 top-full mt-2 flex w-48 flex-col rounded-xl border border-line bg-panel p-1.5 shadow-xl">
+                <div className="absolute right-0 top-full mt-2 flex w-48 flex-col rounded-xl border border-line bg-panel p-1.5 shadow-xl shadow-black/40">
                   {[
                     ["/estudio", "Estudio"],
                     ["/galeria", "Galería"],
@@ -102,7 +102,7 @@ export default async function Header() {
                       href={href}
                       className={
                         href === "/estudio"
-                          ? "rounded-lg bg-sky-400/15 px-3 py-2 font-semibold text-sky-300 hover:bg-sky-400/25"
+                          ? "rounded-lg bg-ocre/15 px-3 py-2 font-semibold text-ocre-claro hover:bg-ocre/25"
                           : "rounded-lg px-3 py-2 text-mute hover:bg-panel-2 hover:text-ink"
                       }
                     >
@@ -125,7 +125,7 @@ export default async function Header() {
               <Link href="/entrar" className="rounded-lg px-2 py-2 text-mute hover:text-ink sm:px-3">
                 Entrar
               </Link>
-              <Link href="/entrar?modo=registro" className="btn-primary !py-2">
+              <Link href="/entrar?modo=registro" className="btn-primary whitespace-nowrap !px-3.5 !py-2 sm:!px-5">
                 Crear cuenta
               </Link>
             </>

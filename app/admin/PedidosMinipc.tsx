@@ -17,12 +17,12 @@ const ETIQUETA: Record<EstadoPedido, string> = {
 };
 
 const COLOR: Record<EstadoPedido, string> = {
-  pagado: "bg-sky-500/15 text-sky-300",
-  revisar: "bg-red-500/15 text-red-400",
+  pagado: "bg-ocre/15 text-ocre-claro",
+  revisar: "bg-rosa/15 text-error",
   enviado: "bg-amber-500/15 text-amber-300",
-  entregado: "bg-emerald-500/15 text-emerald-300",
-  reembolsado: "bg-zinc-500/20 text-zinc-300",
-  cancelado: "bg-zinc-500/20 text-zinc-400",
+  entregado: "bg-turquesa/15 text-ok",
+  reembolsado: "bg-arena/20 text-mute",
+  cancelado: "bg-arena/20 text-mute",
 };
 
 type Accion = "enviado" | "entregado" | "cancelado" | "reembolsado";
@@ -119,7 +119,7 @@ export default function PedidosMinipc() {
       <h2 className="font-semibold">Pedidos de la mini PC</h2>
       <p className="mt-1 text-sm text-mute">Los pedidos en rojo (Revisar) llegaron con datos que no cuadran: míralos antes de enviar.</p>
 
-      {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+      {error && <p className="mt-3 text-sm text-error">{error}</p>}
       {inicial && cargando && <p className="mt-3 text-sm text-mute">Cargando…</p>}
       {!inicial && !error && pedidos.length === 0 && <p className="mt-3 text-sm text-mute">Todavía no hay pedidos.</p>}
 
@@ -129,7 +129,7 @@ export default function PedidosMinipc() {
           const confirma = confirmando?.id === p.id ? confirmando.estado : null;
           const ocupado = guardando === p.id;
           return (
-            <li key={p.id} className={`rounded-xl border p-4 text-sm ${p.estado === "revisar" ? "border-red-500/50" : "border-line"}`}>
+            <li key={p.id} className={`rounded-xl border p-4 text-sm ${p.estado === "revisar" ? "border-rosa/50" : "border-line"}`}>
               <div className="flex flex-wrap items-center gap-3">
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${COLOR[p.estado]}`}>{ETIQUETA[p.estado]}</span>
                 <span className="font-medium">{p.plan_id ?? "Plan desconocido"}</span>
@@ -146,7 +146,7 @@ export default function PedidosMinipc() {
               </div>
 
               {p.estado === "revisar" && (
-                <p className="mt-2 rounded-lg bg-red-500/10 px-3 py-2 text-red-300">Motivo: {p.nota_revision || "sin detalle"}</p>
+                <p className="mt-2 rounded-lg bg-rosa/10 px-3 py-2 text-error">Motivo: {p.nota_revision || "sin detalle"}</p>
               )}
 
               <dl className="mt-3 grid gap-x-6 gap-y-1 sm:grid-cols-2">
@@ -218,7 +218,7 @@ export default function PedidosMinipc() {
                 </div>
               )}
 
-              {errorFila?.id === p.id && <p className="mt-2 text-red-400">{errorFila.msg}</p>}
+              {errorFila?.id === p.id && <p className="mt-2 text-error">{errorFila.msg}</p>}
             </li>
           );
         })}

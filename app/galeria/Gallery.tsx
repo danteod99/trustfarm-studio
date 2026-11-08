@@ -128,7 +128,7 @@ export default function Gallery() {
                 >
                   <span
                     className={`absolute left-3 top-3 grid h-9 w-9 place-items-center rounded-full border-2 text-base font-bold tabular-nums shadow-lg ${
-                      n > 0 ? "border-brand-2 bg-brand text-white" : "border-white/70 bg-black/40"
+                      n > 0 ? "border-brand-2 bg-brand text-on-brand" : "border-white/70 bg-black/40"
                     }`}
                   >
                     {n > 0 ? n : ""}
@@ -264,7 +264,7 @@ export default function Gallery() {
                   <button
                     onClick={() => cambiar(seleccion!.filter((id) => id !== g.id))}
                     disabled={uniendo}
-                    className="rounded-md p-1.5 text-mute hover:text-red-300 disabled:opacity-30"
+                    className="rounded-md p-1.5 text-mute hover:text-error disabled:opacity-30"
                     aria-label="Quitar"
                     title="Quitar"
                   >
@@ -311,7 +311,7 @@ export default function Gallery() {
   return (
     <div className={`mx-auto px-4 py-8 ${seleccion ? "max-w-7xl" : "max-w-6xl"}`}>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Galería</h1>
+        <h1 className="text-2xl font-black">Galería</h1>
         <div className="flex flex-wrap items-center gap-2">
           {FILTERS.map((f) => (
             <button

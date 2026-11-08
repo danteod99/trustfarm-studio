@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { BRAND } from "@/app/lib/brand";
 import { paginaVisible } from "@/app/lib/minipc";
+import Rombos from "@/app/components/Rombos";
 
 export default function Footer() {
   const minipcVisible = paginaVisible({ NEXT_PUBLIC_MINIPC_VISIBLE: process.env.NEXT_PUBLIC_MINIPC_VISIBLE });
   return (
     <footer className="mt-24 border-t border-line">
+      <Rombos n={12} size={7} className="mx-auto -mt-[5px] w-max text-ocre/70" />
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 text-sm text-mute sm:flex-row sm:items-center sm:justify-between">
         <p>
           © {new Date().getFullYear()} {BRAND.legalEntity}. Todos los derechos reservados.

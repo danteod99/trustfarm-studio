@@ -138,7 +138,7 @@ export default function Cuentas({ accounts, characters, disabled, onChange, relo
             {saving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
             Guardar {nuevas.length ? Math.min(nuevas.length, Math.max(0, room)) : ""} cuenta{nuevas.length === 1 ? "" : "s"}
           </button>
-          {msg && <span className="text-sm text-emerald-400">✓ {msg}</span>}
+          {msg && <span className="text-sm text-ok">✓ {msg}</span>}
         </div>
       </div>
 
@@ -199,7 +199,7 @@ export default function Cuentas({ accounts, characters, disabled, onChange, relo
                       />
                     </td>
                     <td className="py-2 text-right">
-                      <button onClick={() => remove(a)} disabled={busy === a.id} aria-label={`Borrar @${a.handle}`} className="p-1 text-mute hover:text-red-400">
+                      <button onClick={() => remove(a)} disabled={busy === a.id} aria-label={`Borrar @${a.handle}`} className="p-1 text-mute hover:text-error">
                         {busy === a.id ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
                       </button>
                     </td>

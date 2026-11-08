@@ -44,7 +44,7 @@ export default function Granja() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <p className="eyebrow">Contenido para cada cuenta</p>
-      <h1 className="mt-2 text-3xl font-bold sm:text-4xl">Modo Granja</h1>
+      <h1 className="mt-2 text-3xl font-black sm:text-4xl">Modo Granja</h1>
       <p className="mt-2 max-w-2xl text-mute">
         Convierte de 1 a 5 videos en un video distinto para cada cuenta de tu granja: otro gancho arriba, otro color, otro encuadre y otra velocidad.
         Los videos se hacen en tu computadora (gratis); solo los ganchos con IA cuestan créditos.
@@ -73,7 +73,7 @@ export default function Granja() {
           Mientras tanto puedes usar Multiplicar con nombres genéricos (cuenta-001, cuenta-002…).
         </div>
       )}
-      {loadError && <div className="card mt-5 border-red-500/50 bg-red-500/5 p-4 text-sm text-red-300">{loadError}</div>}
+      {loadError && <div className="card mt-5 border-rosa/50 bg-rosa/5 p-4 text-sm text-error">{loadError}</div>}
 
       <div className="mt-6">
         {tab === "cuentas" && (
