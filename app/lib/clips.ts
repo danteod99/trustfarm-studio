@@ -19,6 +19,7 @@ export interface ClipResult {
 }
 export interface JobResult {
   clips: ClipResult[]; publication_order: number[]; selection_mode: string | null; failed: number[]; warning?: string | null;
+  video_info?: { tipo: string; tipo_es: string; webcam: boolean; descripcion: string; diseno: string } | null;
 }
 
 /** Cobro guardado en options.cobro de un trabajo de TrustFarm. */

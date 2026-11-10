@@ -26,7 +26,7 @@ const TOOLS = [
     href: "/editar/clips",
     icon: <Clapperboard size={20} />,
     title: "Multiclipping",
-    text: "Sube un video largo (podcast, clase, en vivo) y la IA saca los mejores momentos en clips verticales con subtítulos, listos para publicar.",
+    text: "Sube un video largo o pega un link de YouTube (podcast, clase, tutorial, gameplay) y la IA lo identifica y saca los mejores momentos en clips verticales con subtítulos y título. En tutoriales y gameplay con webcam, la persona va arriba y la pantalla abajo.",
     price: `${EDITAR_PRECIOS.clips} créditos por video`,
     extra: "Se procesa en la nube · hasta 15 clips por video",
   },

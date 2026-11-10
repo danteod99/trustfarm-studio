@@ -179,6 +179,13 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
         <p className="mb-3 text-xs text-mute">
           {result.clips.length} clips en el orden sugerido para publicar (gancho, claridad, valor y cierre). Los enlaces duran 1 hora: si vencen, vuelve a abrir el video.
         </p>
+        {result.video_info && (
+          <p className="mb-3 rounded-lg border border-sky-400/30 bg-sky-400/10 px-3 py-2 text-xs text-sky-200">
+            <b>Video identificado:</b> {result.video_info.tipo_es}
+            {result.video_info.descripcion ? ` — ${result.video_info.descripcion}` : ""}.
+            {result.video_info.diseno === "persona_arriba_pantalla_abajo" && " Armamos los clips con la persona arriba y la pantalla abajo."}
+          </p>
+        )}
         {result.warning && <p className="mb-3 text-xs text-amber-300">La IA no pudo elegir los mejores momentos de este video; se cortó por frases completas.</p>}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {sorted.map((c: ClipResult) => {
@@ -277,7 +284,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
             </label>
             <label className="flex cursor-pointer items-start gap-2 text-sm">
               <input type="checkbox" checked={framing === "auto"} disabled={uploading} onChange={(e) => setFraming(e.target.checked ? "auto" : "fit")} className="mt-1 accent-cyan-400" />
-              <span><span className="font-semibold">Seguir la cara de quien habla</span><span className="block text-xs text-mute">Recorta a vertical siguiendo el rostro. Apagado: muestra todo el cuadro.</span></span>
+              <span><span className="font-semibold">Seguir la cara de quien habla</span><span className="block text-xs text-mute">Recorta a vertical siguiendo el rostro. En tutoriales y gameplay con webcam pone a la persona arriba y la pantalla abajo. Identifica el tipo de video solo. Apagado: muestra todo el cuadro.</span></span>
             </label>
           </div>
           {uploading && file ? (
