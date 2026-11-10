@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from "crypto";
 import { getUser, isAdminEmail, UNAUTHORIZED } from "@/app/lib/auth";
 import { addCredits, chargeCredits } from "@/app/lib/credits";
 import { CLIPS_LIMITE_DIARIO, EDITAR_PRECIOS } from "@/app/lib/editar";
-import { reembolsarClip, trustclipOrigin, type CobroClip } from "@/app/lib/clips";
+import { YT_RE, reembolsarClip, trustclipOrigin, type CobroClip } from "@/app/lib/clips";
 import { supabaseAdmin } from "@/app/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +38,10 @@ export async function POST(req: Request) {
   if (!origin) return Response.json({ error: "Multiclipping todavía no está activo. Escríbenos por WhatsApp." }, { status: 503 });
 
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const url = typeof body.url === "string" ? body.url.trim() : "";
+  if (url && !YT_RE.test(url)) {
+    return Response.json({ error: "Link no válido: usa un link de YouTube (youtube.com o youtu.be)." }, { status: 400 });
+  }
   const nombre = String(body.nombre || "video").replace(/[^\p{L}\p{N} _.-]/gu, "").slice(0, 60) || "video";
   const extIn = String(body.ext || "").toLowerCase();
   const ext = ["mp4", "mov", "m4v", "webm", "mkv"].includes(extIn) ? extIn : "mp4";
@@ -72,7 +76,7 @@ export async function POST(req: Request) {
   }
   const cobro: CobroClip = { creditos, ref, user_id: user.id };
   const options = {
-    clips, subs: body.subs !== false, framing: body.framing === "fit" ? "fit" : "auto",
+    clips, subs: body.subs !== false, title: body.titulo !== false, framing: body.framing === "fit" ? "fit" : "auto",
     preset, min_duration, max_duration, byok: false, origen: "trustfarm", cobro,
   };
   const token = randomBytes(24).toString("hex");
@@ -85,5 +89,6 @@ export async function POST(req: Request) {
     if (creditos) await addCredits(user.id, creditos, "refund", `refund:${ref}`, { motivo: "no se pudo crear el trabajo" }).catch(() => {});
     return Response.json({ error: "No se pudo crear el trabajo. No se cobró nada." }, { status: 500 });
   }
+  if (url) return Response.json({ jobId: job.id, ingestUrl: `${origin}/ingest/${job.id}`, token, cost: creditos });
   return Response.json({ jobId: job.id, uploadUrl: `${origin}/upload/${job.id}?ext=${ext}`, token, cost: creditos });
 }

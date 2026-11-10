@@ -10,7 +10,8 @@ import Reproductor from "@/app/components/Reproductor";
 import { Captions, CheckCircle2, Clapperboard, Download, Loader2, RefreshCw, Trash2, Trophy, Upload, X } from "lucide-react";
 import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import VideoPicker from "@/app/editar/VideoPicker";
-import type { ClipResult, JobResult } from "@/app/lib/clips";
+import { Link2 } from "lucide-react";
+import { YT_RE, type ClipResult, type JobResult } from "@/app/lib/clips";
 
 const MAX_MB = 3000;
 
@@ -40,6 +41,8 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
   const [nombre, setNombre] = useState("");
   const [numClips, setNumClips] = useState(10);
   const [subs, setSubs] = useState(true);
+  const [ytUrl, setYtUrl] = useState("");
+  const [conTitulo, setConTitulo] = useState(true);
   const [framing, setFraming] = useState<"auto" | "fit">("auto");
   const [preset, setPreset] = useState<"standard" | "short">("standard");
   const [uploading, setUploading] = useState(false);
@@ -84,20 +87,44 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
     }
   };
 
+  const ytValid = YT_RE.test(ytUrl.trim());
+
   const upload = async () => {
-    if (!file || uploading) return;
+    const link = !file;
+    if ((link ? !ytValid : false) || uploading) return;
     setError(null);
     setUploading(true); setUploadPct(0);
     try {
-      const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
+      const ext = file ? (file.name.split(".").pop() || "mp4").toLowerCase() : "mp4";
       const r = await fetch("/api/editar/clips", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre: nombre || file.name.replace(/\.[^.]+$/, ""), ext, clips: numClips, subs, framing, preset }),
+        body: JSON.stringify({
+          nombre: nombre || (file ? file.name.replace(/\.[^.]+$/, "") : "Video de YouTube"),
+          ext, clips: numClips, subs, framing, preset, titulo: conTitulo, ...(link ? { url: ytUrl.trim() } : {}),
+        }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "No se pudo crear el trabajo.");
       router.refresh();
+      if (link) {
+        // Link de YouTube: el servicio de clips baja el video; si no puede iniciar, se borra y se devuelven los créditos.
+        const ir = await fetch(d.ingestUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-upload-token": d.token },
+          body: JSON.stringify({ url: ytUrl.trim() }),
+        }).catch(() => null);
+        if (!ir || !ir.ok) {
+          await fetch(`/api/editar/clips/${d.jobId}`, { method: "DELETE" }).catch(() => {});
+          let msg = "No se pudo conectar con el servicio de clips. Intenta de nuevo.";
+          try { if (ir) msg = (await ir.json()).detail || msg; } catch { /* noop */ }
+          throw new Error(msg);
+        }
+        setYtUrl(""); setNombre("");
+        await load();
+        return;
+      }
+      if (!file) return;
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhrRef.current = xhr;
@@ -200,7 +227,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
         <div className="mb-4"><ErrorBox msg="Multiclipping todavía no está activo. Vuelve pronto o escríbenos por WhatsApp." /></div>
       )}
 
-      {!file ? (
+      {!file && (
         <VideoPicker
           maxMB={MAX_MB}
           disabled={uploading || !activo}
@@ -209,12 +236,23 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
           title="Elige tu video largo"
           hint="Podcast, clase, en vivo o entrevista · MP4/MOV hasta 3 GB · mínimo 30 s hablados"
         />
-      ) : (
-        <div className="card space-y-4 p-5">
-          <div className="flex items-center justify-between gap-3 text-sm">
-            <span className="truncate">{file.name} ({(file.size / 1048576).toFixed(0)} MB)</span>
-            {!uploading && <button onClick={() => setFile(null)} className="text-mute hover:text-red-400" aria-label="Quitar"><X size={15} /></button>}
-          </div>
+      )}
+      {!file && (
+        <div className="card mt-4 p-5">
+          <label className="flex items-center gap-2 text-sm font-semibold"><Link2 size={15} className="text-brand-2" /> …o pega un link de YouTube</label>
+          <input value={ytUrl} onChange={(e) => setYtUrl(e.target.value)} disabled={uploading || !activo} placeholder="https://www.youtube.com/watch?v=..." className="input mt-2" />
+          {ytUrl && !ytValid && <p className="mt-1 text-xs text-red-400">Usa un link de youtube.com o youtu.be</p>}
+          <p className="mt-1 text-xs text-mute">Un solo video, hasta 4 horas. Si YouTube bloquea la descarga, se te devuelven los créditos: sube el archivo.</p>
+        </div>
+      )}
+      {(file || ytValid) && (
+        <div className="card mt-4 space-y-4 p-5">
+          {file && (
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="truncate">{file.name} ({(file.size / 1048576).toFixed(0)} MB)</span>
+              {!uploading && <button onClick={() => setFile(null)} className="text-mute hover:text-red-400" aria-label="Quitar"><X size={15} /></button>}
+            </div>
+          )}
           <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre del video (opcional)" disabled={uploading} className="input" />
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-sm">
@@ -234,11 +272,15 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
               <span><span className="font-semibold">Subtítulos palabra por palabra</span><span className="block text-xs text-mute">Quemados en el video y también en archivo .srt</span></span>
             </label>
             <label className="flex cursor-pointer items-start gap-2 text-sm">
+              <input type="checkbox" checked={conTitulo} disabled={uploading} onChange={(e) => setConTitulo(e.target.checked)} className="mt-1 accent-cyan-400" />
+              <span><span className="font-semibold">Título arriba del clip</span><span className="block text-xs text-mute">La IA escribe un título corto y llamativo y lo quema en el video</span></span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-2 text-sm">
               <input type="checkbox" checked={framing === "auto"} disabled={uploading} onChange={(e) => setFraming(e.target.checked ? "auto" : "fit")} className="mt-1 accent-cyan-400" />
               <span><span className="font-semibold">Seguir la cara de quien habla</span><span className="block text-xs text-mute">Recorta a vertical siguiendo el rostro. Apagado: muestra todo el cuadro.</span></span>
             </label>
           </div>
-          {uploading ? (
+          {uploading && file ? (
             <div>
               <div className="h-2 overflow-hidden rounded-full bg-panel-2">
                 <div className="h-full bg-gradient-to-r from-brand to-brand-2 transition-all" style={{ width: `${uploadPct}%` }} />
@@ -250,7 +292,10 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
             </div>
           ) : (
             <div className="flex flex-wrap items-center gap-4">
-              <button onClick={upload} disabled={!activo} className="btn-primary"><Upload size={16} /> Subir y sacar clips</button>
+              <button onClick={upload} disabled={!activo || uploading} className="btn-primary">
+                {uploading ? <Loader2 size={16} className="animate-spin" /> : file ? <Upload size={16} /> : <Link2 size={16} />}
+                {file ? "Subir y sacar clips" : uploading ? "Enviando…" : "Sacar clips del link"}
+              </button>
               <span className="text-sm">Costo: <span className="font-semibold text-brand-2">{precio} créditos</span> por video</span>
             </div>
           )}

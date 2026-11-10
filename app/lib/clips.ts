@@ -6,6 +6,7 @@ import { supabaseAdmin } from "@/app/lib/supabase/admin";
 // (mismo Supabase); los trabajos de TrustFarm llevan options.origen = "trustfarm" y options.cobro.
 
 export const CLIPS_BUCKET = "clips";
+export const YT_RE = /^https?:\/\/((www|m|music)\.)?(youtube\.com|youtu\.be)\//i;
 
 export function trustclipOrigin(): string | null {
   const o = (process.env.TRUSTCLIP_ORIGIN || "").trim().replace(/\/+$/, "");
