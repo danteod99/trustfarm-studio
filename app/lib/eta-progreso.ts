@@ -41,6 +41,14 @@ export function progreso(transcurrido: number, estimado: number): Progreso {
 export function textoRestante(seg: number): string {
   if (seg <= 10) return "unos segundos";
   if (seg < 60) return `~${Math.ceil(seg / 5) * 5} s`;
+  // Trabajos largos (Multiclipping): minutos redondos y horas.
+  if (seg >= 3600) {
+    const totalMin = Math.round(seg / 300) * 5;
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return m ? `~${h} h ${m} min` : `~${h} h`;
+  }
+  if (seg >= 600) return `~${Math.round(seg / 60)} min`;
   const min = Math.floor(seg / 60);
   const s = Math.round((seg % 60) / 10) * 10;
   if (s === 60) return `~${min + 1} min`;

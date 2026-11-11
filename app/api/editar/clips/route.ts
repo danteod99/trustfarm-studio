@@ -5,6 +5,8 @@ import { addCredits, chargeCredits } from "@/app/lib/credits";
 import { CLIPS_LIMITE_DIARIO, EDITAR_PRECIOS } from "@/app/lib/editar";
 import { YT_RE, reembolsarClip, trustclipOrigin, type CobroClip } from "@/app/lib/clips";
 import { supabaseAdmin } from "@/app/lib/supabase/admin";
+import { estimarClipSeg } from "@/app/lib/eta-clips";
+import { ritmoClips } from "@/app/lib/eta-clips-servidor";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +36,19 @@ export async function GET() {
     if (!o.estilo?.logo) return j;
     return { ...j, options: { ...o, estilo: { ...o.estilo, logo: true } } };
   });
-  return Response.json({ jobs: livianos, activo: !!trustclipOrigin() });
+  // Barra de carga: tiempo estimado (según los trabajos reales anteriores) y transcurrido, medido aquí.
+  const ritmo = await ritmoClips();
+  const ahora = Date.now();
+  const conEta = livianos.map((j) => {
+    if (!["pendiente", "procesando"].includes(j.status)) return j;
+    const duracionSeg = (j.options as { duracion_seg?: number } | null)?.duracion_seg ?? null;
+    return {
+      ...j,
+      etaSec: estimarClipSeg(ritmo, { duracionSeg, bytes: j.input_bytes }),
+      elapsedSec: Math.max(0, Math.round((ahora - new Date(j.created_at).getTime()) / 1000)),
+    };
+  });
+  return Response.json({ jobs: conEta, activo: !!trustclipOrigin(), ritmo });
 }
 
 // POST: cobra, crea el trabajo y devuelve la URL de subida directa al servicio de clips.
@@ -86,6 +100,8 @@ export async function POST(req: Request) {
     clips, subs: body.subs !== false, title: body.titulo !== false, framing: body.framing === "fit" ? "fit" : "auto",
     preset, min_duration, max_duration, byok: false, origen: "trustfarm", cobro,
     estilo: sanitizeEstilo(body.estilo),
+    // Duración del video (la mide el navegador al elegir el archivo): sirve para estimar el tiempo.
+    ...(Number(body.duracion_seg) > 0 && Number(body.duracion_seg) < 24 * 3600 ? { duracion_seg: Math.round(Number(body.duracion_seg)) } : {}),
   };
   const token = randomBytes(24).toString("hex");
   const { data: job, error } = await db

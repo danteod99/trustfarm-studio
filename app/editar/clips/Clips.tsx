@@ -13,6 +13,9 @@ import VideoPicker from "@/app/editar/VideoPicker";
 import { Link2 } from "lucide-react";
 import { YT_RE, type ClipResult, type JobResult } from "@/app/lib/clips";
 import EstiloClipsPanel from "./EstiloClips";
+import BarraCargaT from "@/app/components/BarraCargaT";
+import { estimarClipSeg, type RitmoClips } from "@/app/lib/eta-clips";
+import { textoRestante } from "@/app/lib/eta-progreso";
 import { ESTILO_DEFAULT, sanitizeEstilo, type EstiloClips } from "@/app/lib/estilo-clips";
 
 const MAX_MB = 3000;
@@ -21,6 +24,8 @@ interface Job {
   id: string; created_at: string; finished_at: string | null; nombre: string; status: string;
   progress: string | null; error: string | null; result: JobResult | null; expired: boolean;
   options: { clips?: number; cobro?: { creditos: number; reembolsado?: boolean } };
+  /** Solo en cola o procesando: tiempo total estimado y transcurrido (segundos, medidos en el servidor). */
+  etaSec?: number; elapsedSec?: number;
 }
 type Urls = Record<number, { video: string; srt: string | null }>;
 
@@ -32,6 +37,23 @@ const STATUS: Record<string, { label: string; cls: string }> = {
   error: { label: "Error", cls: "text-red-400" },
 };
 const fmtDate = (iso: string) => new Date(iso).toLocaleString("es-PE", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+/** Pasado el tiempo estimado, desde cuándo se avisa que va más lento de lo normal (la cola puede estar llena). */
+const AVISO_LENTO_SEG = 25 * 60;
+
+/** Duración del video elegido (null si el navegador no puede leerlo, p. ej. algunos .mov). */
+function leerDuracion(file: File): Promise<number | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement("video");
+    const fin = (d: number | null) => { URL.revokeObjectURL(url); resolve(d); };
+    v.preload = "metadata";
+    v.onloadedmetadata = () => fin(Number.isFinite(v.duration) && v.duration > 0 ? v.duration : null);
+    v.onerror = () => fin(null);
+    setTimeout(() => fin(null), 8000);
+    v.src = url;
+  });
+}
+
 const fmtDur = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
 
 export default function Clips({ precio, limite }: { precio: number; limite: number }) {
@@ -40,6 +62,8 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
   const [activo, setActivo] = useState(true);
   const [loading, setLoading] = useState(true);
   const [file, setFile] = useState<File | null>(null);
+  const [duracion, setDuracion] = useState<number | null>(null);
+  const [ritmo, setRitmo] = useState<RitmoClips>({ porSegVideo: null, porMB: null });
   const [nombre, setNombre] = useState("");
   const [numClips, setNumClips] = useState(10);
   const [subs, setSubs] = useState(true);
@@ -63,6 +87,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
         const d = await r.json();
         setJobs(d.jobs || []);
         setActivo(!!d.activo);
+        if (d.ritmo) setRitmo(d.ritmo);
       }
     } finally {
       setLoading(false);
@@ -92,6 +117,10 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
 
   const ytValid = YT_RE.test(ytUrl.trim());
 
+  // Cuánto tardará, antes de subir: con la duración del archivo (o su peso); para links, un video típico de 30 min.
+  const estimadoSeg = file ? estimarClipSeg(ritmo, { duracionSeg: duracion, bytes: file.size }) : estimarClipSeg(ritmo, { duracionSeg: 30 * 60 });
+  const estimadoTxt = file ? textoRestante(estimadoSeg) : `${textoRestante(estimadoSeg)} por cada 30 min de video`;
+
   // El estilo se recuerda en este navegador para el siguiente video.
   useEffect(() => {
     try {
@@ -116,7 +145,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nombre: nombre || (file ? file.name.replace(/\.[^.]+$/, "") : "Video de YouTube"),
-          ext, clips: numClips, subs, framing, preset, titulo: conTitulo, estilo, ...(link ? { url: ytUrl.trim() } : {}),
+          ext, duracion_seg: file ? duracion : undefined, clips: numClips, subs, framing, preset, titulo: conTitulo, estilo, ...(link ? { url: ytUrl.trim() } : {}),
         }),
       });
       const d = await r.json().catch(() => ({}));
@@ -255,7 +284,10 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
         <VideoPicker
           maxMB={MAX_MB}
           disabled={uploading || !activo}
-          onFiles={(fs) => { setError(null); setFile(fs[0]); }}
+          onFiles={(fs) => {
+            setError(null); setFile(fs[0]); setDuracion(null);
+            leerDuracion(fs[0]).then(setDuracion);
+          }}
           onError={setError}
           title="Elige tu video largo"
           hint="Podcast, clase, en vivo o entrevista · MP4/MOV hasta 3 GB · mínimo 30 s hablados"
@@ -273,7 +305,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
         <div className="card mt-4 space-y-4 p-5">
           {file && (
             <div className="flex items-center justify-between gap-3 text-sm">
-              <span className="truncate">{file.name} ({(file.size / 1048576).toFixed(0)} MB)</span>
+              <span className="truncate">{file.name} ({(file.size / 1048576).toFixed(0)} MB{duracion ? ` · ${fmtDur(duracion)}` : ""})</span>
               {!uploading && <button onClick={() => setFile(null)} className="text-mute hover:text-red-400" aria-label="Quitar"><X size={15} /></button>}
             </div>
           )}
@@ -311,7 +343,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
                 <div className="h-full bg-gradient-to-r from-brand to-brand-2 transition-all" style={{ width: `${uploadPct}%` }} />
               </div>
               <div className="mt-2 flex items-center justify-between text-xs text-mute">
-                <span>Subiendo {uploadPct}%: no cierres la pestaña hasta que termine</span>
+                <span>Subiendo {uploadPct}%: no cierres la pestaña hasta que termine. Después, tus clips estarán en {estimadoTxt}.</span>
                 <button onClick={() => xhrRef.current?.abort()} className="btn-ghost !py-1 text-xs">Cancelar</button>
               </div>
             </div>
@@ -322,6 +354,10 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
                 {file ? "Subir y sacar clips" : uploading ? "Enviando…" : "Sacar clips del link"}
               </button>
               <span className="text-sm">Costo: <span className="font-semibold text-brand-2">{precio} créditos</span> por video</span>
+              <span className="text-sm">
+                Tus clips estarán en <span className="font-semibold text-brand-2">{estimadoTxt}</span>
+                {!file && <span className="text-mute"> (según lo que dure el video)</span>}
+              </span>
             </div>
           )}
         </div>
@@ -372,6 +408,19 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
                       )}
                     </div>
                   </div>
+                  {(j.status === "pendiente" || j.status === "procesando") && (
+                    <div className="mt-1 flex flex-col items-center text-center text-xs text-mute">
+                      <BarraCargaT
+                        elapsedSec={j.elapsedSec}
+                        etaSec={j.etaSec ?? 15 * 60}
+                        ariaLabel={`Progreso de ${j.nombre}`}
+                        avisoLentitudSeg={AVISO_LENTO_SEG}
+                        textoLento="Hay mucha demanda ahora, tu video sigue en proceso…"
+                        anchoClase="max-w-md"
+                      />
+                      {j.status === "pendiente" && <p className="mt-1">En cola: empieza en cuanto se libere el servicio.</p>}
+                    </div>
+                  )}
                   {open === j.id && (detailLoading ? <p className="mt-3 text-xs text-mute">Cargando clips…</p> : detail && renderClips(detail.job, detail.urls))}
                 </div>
               );
@@ -379,7 +428,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
           </div>
         )}
         <p className="mt-4 text-xs text-mute">
-          Un video de 30 minutos tarda entre 10 y 20 minutos. Máximo {limite} videos por día. Los clips se guardan 48 horas: descárgalos antes.
+          Un video de 30 minutos tarda {textoRestante(estimarClipSeg(ritmo, { duracionSeg: 30 * 60 }))} (calculado con los últimos videos procesados). Máximo {limite} videos por día. Los clips se guardan 48 horas: descárgalos antes.
           Si un video falla, te devolvemos los créditos.
         </p>
       </div>
