@@ -201,6 +201,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
             {result.video_info.diseno === "persona_arriba_pantalla_abajo" && " Armamos los clips con la persona arriba y la pantalla abajo."}
           </p>
         )}
+        {result.aviso && <p className="mb-3 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-200">{result.aviso}</p>}
         {result.warning && <p className="mb-3 text-xs text-amber-300">La IA no pudo elegir los mejores momentos de este video; se cortó por frases completas.</p>}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {sorted.map((c: ClipResult) => {
@@ -220,6 +221,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
                       </span>
                     )}
                     <span className="font-semibold">Clip {String(c.index).padStart(2, "0")}</span>
+                    {c.relajado && <span title="Elegido en una segunda pasada: puede no cerrar la idea del todo" className="rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">Extra</span>}
                     <span className="ml-auto text-[11px] text-mute">{fmtDur(c.duration)}</span>
                   </div>
                   <p className="text-xs leading-snug">{c.titulo || c.hook || "Momento elegido"}</p>

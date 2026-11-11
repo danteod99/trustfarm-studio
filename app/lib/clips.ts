@@ -15,10 +15,10 @@ export function trustclipOrigin(): string | null {
 
 export interface ClipResult {
   index: number; file: string; srt: string | null; start: number; end: number; duration: number;
-  score: number | null; titulo: string; hook: string; score_reason: string; framing: string | null; size_mb: number;
+  score: number | null; titulo: string; hook: string; score_reason: string; framing: string | null; size_mb: number; relajado?: boolean;
 }
 export interface JobResult {
-  clips: ClipResult[]; publication_order: number[]; selection_mode: string | null; failed: number[]; warning?: string | null;
+  clips: ClipResult[]; publication_order: number[]; selection_mode: string | null; failed: number[]; warning?: string | null; aviso?: string | null;
   video_info?: { tipo: string; tipo_es: string; webcam: boolean; descripcion: string; diseno: string } | null;
 }
 
