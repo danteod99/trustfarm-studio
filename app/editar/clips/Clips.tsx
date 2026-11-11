@@ -7,12 +7,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Reproductor from "@/app/components/Reproductor";
-import { Captions, CheckCircle2, Clapperboard, Download, Loader2, RefreshCw, Trash2, Trophy, Upload, X } from "lucide-react";
+import { Captions, CheckCircle2, Clapperboard, Download, FolderDown, Loader2, RefreshCw, Trash2, Trophy, Upload, X } from "lucide-react";
 import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import VideoPicker from "@/app/editar/VideoPicker";
 import { Link2 } from "lucide-react";
 import { YT_RE, type ClipResult, type JobResult } from "@/app/lib/clips";
 import EstiloClipsPanel from "./EstiloClips";
+import { buildZip } from "@/app/granja/zip";
 import BarraCargaT from "@/app/components/BarraCargaT";
 import { estimarClipSeg, type RitmoClips } from "@/app/lib/eta-clips";
 import { textoRestante } from "@/app/lib/eta-progreso";
@@ -56,6 +57,15 @@ function leerDuracion(file: File): Promise<number | null> {
 
 const fmtDur = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
 
+const slug = (t: string) =>
+  t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 50) || "clip";
+
+type DirHandle = {
+  getDirectoryHandle(name: string, o?: { create: boolean }): Promise<DirHandle>;
+  getFileHandle(name: string, o?: { create: boolean }): Promise<{ createWritable(): Promise<{ write(d: Blob): Promise<void>; close(): Promise<void> }> }>;
+};
+const puedeElegirCarpeta = () => typeof window !== "undefined" && "showDirectoryPicker" in window;
+
 export default function Clips({ precio, limite }: { precio: number; limite: number }) {
   const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -72,6 +82,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
   const [framing, setFraming] = useState<"auto" | "fit">("auto");
   const [preset, setPreset] = useState<"standard" | "short">("standard");
   const [estilo, setEstilo] = useState<EstiloClips>(ESTILO_DEFAULT);
+  const [bajando, setBajando] = useState<{ job: string; hechos: number; total: number } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadPct, setUploadPct] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -213,6 +224,54 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
     router.refresh();
   };
 
+  // Baja todos los clips (MP4 y SRT) en el orden de publicación: a una carpeta elegida (Chrome/Edge) o en un ZIP.
+  const descargarTodo = async (job: Job, sorted: ClipResult[], urls: Urls, modo: "carpeta" | "zip") => {
+    const archivos: { nombre: string; url: string }[] = [];
+    sorted.forEach((c, i) => {
+      const base = `${String(i + 1).padStart(2, "0")}-${slug(c.titulo || c.hook || `clip-${c.index}`)}`;
+      const u = urls[c.index];
+      if (u?.video) archivos.push({ nombre: `${base}.mp4`, url: u.video });
+      if (u?.srt) archivos.push({ nombre: `${base}.srt`, url: u.srt });
+    });
+    if (!archivos.length) { setError("No hay clips para descargar. Abre el video de nuevo para renovar los enlaces."); return; }
+    setError(null);
+    const carpeta = `clips-${slug(job.nombre)}`;
+    try {
+      setBajando({ job: job.id, hechos: 0, total: archivos.length });
+      if (modo === "carpeta") {
+        const raiz = await (window as unknown as { showDirectoryPicker(o: { mode: string }): Promise<DirHandle> }).showDirectoryPicker({ mode: "readwrite" });
+        const dir = await raiz.getDirectoryHandle(carpeta, { create: true });
+        let n = 0;
+        for (const a of archivos) {
+          const r = await fetch(a.url);
+          if (!r.ok) throw new Error("Un enlace venció. Abre el video de nuevo y repite.");
+          const w = await (await dir.getFileHandle(a.nombre, { create: true })).createWritable();
+          await w.write(await r.blob());
+          await w.close();
+          setBajando({ job: job.id, hechos: ++n, total: archivos.length });
+        }
+      } else {
+        const entradas: { path: string; data: Blob }[] = [];
+        for (const a of archivos) {
+          const r = await fetch(a.url);
+          if (!r.ok) throw new Error("Un enlace venció. Abre el video de nuevo y repite.");
+          entradas.push({ path: `${carpeta}/${a.nombre}`, data: await r.blob() });
+          setBajando({ job: job.id, hechos: entradas.length, total: archivos.length });
+        }
+        const blob = await buildZip(entradas);
+        const href = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = href; a.download = `${carpeta}.zip`;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(href), 60_000);
+      }
+    } catch (e) {
+      if ((e as { name?: string })?.name !== "AbortError") setError(e instanceof Error ? e.message : "No se pudo descargar.");
+    } finally {
+      setBajando(null);
+    }
+  };
+
   const renderClips = (job: Job, urls: Urls) => {
     const result = job.result;
     if (!result) return null;
@@ -232,6 +291,19 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
         )}
         {result.aviso && <p className="mb-3 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-200">{result.aviso}</p>}
         {result.warning && <p className="mb-3 text-xs text-amber-300">La IA no pudo elegir los mejores momentos de este video; se cortó por frases completas.</p>}
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          {puedeElegirCarpeta() && (
+            <button type="button" disabled={!!bajando} onClick={() => descargarTodo(job, sorted, urls, "carpeta")} className="btn-primary !px-3 !py-1.5 text-xs">
+              <FolderDown size={13} /> Descargar todos (elegir carpeta)
+            </button>
+          )}
+          <button type="button" disabled={!!bajando} onClick={() => descargarTodo(job, sorted, urls, "zip")} className={`${puedeElegirCarpeta() ? "btn-ghost" : "btn-primary"} !px-3 !py-1.5 text-xs`}>
+            <Download size={13} /> Descargar todos en ZIP
+          </button>
+          {bajando?.job === job.id && (
+            <span className="flex items-center gap-2 text-xs text-mute"><Loader2 size={13} className="animate-spin" /> Descargando {bajando.hechos}/{bajando.total}…</span>
+          )}
+        </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {sorted.map((c: ClipResult) => {
             const u = urls[c.index];
