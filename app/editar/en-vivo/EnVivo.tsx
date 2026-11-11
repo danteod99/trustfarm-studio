@@ -32,6 +32,10 @@ const EXIGENCIAS = [
   { v: 6, label: "Más clips" },
 ];
 
+function linkWeb(s: string): boolean {
+  try { return /^https?:$/.test(new URL(s.trim()).protocol); } catch { return false; }
+}
+
 // Region Capture (Chrome/Edge): recorta la captura de esta pestaña al reproductor.
 type CropTargetCtor = { fromElement(el: Element): Promise<unknown> };
 
@@ -39,7 +43,7 @@ export default function EnVivo() {
   const [link, setLink] = useState("");
   const [tipo, setTipo] = useState<TipoVivo>("podcast");
   const [exigencia, setExigencia] = useState(7);
-  const [modo, setModo] = useState<Modo>("aqui");
+  const [abierto, setAbierto] = useState(false);
   const [fase, setFase] = useState<Fase>("inicio");
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -69,6 +73,19 @@ export default function EnVivo() {
   useEffect(() => { setHost(window.location.hostname); }, []);
   useEffect(() => { faseRef.current = fase; }, [fase]);
   const embed = useMemo(() => (host ? embedDeLink(link, host) : null), [link, host]);
+  // YouTube, Twitch y Kick se ven dentro de la página; cualquier otro link (TikTok, Facebook,
+  // Instagram…) se abre en una ventana al lado y se graba esa ventana.
+  const externo = useMemo(() => !embed && linkWeb(link), [embed, link]);
+  const modo: Modo = embed ? "aqui" : "pestana";
+  useEffect(() => { setAbierto(false); }, [link]);
+
+  const abrirAlLado = () => {
+    const w = Math.round(window.screen.availWidth / 2);
+    const h = window.screen.availHeight;
+    const v = window.open(link.trim(), "trustfarm-en-vivo", `popup,width=${w},height=${h},left=${w},top=0`);
+    if (!v) { setError("Chrome bloqueó la ventana. Permite las ventanas emergentes de trustfarm.online o abre el link tú en otra ventana."); return; }
+    setAbierto(true);
+  };
 
   // Aviso al cerrar la pestaña con clips o grabación en curso.
   useEffect(() => {
@@ -301,19 +318,13 @@ export default function EnVivo() {
 
       {fase === "inicio" && (
         <div className="card mb-5 space-y-4 p-5">
-          <div className="flex gap-2 text-sm">
-            <button onClick={() => setModo("aqui")} className={modo === "aqui" ? "btn-primary !py-1.5" : "btn-ghost !py-1.5"}><Link2 size={14} /> Pegar link</button>
-            <button onClick={() => setModo("pestana")} className={modo === "pestana" ? "btn-primary !py-1.5" : "btn-ghost !py-1.5"}><MonitorUp size={14} /> Otra pestaña (TikTok Live)</button>
+          <div>
+            <label className="flex items-center gap-2 text-sm font-semibold"><Link2 size={15} className="text-brand-2" /> Link de la transmisión en vivo</label>
+            <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="TikTok, YouTube, Twitch, Kick, Facebook, Instagram…" className="input mt-2" />
+            {link && !embed && !externo && <p className="mt-1 text-xs text-red-400">Pega el link completo (empieza con https://).</p>}
+            {embed && <p className="mt-1 text-xs text-emerald-300">Se ve aquí mismo, abajo.</p>}
+            {externo && <p className="mt-1 text-xs text-sky-300">Este en vivo se abre en una ventana al lado y desde ahí se graba.</p>}
           </div>
-          {modo === "aqui" ? (
-            <div>
-              <label className="text-sm font-semibold">Link de la transmisión en vivo</label>
-              <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://www.youtube.com/live/...  ·  twitch.tv/canal  ·  kick.com/canal" className="input mt-2" />
-              {link && !embed && <p className="mt-1 text-xs text-red-400">Usa un link de YouTube, Twitch o Kick. Para TikTok Live elige “Otra pestaña”.</p>}
-            </div>
-          ) : (
-            <p className="text-sm text-mute">Abre el en vivo en otra pestaña de Chrome. Al presionar <b>Empezar</b> elige esa pestaña y deja activado “Compartir audio de la pestaña”.</p>
-          )}
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="text-xs font-semibold text-mute">Tipo de transmisión</label>
@@ -351,13 +362,32 @@ export default function EnVivo() {
               )}
             </div>
           ) : (
-            <video ref={previewRef} muted playsInline className="aspect-video w-full rounded-xl border border-line bg-black object-contain" />
+            <div className="relative">
+              <video ref={previewRef} muted playsInline className="aspect-video w-full rounded-xl border border-line bg-black object-contain" />
+              {fase === "inicio" && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center text-sm text-mute">
+                  {externo ? (
+                    <>
+                      <MonitorUp size={22} className="text-brand-2" />
+                      <p>1) Abre el en vivo en una ventana al lado. 2) Presiona <b>Empezar a clipear</b>, elige esa ventana y deja activado <b>“Compartir audio de la pestaña”</b>.</p>
+                    </>
+                  ) : (
+                    <p>Pega el link y la transmisión aparece aquí.</p>
+                  )}
+                </div>
+              )}
+            </div>
           )}
 
           <div className="flex flex-wrap items-center gap-2">
+            {fase === "inicio" && externo && (
+              <button onClick={abrirAlLado} className={abierto ? "btn-ghost" : "btn-primary"}>
+                <MonitorUp size={15} /> {abierto ? "Volver a abrir" : "1. Abrir el en vivo al lado"}
+              </button>
+            )}
             {fase === "inicio" && (
-              <button onClick={empezar} disabled={modo === "aqui" && !embed} className="btn-primary">
-                <Play size={15} /> Empezar a clipear
+              <button onClick={empezar} disabled={!embed && !externo} className={externo && !abierto ? "btn-ghost" : "btn-primary"}>
+                <Play size={15} /> {externo ? "2. Empezar a clipear" : "Empezar a clipear"}
               </button>
             )}
             {grabando && (

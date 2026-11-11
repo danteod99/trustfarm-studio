@@ -35,7 +35,7 @@ const TOOLS = [
     href: "/editar/en-vivo",
     icon: <Radio size={20} />,
     title: "Clipeo en vivo",
-    text: "Pega el link de un en vivo de YouTube, Twitch o Kick (ideal para podcast). Mientras lo ves, la IA lo transcribe en tiempo real y corta sola los mejores momentos. También puedes clipear al instante con un botón.",
+    text: "Pega el link de un en vivo de cualquier plataforma: TikTok, YouTube, Twitch, Kick, Facebook… (ideal para podcast). Mientras lo ves, la IA lo transcribe en tiempo real y corta sola los mejores momentos. También puedes clipear al instante con un botón.",
     price: `${EN_VIVO_CREDITOS} créditos cada 10 minutos`,
     extra: "Clips en MP4 vertical o normal · transcripción descargable",
   },
