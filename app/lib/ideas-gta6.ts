@@ -151,3 +151,19 @@ export const VIDEOS_GTA6: Idea[] = [
     ],
   }, "fija"),
 ];
+
+// Video 3D estilo videojuego (11-11-2026) hecho con Trust Cine (Gemini Omni 1.1 Flash, 8 s, 720p). Dante dio el OK tras verlo.
+export const VIDEOS_GTA6_3D: Idea[] = [
+  {
+    id: "gta6-video-pareja-3d", category: CATEGORIA, kind: "video", model: "veo-fast", aspect: "9:16", duration: 8, resolution: "720p", motion: "acercamiento",
+    title: "Lucia y Jason en 3D (video)",
+    hook: "La pareja como personajes 3D de videojuego, espalda con espalda frente al skyline de neón.",
+    image: "/showcase/idea-gta6-video-pareja-3d.jpg", video: "/showcase/idea-gta6-video-pareja-3d.mp4",
+    prompt: "Escena 3D estilo pantalla de carga de videojuego de mundo abierto: dos personajes 3D estilizados, una joven latina de trenza oscura y un hombre blanco de barba corta, espalda con espalda frente a un skyline tropical al anochecer, con palmeras y un convertible clásico. La cámara se aleja despacio, ambos miran a cámara con confianza y los reflejos de neón brillan. Render en tiempo real, personajes claramente 3D CGI, luz volumétrica rosa y turquesa. Sin diálogo, solo ambiente y música. Sin texto, sin logos, sin armas.",
+    variaciones: variaciones([
+      ["Lucia en el malecón", "Personaje de videojuego 3D: una joven latina de unos 25 años, trenza oscura larga, tatuajes pequeños, top deportivo y shorts de mezclilla, en un malecón de Florida al atardecer con palmeras y neón; la cámara orbita y ella se sube las gafas de sol con media sonrisa. Render 3D de videojuego, no persona real. Sin texto, sin logos, sin armas."],
+      ["Jason en el muelle", "Personaje de videojuego 3D: un hombre blanco de unos 30 años, barba corta, camiseta gris sin mangas y gorra, sentado en un muelle de madera con lanchas al atardecer; la cámara avanza y él mira a cámara y se toca la gorra. Render 3D de videojuego, no persona real. Sin texto, sin logos, sin armas."],
+    ]),
+    fuente: FUENTE, tendencia: true,
+  },
+];
