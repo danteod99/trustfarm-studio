@@ -1,3 +1,4 @@
+import { sanitizeEstilo } from "@/app/lib/estilo-clips";
 import { randomBytes, randomUUID } from "crypto";
 import { getUser, isAdminEmail, UNAUTHORIZED } from "@/app/lib/auth";
 import { addCredits, chargeCredits } from "@/app/lib/credits";
@@ -27,7 +28,13 @@ export async function GET() {
       if (cobro) cobro.reembolsado = true;
     }
   }
-  return Response.json({ jobs, activo: !!trustclipOrigin() });
+  // El logo (base64) puede pesar cientos de KB por trabajo: no se devuelve al navegador.
+  const livianos = jobs.map((j) => {
+    const o = (j.options || {}) as { estilo?: { logo?: unknown } };
+    if (!o.estilo?.logo) return j;
+    return { ...j, options: { ...o, estilo: { ...o.estilo, logo: true } } };
+  });
+  return Response.json({ jobs: livianos, activo: !!trustclipOrigin() });
 }
 
 // POST: cobra, crea el trabajo y devuelve la URL de subida directa al servicio de clips.
@@ -78,6 +85,7 @@ export async function POST(req: Request) {
   const options = {
     clips, subs: body.subs !== false, title: body.titulo !== false, framing: body.framing === "fit" ? "fit" : "auto",
     preset, min_duration, max_duration, byok: false, origen: "trustfarm", cobro,
+    estilo: sanitizeEstilo(body.estilo),
   };
   const token = randomBytes(24).toString("hex");
   const { data: job, error } = await db

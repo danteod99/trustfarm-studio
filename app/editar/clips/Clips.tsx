@@ -12,6 +12,8 @@ import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import VideoPicker from "@/app/editar/VideoPicker";
 import { Link2 } from "lucide-react";
 import { YT_RE, type ClipResult, type JobResult } from "@/app/lib/clips";
+import EstiloClipsPanel from "./EstiloClips";
+import { ESTILO_DEFAULT, sanitizeEstilo, type EstiloClips } from "@/app/lib/estilo-clips";
 
 const MAX_MB = 3000;
 
@@ -45,6 +47,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
   const [conTitulo, setConTitulo] = useState(true);
   const [framing, setFraming] = useState<"auto" | "fit">("auto");
   const [preset, setPreset] = useState<"standard" | "short">("standard");
+  const [estilo, setEstilo] = useState<EstiloClips>(ESTILO_DEFAULT);
   const [uploading, setUploading] = useState(false);
   const [uploadPct, setUploadPct] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +92,18 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
 
   const ytValid = YT_RE.test(ytUrl.trim());
 
+  // El estilo se recuerda en este navegador para el siguiente video.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("trustclip_estilo");
+      if (raw) setEstilo(sanitizeEstilo(JSON.parse(raw)));
+    } catch { /* noop */ }
+  }, []);
+  const cambiarEstilo = (e: EstiloClips) => {
+    setEstilo(e);
+    try { localStorage.setItem("trustclip_estilo", JSON.stringify(e)); } catch { /* sin espacio: no se recuerda */ }
+  };
+
   const upload = async () => {
     const link = !file;
     if ((link ? !ytValid : false) || uploading) return;
@@ -101,7 +116,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nombre: nombre || (file ? file.name.replace(/\.[^.]+$/, "") : "Video de YouTube"),
-          ext, clips: numClips, subs, framing, preset, titulo: conTitulo, ...(link ? { url: ytUrl.trim() } : {}),
+          ext, clips: numClips, subs, framing, preset, titulo: conTitulo, estilo, ...(link ? { url: ytUrl.trim() } : {}),
         }),
       });
       const d = await r.json().catch(() => ({}));
@@ -287,6 +302,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
               <span><span className="font-semibold">Seguir la cara de quien habla</span><span className="block text-xs text-mute">Recorta a vertical siguiendo el rostro. En tutoriales y gameplay con webcam pone a la persona arriba y la pantalla abajo. Identifica el tipo de video solo. Apagado: muestra todo el cuadro.</span></span>
             </label>
           </div>
+          <EstiloClipsPanel estilo={estilo} onChange={cambiarEstilo} disabled={uploading} conSubs={subs} conTitulo={conTitulo} />
           {uploading && file ? (
             <div>
               <div className="h-2 overflow-hidden rounded-full bg-panel-2">
