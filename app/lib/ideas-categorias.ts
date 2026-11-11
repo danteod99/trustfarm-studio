@@ -19,6 +19,7 @@ export const IDEA_CATEGORIES = [
   "Tecnología y granjas",
   "Motivación y paisajes",
   "Mascotas",
+  "Personajes GTA 6",
   "Moda y belleza",
   "Educación y tips",
   "Fitness y salud",

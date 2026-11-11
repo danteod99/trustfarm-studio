@@ -5,6 +5,7 @@ import type { Aspect, Kind } from "@/app/lib/catalog";
 import { IDEAS_ANIME_TEMPORADAS, VIDEOS_ANIME_TEMPORADAS_POR_PROBAR } from "./ideas-anime-temporadas.ts";
 import { IDEAS_ECOMMERCE, VIDEOS_ECOMMERCE_POR_PROBAR } from "./ideas-ecommerce.ts";
 import { IDEAS_GATITOS, VIDEOS_GATITOS_POR_PROBAR } from "./ideas-gatitos.ts";
+import { IDEAS_GTA6 } from "./ideas-gta6.ts";
 import { IMAGENES_PUBLICADAS, VIDEOS_PUBLICADOS } from "./ideas-publicadas.ts";
 import { IDEAS_TENDENCIA, VIDEOS_POR_PROBAR } from "./ideas-tendencias.ts";
 
@@ -1223,6 +1224,8 @@ export const IDEAS: Idea[] = [
   ...[...VIDEOS_POR_PROBAR, ...VIDEOS_ECOMMERCE_POR_PROBAR, ...VIDEOS_ANIME_TEMPORADAS_POR_PROBAR, ...VIDEOS_GATITOS_POR_PROBAR]
     .filter((v) => VIDEOS_PUBLICADOS.includes(v.id))
     .map((v) => ({ ...v, image: img(`idea-${v.id}`), video: vid(`idea-${v.id}`) })),
+  // Personajes GTA 6 (11-11-2026): ya revisadas y con su imagen en public/showcase; no cuentan en "las 40" de la tanda de tendencias.
+  ...IDEAS_GTA6,
 ];
 
 export function getIdea(id: string): Idea | undefined {
