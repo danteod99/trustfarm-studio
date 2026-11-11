@@ -152,18 +152,33 @@ export const VIDEOS_GTA6: Idea[] = [
   }, "fija"),
 ];
 
-// Video 3D estilo videojuego (11-11-2026) hecho con Trust Cine (Gemini Omni 1.1 Flash, 8 s, 720p). Dante dio el OK tras verlo.
+// Videos 3D estilo videojuego (11-11-2026) hechos con Trust Cine (Gemini Omni 1.1 Flash, 8 s, 720p). Dante dio el OK a Lucia y Jason por separado (la pareja no gustó).
+const FIN3D = "Render 3D de videojuego, claramente un personaje CGI y no una persona real. Sin texto, sin logos, sin armas.";
+function video3d(b: Pick<Idea, "id" | "title" | "hook" | "prompt"> & { v: [string, string][] }): Idea {
+  const { v, ...r } = b;
+  return {
+    ...r, category: CATEGORIA, kind: "video", model: "veo-fast", aspect: "9:16", duration: 8, resolution: "720p", motion: "acercamiento",
+    image: `/showcase/idea-${r.id}.jpg`, video: `/showcase/idea-${r.id}.mp4`, variaciones: variaciones(v), fuente: FUENTE, tendencia: true,
+  };
+}
+
 export const VIDEOS_GTA6_3D: Idea[] = [
-  {
-    id: "gta6-video-pareja-3d", category: CATEGORIA, kind: "video", model: "veo-fast", aspect: "9:16", duration: 8, resolution: "720p", motion: "acercamiento",
-    title: "Lucia y Jason en 3D (video)",
-    hook: "La pareja como personajes 3D de videojuego, espalda con espalda frente al skyline de neón.",
-    image: "/showcase/idea-gta6-video-pareja-3d.jpg", video: "/showcase/idea-gta6-video-pareja-3d.mp4",
-    prompt: "Escena 3D estilo pantalla de carga de videojuego de mundo abierto: dos personajes 3D estilizados, una joven latina de trenza oscura y un hombre blanco de barba corta, espalda con espalda frente a un skyline tropical al anochecer, con palmeras y un convertible clásico. La cámara se aleja despacio, ambos miran a cámara con confianza y los reflejos de neón brillan. Render en tiempo real, personajes claramente 3D CGI, luz volumétrica rosa y turquesa. Sin diálogo, solo ambiente y música. Sin texto, sin logos, sin armas.",
-    variaciones: variaciones([
-      ["Lucia en el malecón", "Personaje de videojuego 3D: una joven latina de unos 25 años, trenza oscura larga, tatuajes pequeños, top deportivo y shorts de mezclilla, en un malecón de Florida al atardecer con palmeras y neón; la cámara orbita y ella se sube las gafas de sol con media sonrisa. Render 3D de videojuego, no persona real. Sin texto, sin logos, sin armas."],
-      ["Jason en el muelle", "Personaje de videojuego 3D: un hombre blanco de unos 30 años, barba corta, camiseta gris sin mangas y gorra, sentado en un muelle de madera con lanchas al atardecer; la cámara avanza y él mira a cámara y se toca la gorra. Render 3D de videojuego, no persona real. Sin texto, sin logos, sin armas."],
-    ]),
-    fuente: FUENTE, tendencia: true,
-  },
+  video3d({
+    id: "gta6-video-lucia-3d", title: "Lucia en 3D estilo videojuego (video)",
+    hook: "La protagonista como personaje 3D de videojuego: la cámara orbita y ella se sube las gafas con media sonrisa.",
+    prompt: `Personaje de videojuego 3D: una joven latina de unos 25 años, trenza oscura larga, tatuajes pequeños en los brazos, top deportivo y shorts de mezclilla, de pie en un malecón de Florida al atardecer con palmeras, edificios con neón y un convertible clásico detrás. La cámara orbita despacio y ella se gira hacia la cámara, se sube las gafas de sol con media sonrisa segura. Luz volumétrica rosa y turquesa. Sin diálogo, solo ambiente y música. ${FIN3D}`,
+    v: [
+      ["De noche con neón", `Personaje de videojuego 3D: una joven latina de unos 25 años, trenza oscura y tatuajes pequeños, caminando hacia la cámara por una avenida costera de noche con edificios art déco en neón rosa y turquesa, reflejos en el pavimento. Cámara lenta, música synthwave. ${FIN3D}`],
+      ["En el convertible", `Personaje de videojuego 3D: una joven latina de unos 25 años, trenza oscura y tatuajes pequeños, al volante de un convertible clásico rojo por una avenida frente al mar al atardecer, el viento mueve su trenza y mira a la cámara. ${FIN3D}`],
+    ],
+  }),
+  video3d({
+    id: "gta6-video-jason-3d", title: "Jason en 3D estilo videojuego (video)",
+    hook: "El otro protagonista como personaje 3D: sentado en el muelle, mira a cámara y se toca la gorra.",
+    prompt: `Personaje de videojuego 3D: un hombre blanco de unos 30 años, bronceado, pelo corto oscuro, barba corta, camiseta gris sin mangas y gorra, sentado al borde de un muelle de madera en una marina al atardecer, lanchas amarradas detrás. La cámara avanza despacio y él levanta la vista a cámara con una sonrisa relajada y se toca la gorra. Luz volumétrica rosa y turquesa. Sin diálogo, solo ambiente y música. ${FIN3D}`,
+    v: [
+      ["En la moto acuática", `Personaje de videojuego 3D: un hombre blanco de unos 30 años, barba corta, sin camisa y con gafas de sol, sobre una moto acuática que levanta una gran ola en un canal soleado, sonríe a la cámara. ${FIN3D}`],
+      ["Lancha de noche", `Personaje de videojuego 3D: un hombre blanco de unos 30 años, barba corta, al volante de una lancha en un canal de noche con las luces de la ciudad reflejadas en el agua, expresión seria y concentrada. ${FIN3D}`],
+    ],
+  }),
 ];
