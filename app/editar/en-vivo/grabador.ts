@@ -9,6 +9,24 @@
 import { AUDIO_SEG_S, BUFFER_S, VIDEO_SEG_S } from "@/app/lib/en-vivo";
 import { execLogged, loadEngine, readBlob, safeDelete, writeInput } from "@/app/lib/video";
 
+/**
+ * Reloj que no se frena: los setInterval de una pestaña tapada o en segundo plano Chrome los
+ * retrasa (hasta 1 por minuto), y la grabación necesita rotar cada pocos segundos. Los timers
+ * de un Worker no sufren ese freno.
+ */
+export function crearTicker(ms: number, fn: () => void): () => void {
+  try {
+    const src = `setInterval(() => postMessage(0), ${Math.max(20, ms)});`;
+    const url = URL.createObjectURL(new Blob([src], { type: "text/javascript" }));
+    const w = new Worker(url);
+    w.onmessage = () => fn();
+    return () => { w.terminate(); URL.revokeObjectURL(url); };
+  } catch {
+    const id = setInterval(fn, ms);
+    return () => clearInterval(id);
+  }
+}
+
 export interface SegVideo { t0: number; t1: number; blob: Blob }
 export interface TrozoAudio { t0: number; t1: number; blob: Blob }
 
@@ -28,7 +46,7 @@ export class Grabador {
   private aRec: MediaRecorder | null = null;
   private vT0 = 0;
   private aT0 = 0;
-  private timers: ReturnType<typeof setInterval>[] = [];
+  private paradas: (() => void)[] = [];
   private detenido = false;
   private pendientes = 0;
   private alVaciar: (() => void)[] = [];
@@ -43,10 +61,10 @@ export class Grabador {
   iniciar() {
     if (!this.videoMime) throw new Error("Tu navegador no puede grabar video. Usa Chrome o Edge en computadora.");
     this.vRec = this.nuevoVideo();
-    this.timers.push(setInterval(() => this.rotarVideo(), VIDEO_SEG_S * 1000));
+    this.paradas.push(crearTicker(VIDEO_SEG_S * 1000, () => this.rotarVideo()));
     if (this.stream.getAudioTracks().length) {
       this.aRec = this.nuevoAudio();
-      this.timers.push(setInterval(() => this.rotarAudio(), AUDIO_SEG_S * 1000));
+      this.paradas.push(crearTicker(AUDIO_SEG_S * 1000, () => this.rotarAudio()));
     }
   }
 
@@ -54,7 +72,7 @@ export class Grabador {
   async detener() {
     if (this.detenido) return;
     this.detenido = true;
-    this.timers.forEach(clearInterval);
+    this.paradas.forEach((f) => f());
     const t = this.ahora();
     this.cerrar(this.vRec, "v", this.vT0, t);
     this.cerrar(this.aRec, "a", this.aT0, t);

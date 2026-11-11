@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  bloqueDe, desplazar, embedDeLink, filtrarMomentos, nombreClip, refBloque, reloj, segmentosPara, sesionValida, solape, textoVentana, tipoValido,
+  DetectorPicos, bloqueDe, desplazar, embedDeLink, esAlucinacion, textoPicos, filtrarMomentos, nombreClip, refBloque, reloj, segmentosPara, sesionValida, solape, textoVentana, tipoValido,
 } from '../app/lib/en-vivo.ts'
 
 test('embedDeLink: YouTube watch, live, youtu.be y canal', () => {
@@ -71,4 +71,35 @@ test('reloj, nombreClip y tipoValido', () => {
   assert.equal(nombreClip(1, '???', 'webm'), '01-clip.webm')
   assert.equal(tipoValido('stream'), 'stream')
   assert.equal(tipoValido('cualquier'), 'podcast')
+})
+
+test('esAlucinacion filtra las frases que Whisper inventa', () => {
+  assert.ok(esAlucinacion('Thank you.'))
+  assert.ok(esAlucinacion('¡Gracias por ver el video!'))
+  assert.ok(esAlucinacion('Subtítulos realizados por la comunidad de Amara.org'))
+  assert.ok(esAlucinacion(' ... '))
+  assert.ok(!esAlucinacion('¿Izquierda o derecha?'))
+  assert.ok(!esAlucinacion('thank you so much for coming to the show'))
+})
+
+test('textoPicos solo lista los de la ventana', () => {
+  assert.equal(textoPicos([10, 120.04, 300], 100, 200), '120.0')
+  assert.equal(textoPicos([], 0, 100), 'ninguno')
+})
+
+test('DetectorPicos: marca la risa fuerte y no el habla normal', () => {
+  const d = new DetectorPicos()
+  let t = 0
+  const paso = (rms: number, n: number) => { for (let i = 0; i < n; i++) { d.medir(t, rms * (0.9 + 0.2 * ((i * 7) % 10) / 10)); t += 0.1 } }
+  paso(0.05, 300)          // 30 s de charla normal
+  assert.equal(d.picos.length, 0)
+  paso(0.25, 15)           // risa / grito de 1,5 s
+  assert.equal(d.picos.length, 1)
+  assert.ok(d.picos[0] > 30 && d.picos[0] < 31)
+  paso(0.05, 20)
+  paso(0.25, 15)           // otro grito a los 2 s: muy pegado, no cuenta doble
+  assert.equal(d.picos.length, 1)
+  paso(0.05, 100)
+  paso(0.3, 15)            // otro más tarde sí
+  assert.equal(d.picos.length, 2)
 })

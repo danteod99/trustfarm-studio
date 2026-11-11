@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, FileText, Link2, Loader2, MonitorUp, Play, Radio, Scissors, Smartphone, Sparkles, Square, Trophy } from "lucide-react";
+import { Download, FileText, Link2, Loader2, MonitorUp, Play, Radio, Scissors, Smartphone, Sparkles, Square, Trophy, Zap } from "lucide-react";
 import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import { downloadBlobUrl } from "@/app/lib/video";
 import { buildZip } from "@/app/granja/zip";
 import {
-  AUDIO_SEG_S, EN_VIVO_CREDITOS, MOMENTOS_CADA_S, TIPOS_VIVO, VIDEO_SEG_S, embedDeLink, nombreClip, reloj, segmentosPara,
+  AUDIO_SEG_S, DetectorPicos, EN_VIVO_CREDITOS, MOMENTOS_CADA_S, TIPOS_VIVO, VIDEO_SEG_S, embedDeLink, nombreClip, reloj, segmentosPara,
   type Momento, type Segmento, type TipoVivo,
 } from "@/app/lib/en-vivo";
-import { Grabador, aMp4, unirSegmentos, type TrozoAudio } from "./grabador";
+import { Grabador, aMp4, crearTicker, unirSegmentos, type TrozoAudio } from "./grabador";
 
 type Fase = "inicio" | "grabando" | "cerrando" | "terminado";
 type Modo = "aqui" | "pestana";
@@ -28,9 +28,18 @@ interface Clip {
 
 const EXIGENCIAS = [
   { v: 8, label: "Pocos y muy buenos" },
-  { v: 7, label: "Normal" },
-  { v: 6, label: "Más clips" },
+  { v: 6, label: "Normal" },
+  { v: 5, label: "Más clips" },
 ];
+
+const IDIOMAS = [
+  { v: "es", label: "Español" },
+  { v: "en", label: "Inglés" },
+  { v: "pt", label: "Portugués" },
+  { v: "auto", label: "Detectar solo" },
+];
+
+interface Revision { hasta: number; nuevos: number; mejor: { titulo: string; puntaje: number } | null; error?: boolean }
 
 function linkWeb(s: string): boolean {
   try { return /^https?:$/.test(new URL(s.trim()).protocol); } catch { return false; }
@@ -42,7 +51,10 @@ type CropTargetCtor = { fromElement(el: Element): Promise<unknown> };
 export default function EnVivo() {
   const [link, setLink] = useState("");
   const [tipo, setTipo] = useState<TipoVivo>("podcast");
-  const [exigencia, setExigencia] = useState(7);
+  const [exigencia, setExigencia] = useState(6);
+  const [idioma, setIdioma] = useState("es");
+  const [revision, setRevision] = useState<Revision | null>(null);
+  const [picos, setPicos] = useState<number[]>([]);
   const [abierto, setAbierto] = useState(false);
   const [fase, setFase] = useState<Fase>("inicio");
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +78,11 @@ export default function EnVivo() {
   const momentosHasta = useRef(0);
   const ultimaBusqueda = useRef(0);
   const colaAudio = useRef<Promise<void>>(Promise.resolve());
-  const timers = useRef<ReturnType<typeof setInterval>[]>([]);
+  const timers = useRef<(() => void)[]>([]);
+  const detector = useRef<DetectorPicos | null>(null);
+  const audioCtx = useRef<AudioContext | null>(null);
+  /** Pico de volumen que todavía no pasó por la IA: se busca apenas esté transcrito. */
+  const picoPendiente = useRef<number | null>(null);
   const idClip = useRef(0);
   const faseRef = useRef<Fase>("inicio");
 
@@ -96,8 +112,9 @@ export default function EnVivo() {
     return () => window.removeEventListener("beforeunload", fn);
   }, []);
   useEffect(() => () => {
-    timers.current.forEach(clearInterval);
+    timers.current.forEach((f) => f());
     stream.current?.getTracks().forEach((t) => t.stop());
+    void audioCtx.current?.close().catch(() => {});
   }, []);
   useEffect(() => {
     const el = transcriptRef.current;
@@ -141,15 +158,17 @@ export default function EnVivo() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sesion: sesion.current, hasta, tipo, exigencia,
+          sesion: sesion.current, hasta, tipo, exigencia, picos: detector.current?.picos ?? [],
           segments: segsRef.current.filter((s) => s.end > hasta - 330),
           previos: clipsRef.current.map((c) => ({ inicio: c.m.inicio, fin: c.m.fin, titulo: c.m.titulo })),
         }),
       });
-      const d = (await r.json().catch(() => ({}))) as { momentos?: Momento[]; error?: string };
+      const d = (await r.json().catch(() => ({}))) as { momentos?: Momento[]; mejor?: Revision["mejor"]; error?: string };
       if (!r.ok && d.error) setAviso(d.error);
+      setRevision({ hasta, nuevos: d.momentos?.length || 0, mejor: d.mejor ?? null, error: !r.ok });
       for (const m of d.momentos || []) void crearClip(m);
     } catch {
+      setRevision({ hasta, nuevos: 0, mejor: null, error: true });
       setAviso("No se pudo buscar momentos en esta ronda; se reintenta en la siguiente.");
     } finally {
       setBuscando(false);
@@ -162,6 +181,8 @@ export default function EnVivo() {
     form.append("audio", new File([t.blob], "audio.webm", { type: t.blob.type || "audio/webm" }));
     form.append("sesion", sesion.current);
     form.append("t0", t.t0.toFixed(2));
+    form.append("idioma", idioma === "auto" ? "" : idioma);
+    form.append("previo", segsRef.current.slice(-6).map((x) => x.text).join(" "));
     try {
       const r = await fetch("/api/editar/en-vivo/transcribir", { method: "POST", body: form });
       const d = (await r.json().catch(() => ({}))) as { segments?: Segmento[]; cost?: number; error?: string; insufficient?: boolean };
@@ -228,7 +249,10 @@ export default function EnVivo() {
     clipsRef.current.forEach((c) => c.url && URL.revokeObjectURL(c.url));
     clipsRef.current = []; setClips([]);
     transcritoHasta.current = momentosHasta.current = ultimaBusqueda.current = 0;
-    setCreditos(0); setSegundos(0);
+    setCreditos(0); setSegundos(0); setRevision(null); setPicos([]);
+    picoPendiente.current = null;
+    const det = new DetectorPicos();
+    detector.current = det;
     colaAudio.current = Promise.resolve();
     const g = new Grabador(s, (t) => { colaAudio.current = colaAudio.current.then(() => transcribir(t)); });
     try { g.iniciar(); } catch (e) {
@@ -238,19 +262,47 @@ export default function EnVivo() {
     }
     grab.current = g;
     setFase("grabando"); faseRef.current = "grabando";
+    // Medidor de volumen para detectar risas, gritos y aplausos.
+    let medir: (() => void) | null = null;
+    try {
+      const ctx = new AudioContext();
+      audioCtx.current = ctx;
+      const an = ctx.createAnalyser();
+      an.fftSize = 2048;
+      ctx.createMediaStreamSource(new MediaStream(s.getAudioTracks())).connect(an);
+      const buf = new Float32Array(an.fftSize);
+      medir = () => {
+        an.getFloatTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+        const t = g.ahora();
+        if (det.medir(t, Math.sqrt(sum / buf.length))) {
+          setPicos([...det.picos]);
+          if (picoPendiente.current === null) picoPendiente.current = t;
+        }
+      };
+    } catch { /* sin medidor: la IA trabaja solo con el texto */ }
     timers.current = [
-      setInterval(() => setSegundos(g.ahora()), 1000),
-      setInterval(() => {
-        if (g.ahora() - ultimaBusqueda.current >= MOMENTOS_CADA_S) void buscarMomentos();
-      }, 5000),
+      crearTicker(100, () => medir?.()),
+      crearTicker(1000, () => setSegundos(g.ahora())),
+      crearTicker(3000, () => {
+        const pico = picoPendiente.current;
+        // Risas o gritos: se busca apenas esté transcrito lo que vino 8 s después del pico.
+        if (pico !== null && transcritoHasta.current >= pico + 8) {
+          picoPendiente.current = null;
+          void buscarMomentos();
+        } else if (g.ahora() - ultimaBusqueda.current >= MOMENTOS_CADA_S) void buscarMomentos();
+      }),
     ];
   };
 
   const terminar = async () => {
     if (faseRef.current !== "grabando") return;
     setFase("cerrando"); faseRef.current = "cerrando";
-    timers.current.forEach(clearInterval);
+    timers.current.forEach((f) => f());
     timers.current = [];
+    void audioCtx.current?.close().catch(() => {});
+    audioCtx.current = null;
     await grab.current?.detener();
     stream.current?.getTracks().forEach((t) => t.stop());
     if (previewRef.current) previewRef.current.srcObject = null;
@@ -325,11 +377,17 @@ export default function EnVivo() {
             {embed && <p className="mt-1 text-xs text-emerald-300">Se ve aquí mismo, abajo.</p>}
             {externo && <p className="mt-1 text-xs text-sky-300">Este en vivo se abre en una ventana al lado y desde ahí se graba.</p>}
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <div>
               <label className="text-xs font-semibold text-mute">Tipo de transmisión</label>
               <select value={tipo} onChange={(e) => setTipo(e.target.value as TipoVivo)} className="input mt-1">
                 {(Object.keys(TIPOS_VIVO) as TipoVivo[]).map((k) => <option key={k} value={k}>{TIPOS_VIVO[k].label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-mute">Idioma</label>
+              <select value={idioma} onChange={(e) => setIdioma(e.target.value)} className="input mt-1">
+                {IDIOMAS.map((x) => <option key={x.v} value={x.v}>{x.label}</option>)}
               </select>
             </div>
             <div>
@@ -410,8 +468,19 @@ export default function EnVivo() {
           )}
           {grabando && (
             <p className="text-xs text-mute">
-              Transcribe cada {AUDIO_SEG_S} s · busca momentos {buscando ? "ahora…" : `en ${Math.ceil(proximaBusqueda / 60)} min`} · gastado: {creditos} créditos. “Clipear ahora” guarda los últimos 45 s.
+              Transcribe cada {AUDIO_SEG_S} s · busca momentos {buscando ? "ahora…" : `en ${Math.ceil(proximaBusqueda)} s`} (y apenas detecta risas o gritos) · gastado: {creditos} créditos. “Clipear ahora” guarda los últimos 45 s.
             </p>
+          )}
+          {(grabando || fase === "terminado") && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+              <span className="inline-flex items-center gap-1 text-amber-300"><Zap size={12} /> {picos.length} pico{picos.length === 1 ? "" : "s"} de risas/gritos{picos.length ? ` (último ${reloj(picos[picos.length - 1])})` : ""}</span>
+              {revision ? (
+                <span className={revision.nuevos ? "text-emerald-300" : "text-mute"}>
+                  Revisado hasta {reloj(revision.hasta)}:{" "}
+                  {revision.error ? "la IA no respondió, se reintenta" : revision.nuevos ? `${revision.nuevos} clip${revision.nuevos === 1 ? "" : "s"} nuevo${revision.nuevos === 1 ? "" : "s"}` : revision.mejor ? `nada para clipear (lo mejor: “${revision.mejor.titulo}” ${revision.mejor.puntaje}/10)` : "nada para clipear todavía"}
+                </span>
+              ) : grabando ? <span className="text-mute">La primera revisión de la IA llega en ~1 minuto.</span> : null}
+            </div>
           )}
           {aviso && <p className="text-xs text-amber-300">{aviso}</p>}
 

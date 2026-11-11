@@ -1,9 +1,9 @@
 import { getUser, UNAUTHORIZED } from "@/app/lib/auth";
 import { topeAbort } from "@/app/lib/claude-tope";
-import { bloqueDe, desplazar, sesionValida } from "@/app/lib/en-vivo";
+import { bloqueDe, desplazar, esAlucinacion, sesionValida } from "@/app/lib/en-vivo";
 import { cobrarBloque } from "@/app/lib/en-vivo-cobro";
 
-// Clipeo en vivo: transcribe un trozo de ~30 s de audio de la transmisión (Groq Whisper) y devuelve
+// Clipeo en vivo: transcribe un trozo de ~15 s de audio de la transmisión (Groq Whisper) y devuelve
 // los segmentos ya pasados al tiempo de la transmisión. Cobra por bloque de 10 minutos.
 export const maxDuration = 60;
 
@@ -19,6 +19,8 @@ export async function POST(req: Request) {
   const audio = form?.get("audio");
   const sesion = form?.get("sesion");
   const t0 = Number(form?.get("t0"));
+  const idioma = String(form?.get("idioma") || "es");
+  const previo = String(form?.get("previo") || "").slice(-300);
   if (!(audio instanceof File) || audio.size === 0) return Response.json({ error: "Falta el audio." }, { status: 400 });
   if (audio.size > MAX_TROZO) return Response.json({ error: "Trozo de audio demasiado grande." }, { status: 413 });
   if (!sesionValida(sesion) || !Number.isFinite(t0) || t0 < 0) return Response.json({ error: "Sesión no válida." }, { status: 400 });
@@ -32,6 +34,9 @@ export async function POST(req: Request) {
     groqForm.append("model", "whisper-large-v3-turbo");
     groqForm.append("response_format", "verbose_json");
     groqForm.append("timestamp_granularities[]", "segment");
+    if (/^[a-z]{2}$/.test(idioma)) groqForm.append("language", idioma);
+    // Lo último que se dijo ayuda a Whisper a seguir el hilo entre trozos.
+    if (previo) groqForm.append("prompt", previo);
     const res = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
       method: "POST",
       headers: { Authorization: `Bearer ${groqKey}` },
@@ -44,7 +49,7 @@ export async function POST(req: Request) {
     }
     const tr = (await res.json()) as { segments?: { start: number; end: number; text: string; no_speech_prob?: number }[] };
     // Whisper inventa frases en silencio o música ("Gracias por ver"): se descartan los de no_speech alto.
-    const segs = (tr.segments || []).filter((s) => (s.no_speech_prob ?? 0) < 0.6);
+    const segs = (tr.segments || []).filter((s) => (s.no_speech_prob ?? 0) < 0.6 && !esAlucinacion(s.text || ""));
     return Response.json({ segments: desplazar(segs, t0), cost: cobro.cobrado });
   } catch (e) {
     console.error("[en-vivo/transcribir]", e);

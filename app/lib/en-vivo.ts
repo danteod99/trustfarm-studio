@@ -6,9 +6,9 @@
 /** Duración de cada segmento de video grabado (cada uno empieza con un fotograma clave). */
 export const VIDEO_SEG_S = 5;
 /** Duración de cada trozo de audio que se manda a transcribir. */
-export const AUDIO_SEG_S = 30;
+export const AUDIO_SEG_S = 15;
 /** Cada cuánto se buscan momentos nuevos. */
-export const MOMENTOS_CADA_S = 120;
+export const MOMENTOS_CADA_S = 60;
 /** Cuánta transcripción reciente se le pasa a Claude. */
 export const VENTANA_S = 300;
 /** Cuánto video se guarda en memoria para poder cortar clips. */
@@ -65,6 +65,60 @@ export function textoVentana(segs: Segmento[], desde: number, hasta: number): st
     .join("\n");
 }
 
+// Frases que Whisper inventa en silencio, música o ruido.
+const ALUCINACIONES = [
+  /^(thank you|thanks for watching|you)[.!]?$/i,
+  /gracias por (ver|mirar)/i,
+  /suscr[ií]bete|dale like|activa la campanita/i,
+  /subt[ií]tulos? (realizados|hechos|por)/i,
+  /amara\.org/i,
+  /^\W*$/,
+];
+export function esAlucinacion(texto: string): boolean {
+  const t = texto.trim();
+  return ALUCINACIONES.some((r) => r.test(t));
+}
+
+/** Picos de volumen dentro de [desde, hasta], como texto para el prompt. */
+export function textoPicos(picos: number[], desde: number, hasta: number): string {
+  const p = picos.filter((t) => t >= desde && t <= hasta).map((t) => t.toFixed(1));
+  return p.length ? p.join(", ") : "ninguno";
+}
+
+/**
+ * Detector de picos de volumen (risas, gritos, aplausos): compara el volumen de los últimos
+ * ~0,5 s con el promedio lento de la transmisión. Se alimenta con un valor RMS cada ~100 ms.
+ */
+export class DetectorPicos {
+  private base = 0;
+  private corto = 0;
+  private sobre = 0;
+  private ultimo = -Infinity;
+  readonly picos: number[] = [];
+  private readonly factor: number;
+  private readonly minSostenido: number;
+  private readonly separacion: number;
+  constructor(factor = 2.2, minSostenido = 4, separacion = 8) {
+    this.factor = factor;
+    this.minSostenido = minSostenido;
+    this.separacion = separacion;
+  }
+  /** Devuelve true si en `t` empieza un pico nuevo. */
+  medir(t: number, rms: number): boolean {
+    if (!Number.isFinite(rms)) return false;
+    this.base = this.base === 0 ? rms : this.base * 0.995 + rms * 0.005;
+    this.corto = this.corto * 0.6 + rms * 0.4;
+    const alto = this.base > 0.004 && this.corto > this.base * this.factor && this.corto > 0.03;
+    this.sobre = alto ? this.sobre + 1 : 0;
+    if (this.sobre === this.minSostenido && t - this.ultimo >= this.separacion) {
+      this.ultimo = t;
+      this.picos.push(Math.round(t * 10) / 10);
+      return true;
+    }
+    return false;
+  }
+}
+
 /** Fracción del momento `a` que se solapa con `b`. */
 export function solape(a: { inicio: number; fin: number }, b: { inicio: number; fin: number }): number {
   const inter = Math.min(a.fin, b.fin) - Math.max(a.inicio, b.inicio);
@@ -80,7 +134,7 @@ export function filtrarMomentos(
   crudos: unknown[],
   ventana: { desde: number; hasta: number },
   previos: { inicio: number; fin: number }[],
-  puntajeMin = 7,
+  puntajeMin = 6,
 ): Momento[] {
   const out: Momento[] = [];
   for (const c of crudos) {
@@ -186,14 +240,16 @@ export const MOMENTOS_PROMPT = `Eres editor de clips virales. Estás viendo una 
 {TRANSCRIPT}
 </transcripcion>
 
+Picos de volumen detectados en el audio (posibles RISAS, gritos, aplausos o reacciones), en segundos: {PICOS}
+
 Momentos ya clipeados (no los repitas): {PREVIOS}
 
 {TIPO}
 
-Elige los MEJORES MOMENTOS para clips cortos de TikTok/Reels/Shorts: frases de impacto, chistes, reacciones fuertes, revelaciones, consejos concretos, polémica, historias con remate. Cada momento debe:
+Elige los MEJORES MOMENTOS para clips cortos de TikTok/Reels/Shorts. PRIORIDAD 1: lo DIVERTIDO (chistes, risas, reacciones exageradas, momentos absurdos o incómodos, bromas entre ellos); si hay un pico de volumen, revisa qué se dijo justo antes: suele ser el remate de un chiste o una reacción, y ese momento vale clipearlo. También sirven frases de impacto, revelaciones, consejos concretos, polémica e historias con remate. Cada momento debe:
 - durar entre ${CLIP_MIN_S} y ${CLIP_MAX_S} segundos y entenderse solo (empieza al inicio de una idea, termina cuando se cierra),
 - NO terminar en los últimos 10 segundos de la transcripción si la idea parece seguir (se clipea en la siguiente ronda).
-Puntaje 1–10 de qué tan viral es (sé exigente: 8+ solo para momentos realmente buenos). Título corto en español, gancho = frase para poner arriba del clip. Si no hay nada bueno, devuelve la lista vacía.`;
+Puntaje 1–10 de qué tan bueno es para un clip: 8–10 muy divertido o impactante, 6–7 interesante o gracioso, 1–5 relleno. Título corto en español, gancho = frase para poner arriba del clip. Si no hay nada bueno, devuelve la lista vacía.`;
 
 export const MOMENTOS_SCHEMA = {
   type: "object" as const,
