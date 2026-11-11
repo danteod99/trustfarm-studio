@@ -481,16 +481,17 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
                     </div>
                   </div>
                   {(j.status === "pendiente" || j.status === "procesando") && (
-                    <div className="mt-1 flex flex-col items-center text-center text-xs text-mute">
+                    <div className="mt-1 flex flex-col items-start text-xs text-mute">
                       <BarraCargaT
                         elapsedSec={j.elapsedSec}
                         etaSec={j.etaSec ?? 15 * 60}
                         ariaLabel={`Progreso de ${j.nombre}`}
                         avisoLentitudSeg={AVISO_LENTO_SEG}
                         textoLento="Hay mucha demanda ahora, tu video sigue en proceso…"
-                        anchoClase="max-w-md"
+                        anchoClase="max-w-[220px]"
+                        compacta
                       />
-                      {j.status === "pendiente" && <p className="mt-1">En cola: empieza en cuanto se libere el servicio.</p>}
+                      {j.status === "pendiente" && <p className="text-[11px]">En cola: empieza en cuanto se libere el servicio.</p>}
                     </div>
                   )}
                   {open === j.id && (detailLoading ? <p className="mt-3 text-xs text-mute">Cargando clips…</p> : detail && renderClips(detail.job, detail.urls))}
