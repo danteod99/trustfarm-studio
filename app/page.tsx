@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { MODELS, PACKS, PLAN, creditCost } from "@/app/lib/catalog";
 import { BRAND } from "@/app/lib/brand";
-import { BRAINROT, MARQUEE, SHOW, type Showcase } from "@/app/lib/showcase";
+import { BRAINROT, GTA6, MARQUEE, SHOW, type Showcase } from "@/app/lib/showcase";
 import ParticleGlobe from "@/app/components/ParticleGlobe";
 import Reveal from "@/app/components/Reveal";
 import Media from "@/app/components/Media";
@@ -265,6 +265,30 @@ export default async function Home() {
         />
         <Reveal>
           <SoundReel items={BRAINROT} />
+        </Reveal>
+      </section>
+
+      {/* GTA 6 */}
+      <section className="mx-auto mt-28 max-w-6xl px-4">
+        <SectionHead
+          eyebrow="Personajes GTA 6"
+          title="Estilo GTA 6 para clips virales"
+          sub="Pantallas de carga, NPCs y personajes al estilo Vice City, listos para animar en video."
+        />
+        <Reveal>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            {GTA6.map((g) => (
+              <div key={g.src}>
+                <Frame item={g} className="relative aspect-[9/16]" />
+                <p className="mt-2 text-center text-xs text-mute">{g.title}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 text-center">
+            <Link href="/ideas" className="btn-ghost !px-6 !py-3">
+              Ver las ideas de GTA 6
+            </Link>
+          </div>
         </Reveal>
       </section>
 
