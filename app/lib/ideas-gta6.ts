@@ -108,3 +108,46 @@ export const IDEAS_GTA6: Idea[] = [
     ],
   }),
 ];
+
+// Videos (11-11-2026): las 3 portadas animadas con LTX-2.5 (5 s, 720p, voz). Dante dio el OK tras verlos.
+function video(b: Pick<Idea, "id" | "title" | "hook" | "prompt"> & { v: [string, string][]; portada: string }, motion: string): Idea {
+  const { v, portada, ...resto } = b;
+  return {
+    ...resto, category: CATEGORIA, kind: "video", model: "ltx-25", aspect: "9:16", duration: 5, resolution: "720p", motion,
+    image: `/showcase/idea-${portada}.jpg`, video: `/showcase/idea-${resto.id}.mp4`,
+    variaciones: variaciones(v), fuente: FUENTE, tendencia: true,
+  };
+}
+
+export const VIDEOS_GTA6: Idea[] = [
+  video({
+    id: "gta6-video-lucia-playa", portada: "gta6-lucia-playa", title: "Lucia camina por la playa (video)",
+    hook: "El clip que abre cualquier fan edit: la protagonista hacia la cámara al atardecer, con música synthwave.",
+    prompt: "Ilustración animada de una joven latina de unos 25 años, trenza oscura larga, tatuajes pequeños, top blanco y shorts turquesa, caminando despacio hacia la cámara por la orilla de una playa tropical al atardecer, el viento mueve su trenza, olas suaves, palmeras y un convertible rosa al fondo, neón rosa y turquesa. Cámara lenta con un leve acercamiento. Sonido ambiente de olas y música synthwave suave. Sin texto, sin logos, sin armas.",
+    v: [
+      ["De noche con neón", "Ilustración animada de una joven latina de unos 25 años, trenza oscura y tatuajes pequeños, caminando hacia la cámara por una avenida costera de noche con edificios art déco en neón rosa y turquesa, brillos en el pavimento. Cámara lenta, música synthwave. Sin texto, sin logos, sin armas."],
+      ["Gira y sonríe", "Ilustración animada de una joven latina de unos 25 años, trenza oscura y tatuajes pequeños, de espaldas en la playa al atardecer que gira la cabeza, sonríe a la cámara y dice en español: «Bienvenidos a Vice City». Música synthwave suave. Sin texto, sin logos, sin armas."],
+      ["Bajo la lluvia", "Ilustración animada de una joven latina de unos 25 años, trenza oscura y tatuajes pequeños, caminando hacia la cámara bajo una lluvia fina en una avenida de neón rosa y turquesa de noche, charcos que reflejan las luces. Cámara lenta, música synthwave. Sin texto, sin logos, sin armas."],
+    ],
+  }, "acercamiento"),
+  video({
+    id: "gta6-video-pareja-pantalla-carga", portada: "gta6-pareja-pantalla-carga", title: "Lucia y Jason giran a cámara (video)",
+    hook: "La pareja que divide TikTok, con el atardecer y las luces de neón moviéndose detrás.",
+    prompt: "Ilustración animada de una joven latina de trenza oscura y un hombre blanco de barba corta, espalda con espalda, que giran la cabeza hacia la cámara con confianza mientras el sol se pone y las luces de neón de la ciudad parpadean detrás, palmeras y un convertible clásico, leve movimiento de cámara hacia adelante. Una voz de mujer joven latina dice en español: «Vamos, que esto recién empieza». Música synthwave suave. Sin texto, sin logos, sin armas.",
+    v: [
+      ["Se miran entre sí", "Ilustración animada de una joven latina de trenza oscura y un hombre blanco de barba corta, espalda con espalda, que se miran de reojo y sonríen mientras las luces de neón de la ciudad brillan al atardecer. Música synthwave suave. Sin texto, sin logos, sin armas."],
+      ["Frase de él", "Ilustración animada de una joven latina de trenza oscura y un hombre blanco de barba corta, espalda con espalda, él gira hacia la cámara y dice en español con voz grave: «Todo va a salir bien». Atardecer neón, palmeras. Sin texto, sin logos, sin armas."],
+      ["En la azotea", "Ilustración animada de una joven latina de trenza oscura y un hombre blanco de barba corta, sentados en el borde de una azotea con las luces de neón de la ciudad abajo, que giran hacia la cámara y ella dice en español: «Qué vista, ¿no?». De noche, música synthwave. Sin texto, sin logos, sin armas."],
+    ],
+  }, "acercamiento"),
+  video({
+    id: "gta6-video-hombre-florida", portada: "gta6-hombre-florida", title: "Hombre de Florida y su copiloto (video)",
+    hook: "Un hombre con camisa floreada, un convertible rosa y un caimán de copiloto: humor listo para viralizar.",
+    prompt: "Video realista estilizado de un hombre de mediana edad, bronceado, con camisa floreada abierta, que mira a cámara sonriendo con orgullo y acaricia a un pequeño caimán que mueve la cola en el asiento del copiloto de un convertible rosa viejo que avanza despacio por una avenida de palmeras al atardecer. Una voz masculina dice en español con tono muy tranquilo: «Tranquilo, es mi copiloto». Sonido ambiente de playa y motor suave. Sin texto, sin logos, sin armas.",
+    v: [
+      ["Con un flamenco", "Video realista estilizado de un hombre de mediana edad con camisa floreada al volante de un convertible rosa viejo, con un flamenco rosa de pasajero que gira el cuello hacia la cámara, avenida de palmeras al atardecer. Una voz masculina dice en español: «No pregunten». Sin texto, sin logos, sin armas."],
+      ["Semáforo en rojo", "Video realista estilizado de un hombre de mediana edad con camisa floreada en un convertible rosa detenido en un semáforo, con un caimán pequeño en el asiento del copiloto que abre la boca como si bostezara, él lo mira y dice en español: «Yo también tengo sueño». Sin texto, sin logos, sin armas."],
+      ["Con un pelícano", "Video realista estilizado de un hombre de mediana edad con camisa floreada al volante de un convertible rosa viejo, con un pelícano posado en el parabrisas que lo mira fijo, avenida costera al atardecer, él lo mira y dice en español: «Es mi sindicato». Sin texto, sin logos, sin armas."],
+    ],
+  }, "fija"),
+];
