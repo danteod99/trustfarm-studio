@@ -26,7 +26,9 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     const map = new Map((signed || []).filter((s) => s.signedUrl && s.path).map((s) => [s.path as string, s.signedUrl]));
     urls = Object.fromEntries(result.clips.map((c) => [c.index, { video: map.get(c.file) || "", srt: c.srt ? map.get(c.srt) || null : null }]));
   }
-  return Response.json({ job, urls });
+  const o = (job.options || {}) as { estilo?: { logo?: unknown } };
+  const liviano = o.estilo?.logo ? { ...job, options: { ...o, estilo: { ...o.estilo, logo: true } } } : job;
+  return Response.json({ job: liviano, urls });
 }
 
 // DELETE: borra el trabajo y sus archivos. Si no llegó a procesarse, devuelve los créditos.
