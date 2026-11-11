@@ -12,7 +12,7 @@ export default async function Header() {
   const balance = user ? await getBalance(user.id) : 0;
   const minipcVisible = paginaVisible({ NEXT_PUBLIC_MINIPC_VISIBLE: process.env.NEXT_PUBLIC_MINIPC_VISIBLE });
   const grupos: { titulo: string; items: string[][] }[] = [
-    { titulo: "Crear", items: [["/galeria", "Galería"], ["/flujos", "Flujos"], ["/editar", "Editar"]] },
+    { titulo: "Crear", items: [["/galeria", "Galería"], ["/flujos", "Flujos"], ["/editar", "Editar"], ["/editar/en-vivo", "Clipeo en vivo"]] },
     {
       titulo: "Granjas",
       items: [

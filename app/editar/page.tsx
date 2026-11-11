@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Clapperboard, Copy, Film, Scissors } from "lucide-react";
+import { Clapperboard, Copy, Film, Radio, Scissors } from "lucide-react";
 import SpotlightCard from "@/app/components/fx/SpotlightCard";
 import { EDITAR_PRECIOS } from "@/app/lib/editar";
+import { EN_VIVO_CREDITOS } from "@/app/lib/en-vivo";
 
 export const metadata = { title: "Editar" };
 
@@ -29,6 +30,14 @@ const TOOLS = [
     text: "Sube un video largo o pega un link de YouTube (podcast, clase, tutorial, gameplay) y la IA lo identifica y saca los mejores momentos en clips verticales con subtítulos y título. En tutoriales y gameplay con webcam, la persona va arriba y la pantalla abajo.",
     price: `${EDITAR_PRECIOS.clips} créditos por video`,
     extra: "Se procesa en la nube · hasta 15 clips por video",
+  },
+  {
+    href: "/editar/en-vivo",
+    icon: <Radio size={20} />,
+    title: "Clipeo en vivo",
+    text: "Pega el link de un en vivo de YouTube, Twitch o Kick (ideal para podcast). Mientras lo ves, la IA lo transcribe en tiempo real y corta sola los mejores momentos. También puedes clipear al instante con un botón.",
+    price: `${EN_VIVO_CREDITOS} créditos cada 10 minutos`,
+    extra: "Clips en MP4 vertical o normal · transcripción descargable",
   },
   {
     href: "/editar/unir",
