@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Clapperboard, Copy, Film, Radio, Scissors } from "lucide-react";
+import { Clapperboard, Copy, Film, Radio, Scissors, UserRound } from "lucide-react";
 import SpotlightCard from "@/app/components/fx/SpotlightCard";
 import { EDITAR_PRECIOS } from "@/app/lib/editar";
 import { EN_VIVO_CREDITOS } from "@/app/lib/en-vivo";
@@ -30,6 +30,14 @@ const TOOLS = [
     text: "Sube un video largo o pega un link de YouTube (podcast, clase, tutorial, gameplay) y la IA lo identifica y saca los mejores momentos en clips verticales con subtítulos y título. En tutoriales y gameplay con webcam, la persona va arriba y la pantalla abajo.",
     price: `${EDITAR_PRECIOS.clips} créditos por video`,
     extra: "Se procesa en la nube · hasta 15 clips por video",
+  },
+  {
+    href: "/editar/perfil",
+    icon: <UserRound size={20} />,
+    title: "Perfil de TikTok",
+    text: "Pega el @usuario de tu perfil de TikTok y bajamos tus videos sin marca de agua. Si quieres, cada video se mete dentro de una laptop o una TV reales con pantalla verde para que se vea distinto. Descargas todo en una carpeta o un ZIP. No publica nada.",
+    price: `${EDITAR_PRECIOS.perfil} créditos · ${EDITAR_PRECIOS.perfilVariacion} con pantalla real`,
+    extra: "Hasta 10 videos por trabajo · solo perfiles públicos",
   },
   {
     href: "/editar/en-vivo",
