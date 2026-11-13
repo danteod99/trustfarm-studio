@@ -16,6 +16,7 @@ export async function ritmoClips(): Promise<RitmoClips> {
       .from("clip_jobs")
       .select("created_at, finished_at, input_bytes, options")
       .eq("status", "listo")
+      .is("options->>tipo", null)
       .not("finished_at", "is", null)
       .order("created_at", { ascending: false })
       .limit(MUESTRAS);
