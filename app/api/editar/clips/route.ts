@@ -20,6 +20,7 @@ export async function GET() {
     .from("clip_jobs")
     .select(COLS)
     .eq("user_email", user.email.toLowerCase())
+    .is("options->>tipo", null) // los trabajos de Perfil de TikTok (options.tipo = "perfil") van en /editar/perfil
     .order("created_at", { ascending: false })
     .limit(40);
   if (error) return Response.json({ error: "No se pudieron cargar tus videos." }, { status: 500 });
@@ -79,6 +80,7 @@ export async function POST(req: Request) {
       .from("clip_jobs")
       .select("id", { count: "exact", head: true })
       .eq("user_email", email)
+      .is("options->>tipo", null)
       .gte("created_at", since)
       .neq("status", "error");
     if ((count || 0) >= CLIPS_LIMITE_DIARIO) {

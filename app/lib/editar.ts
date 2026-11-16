@@ -12,7 +12,14 @@ export const EDITAR_PRECIOS = {
   detectarSubs: 1,
   /** Multiclipping: análisis del video largo y clips en la nube, por video. */
   clips: 5,
+  /** Perfil de TikTok: bajar hasta 10 videos de tu perfil (sin marca de agua), por trabajo. */
+  perfil: 3,
+  /** Perfil de TikTok + variación «Pantalla real laptop/TV» en cada video, por trabajo. */
+  perfilVariacion: 5,
 } as const;
+
+/** Límite diario de trabajos de Perfil de TikTok (los admins no tienen límite). */
+export const PERFIL_LIMITE_DIARIO = 5;
 
 /** Límite diario de videos en Multiclipping (los admins no tienen límite). */
 export const CLIPS_LIMITE_DIARIO = 5;
