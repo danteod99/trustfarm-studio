@@ -51,3 +51,17 @@ export function etiquetaPlantilla(id: string): string {
   const nombre = esDispositivo(tipo) ? DISPOSITIVO_TEXTO[tipo] : tipo;
   return `${nombre.charAt(0).toUpperCase()}${nombre.slice(1)}${resto.length ? ` · ${resto.join(" ")}` : ""}`;
 }
+
+export const MAX_VERSIONES = 5;
+/** Tope de CPU de trustclip: videos × versiones por trabajo. */
+export const MAX_SALIDAS = 50;
+
+/** Versiones por video (1–5; lo ausente o inválido es 1 = comportamiento de siempre). */
+export function normalizarVersiones(raw: unknown): number {
+  const n = Math.floor(Number(raw));
+  return Number.isFinite(n) ? Math.min(MAX_VERSIONES, Math.max(1, n)) : 1;
+}
+
+/** Videos que caben en el trabajo con `versiones` por video sin pasar de MAX_SALIDAS (mínimo 1). */
+export const videosPermitidos = (maxVideos: number, versiones: number): number =>
+  Math.max(1, Math.min(Math.floor(maxVideos), Math.floor(MAX_SALIDAS / normalizarVersiones(versiones))));

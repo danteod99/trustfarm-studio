@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  captionDe, costoTrabajo, ejecutarVuelta, limaDia, migracionMarcoPendiente, opcionesMarco, recogerRun, requiereMigracion09, refCobro, runKeyPerfil, validarConfig,
+  captionDe, costoTrabajo, ejecutarVuelta, limaDia, migracionMarcoPendiente, opcionesMarco, opcionesVersiones, recogerRun, requiereMigracion09, refCobro, runKeyPerfil, validarConfig,
   type Candidato, type DepsRecoger, type DepsVuelta, type EntregaNueva, type JobParaRecoger, type ToolLoop, type ToolRun,
 } from '../app/lib/bucles-core.ts'
 import { etiquetaPlantilla, textoVariacion } from '../app/lib/variacion.ts'
@@ -345,4 +345,52 @@ test('dispositivos nuevos: validarConfig, requiereMigracion09 y textos', () => {
   assert.equal(textoVariacion('pantalla_real', null, null), 'pantalla real')
   assert.equal(etiquetaPlantilla('tv_sala'), 'TV · sala')
   assert.equal(etiquetaPlantilla('movil_negro'), 'Celular · negro')
+})
+
+// ───────── Versiones por video en bucles de perfil ─────────
+
+const clipsVersiones = (...ids: string[]) => ids.flatMap((id, v) => [1, 2, 3].map((n) => ({
+  index: v * 3 + n, file: `out/J1/${String(v + 1).padStart(2, '0')}_v${n}.mp4`, tiktok_id: id, version: n, caption: `cap ${id}`,
+})))
+
+test('versiones=3: una vuelta de perfil entrega 3 archivos por video con source_ref único y marca el video como visto', async () => {
+  const r = recogida()
+  const l = loop({ tool: 'perfil', params: { handle: 'x', versiones: 3 } })
+  const fin = await recogerRun(l, run({ run_key: '2026-11-17@09:00', source_ref: '@x' }), listo({ clips: clipsVersiones('111', '222') }), r.deps, NOW)
+  assert.equal(fin, true)
+  assert.deepEqual(r.entregas.map((e) => e.source_ref), ['111', '111#v2', '111#v3', '222', '222#v2', '222#v3'])
+  assert.equal(new Set(r.entregas.map((e) => e.storage_path)).size, 6)           // archivos distintos
+  assert.ok(r.entregas.every((e) => e.caption === `cap ${e.source_ref.split('#')[0]}`)) // caption del video original
+  assert.deepEqual((r.bucle.cursor as { seen: string[] }).seen, ['111', '222'])   // seen = videos, no versiones
+  assert.equal(r.runs.status, 'done')
+  assert.equal(r.reembolsos.length, 0)
+})
+
+test('versiones=3: un video ya entregado no se repite y la vuelta sin nada nuevo es empty con reembolso', async () => {
+  const todo = ['111', '111#v2', '111#v3']
+  const r = recogida({ existentes: todo })
+  const l = loop({ tool: 'perfil', params: { handle: 'x', versiones: 3 }, cursor: { seen: ['111'], baseline: true } })
+  await recogerRun(l, run({ run_key: 'k2' }), listo({ clips: clipsVersiones('111') }), r.deps, NOW)
+  assert.equal(r.entregas.length, 0)
+  assert.equal(r.runs.status, 'empty')
+  assert.deepEqual(r.reembolsos, ['loop:L1:vid1'])
+  // Mezcla: el video 111 ya estaba y el 333 es nuevo: solo se entregan las 3 versiones del 333.
+  const r2 = recogida({ existentes: todo })
+  await recogerRun(l, run({ run_key: 'k3' }), listo({ clips: clipsVersiones('111', '333') }), r2.deps, NOW)
+  assert.deepEqual(r2.entregas.map((e) => e.source_ref), ['333', '333#v2', '333#v3'])
+  assert.deepEqual((r2.bucle.cursor as { seen: string[] }).seen, ['111', '333'])
+})
+
+test('versiones: sin campo version (trabajos viejos) el source_ref sigue siendo el id de TikTok', async () => {
+  const r = recogida()
+  await recogerRun(loop({ tool: 'perfil' }), run(), listo({ clips: [{ index: 1, file: 'out/J1/01.mp4', tiktok_id: '999' }] }), r.deps, NOW)
+  assert.deepEqual(r.entregas.map((e) => e.source_ref), ['999'])
+})
+
+test('opcionesVersiones: exclude_ids va aparte; max_videos se ajusta al tope de 50 salidas y versiones solo si > 1', () => {
+  assert.deepEqual(opcionesVersiones({ handle: 'x', max_videos: 3 }), { max_videos: 3 })
+  assert.deepEqual(opcionesVersiones({ handle: 'x', max_videos: 3, versiones: 3 }), { max_videos: 3, versiones: 3 })
+  assert.deepEqual(opcionesVersiones({ max_videos: 40, versiones: 5 }), { max_videos: 10, versiones: 5 })
+  assert.deepEqual(opcionesVersiones({ max_videos: 3, versiones: 99 }), { max_videos: 3, versiones: 5 })
+  assert.deepEqual(opcionesVersiones({ max_videos: 3, versiones: 'x' }), { max_videos: 3 })
 })

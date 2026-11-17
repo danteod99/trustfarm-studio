@@ -34,3 +34,13 @@ test("opciones: dispositivos nuevos de pantalla real en lista blanca", () => {
   assert.equal(opcionesPerfil({ usuario: "a", variacion: "pantalla_real", pantalla: "celular" })?.pantalla, undefined);
   assert.equal(opcionesPerfil({ usuario: "a", variacion: "marco", pantalla: "movil" })?.pantalla, undefined);
 });
+
+test("opciones: versiones 1-5 y tope de 50 salidas por trabajo", () => {
+  assert.equal("versiones" in (opcionesPerfil({ usuario: "a" }) ?? {}), false);
+  assert.equal("versiones" in (opcionesPerfil({ usuario: "a", versiones: 1 }) ?? {}), false);
+  assert.equal(opcionesPerfil({ usuario: "a", versiones: 3, max_videos: 4 })?.versiones, 3);
+  assert.equal(opcionesPerfil({ usuario: "a", versiones: 99 })?.versiones, 5);
+  assert.equal(opcionesPerfil({ usuario: "a", versiones: "x" })?.versiones, undefined);
+  assert.equal(opcionesPerfil({ usuario: "a", versiones: 5, max_videos: 10 })?.max_videos, 10);   // 10 x 5 = 50
+  assert.equal(opcionesPerfil({ usuario: "a", versiones: 5, max_videos: 99 })?.max_videos, 10);
+});
