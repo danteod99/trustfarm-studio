@@ -99,9 +99,14 @@ export default function MinipcPage() {
           <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">TRUST Assistant</h1>
           <p className="mt-4 text-xl text-ink sm:text-2xl">{PROMESA}</p>
           <p className="mt-4 text-mute">Vende · toma pedidos · agenda citas · edita tus videos.</p>
+          {abierta && (
+            <p className="mt-4 inline-block rounded-full border border-brand/40 px-4 py-1.5 text-sm text-ink">
+              Reserva tu equipo hoy con <strong>$20</strong>, se descuentan del precio.
+            </p>
+          )}
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <a href="#planes" className="btn-primary">
-              Ver planes y precios
+              {abierta ? "Reservar con $20" : "Ver planes y precios"}
             </a>
             <a href={CONTACTO.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-ghost">
               <MessageCircle className="h-4 w-4" aria-hidden="true" />
