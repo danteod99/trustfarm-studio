@@ -6,6 +6,7 @@ import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
 import PageBackdrop from "@/app/components/PageBackdrop";
 import PixelStudio from "@/app/components/PixelStudio";
+import DescargaAutomaticaHost from "@/app/components/DescargaAutomaticaHost";
 
 // Wordmark "TRUST": Michroma ≈ Eurostile Extended, la misma fuente del logo de trustmind.online.
 const michroma = Michroma({ variable: "--font-michroma", weight: "400", subsets: ["latin"], display: "swap" });
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </main>
         <Footer />
         <PixelStudio />
+        <DescargaAutomaticaHost />
       </body>
     </html>
   );

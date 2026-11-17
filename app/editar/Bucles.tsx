@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Loader2, Pause, Play, Repeat, Trash2 } from "lucide-react";
 import { ErrorBox } from "@/app/editar/ToolHeader";
 import SelectorVariacion, { SelectorVersiones, cuerpoVariacion, type SeleccionVariacion } from "@/app/editar/SelectorVariacion";
+import DescargaCarpeta from "@/app/editar/DescargaCarpeta";
 import { textoVariacion } from "@/app/lib/variacion";
 
 type Tool = "multiclip" | "perfil";
@@ -105,6 +106,7 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
         Cada resultado queda como entrega para TrustFarm Desktop. <b className="text-ink">Necesita el desktop encendido</b> para recogerlas
         (esperan 7 días en la nube).
       </p>
+      <DescargaCarpeta />
       {error && <div className="mt-3"><ErrorBox msg={error} onClose={() => setError(null)} /></div>}
 
       {abierto && (
