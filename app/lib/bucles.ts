@@ -7,7 +7,7 @@ import { EDITAR_PRECIOS } from "@/app/lib/editar";
 import { limpiarUsuario, PERFIL_MAX_VIDEOS } from "@/app/lib/perfil";
 import { nextRunAt } from "@/app/lib/automatizacion";
 import {
-  MAX_BUCLES_POR_CUENTA, costoTrabajo, ejecutarVuelta, migracionMarcoPendiente, opcionesMarco, recogerRun, runColgada, runKeyPerfil, validarConfig,
+  MAX_BUCLES_POR_CUENTA, costoTrabajo, ejecutarVuelta, migracionMarcoPendiente, opcionesMarco, recogerRun, requiereMigracion09, runColgada, runKeyPerfil, validarConfig,
   type Candidato, type DepsRecoger, type DepsVuelta, type JobParaRecoger, type Tool, type ToolLoop, type ToolRun,
 } from "@/app/lib/bucles-core";
 import { channelIdDeHtml, clasificarYouTube, parseFeed, urlFeed, urlVideo, type VideoFeed } from "@/app/lib/youtube-feed";
@@ -113,8 +113,9 @@ export async function crearBucle(userId: string, email: string, { tool, body }: 
     .select("*")
     .single();
   if (error || !data) {
-    if (v.variacion === "marco" && migracionMarcoPendiente(error)) {
-      return { ok: false, error: "La variación «Marco o fondo» todavía no está disponible en bucles. Usa «Pantalla real» o sin variación, o vuelve pronto.", status: 503 };
+    if (requiereMigracion09(v) && migracionMarcoPendiente(error)) {
+      const que = v.variacion === "marco" ? "La variación «Marco o fondo»" : "Ese dispositivo (celular, tablet o monitor)";
+      return { ok: false, error: `${que} todavía no está disponible en bucles. Usa laptop o TV, o vuelve pronto.`, status: 503 };
     }
     return { ok: false, error: "No se pudo crear el bucle.", status: 500 };
   }

@@ -2,7 +2,7 @@
 // dentro de una laptop/TV real (variación «Pantalla real»). Corre en el servicio trustclip como un
 // trabajo de `clip_jobs` con options.tipo = "perfil" (ver trustclip/engine/perfil.py).
 
-import { normalizarVariacion, type EstiloMarco, type Variacion } from "./variacion.ts";
+import { normalizarVariacion, type Dispositivo, type EstiloMarco, type Variacion } from "./variacion.ts";
 
 export const PERFIL_MAX_VIDEOS = 10;
 const MAX_HANDLE = 48;
@@ -17,14 +17,14 @@ export function limpiarUsuario(raw: unknown): string | null {
   return t.length > 0 && t.length <= MAX_HANDLE && /^[A-Za-z0-9._]+$/.test(t) ? t : null;
 }
 
-export type PantallaTipo = "mixto" | "laptop" | "tv";
+export type PantallaTipo = "mixto" | Dispositivo;
 
 export interface OpcionesPerfil {
   tipo: "perfil";
   handle: string;
   max_videos: number;
   variacion: Variacion | null;
-  pantalla?: "laptop" | "tv";
+  pantalla?: Dispositivo;
   /** Solo con variacion = "marco" (trustclip: options.estilo). */
   estilo?: EstiloMarco;
 }

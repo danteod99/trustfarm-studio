@@ -27,3 +27,10 @@ test("opciones: variación marco con estilo en lista blanca; estilo/pantalla no 
   assert.equal(opcionesPerfil({ usuario: "a", variacion: "otra", estilo: "blur" })?.variacion, null);
   assert.equal("estilo" in (opcionesPerfil({ usuario: "a", estilo: "blur" }) ?? {}), false);
 });
+
+test("opciones: dispositivos nuevos de pantalla real en lista blanca", () => {
+  for (const d of ["laptop", "tv", "movil", "tablet", "monitor"]) assert.equal(opcionesPerfil({ usuario: "a", variacion: "pantalla_real", pantalla: d })?.pantalla, d);
+  assert.equal(opcionesPerfil({ usuario: "a", variacion: "pantalla_real", pantalla: "mixto" })?.pantalla, undefined);
+  assert.equal(opcionesPerfil({ usuario: "a", variacion: "pantalla_real", pantalla: "celular" })?.pantalla, undefined);
+  assert.equal(opcionesPerfil({ usuario: "a", variacion: "marco", pantalla: "movil" })?.pantalla, undefined);
+});

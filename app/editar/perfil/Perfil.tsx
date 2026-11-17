@@ -1,7 +1,7 @@
 "use client";
 
 // Perfil de TikTok: pegas tu @usuario, el servicio de clips (nube) baja tus videos sin marca de agua y,
-// si quieres, mete cada uno en una laptop o TV reales (variación «Pantalla real»). Tú descargas todo.
+// si quieres, mete cada uno en un dispositivo real (variación «Pantalla real»). Tú descargas todo.
 // No publica nada.
 
 import { useCallback, useEffect, useState } from "react";
@@ -13,13 +13,13 @@ import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import type { JobResult } from "@/app/lib/clips";
 import SelectorVariacion, { cuerpoVariacion, type SeleccionVariacion } from "@/app/editar/SelectorVariacion";
 import { limpiarUsuario, PERFIL_MAX_VIDEOS } from "@/app/lib/perfil";
-import { textoVariacion } from "@/app/lib/variacion";
+import { etiquetaPlantilla, textoVariacion } from "@/app/lib/variacion";
 import { buildZip } from "@/app/granja/zip";
 
 interface Job {
   id: string; created_at: string; finished_at: string | null; nombre: string; status: string;
   progress: string | null; error: string | null; result: JobResult | null; expired: boolean;
-  options: { handle?: string; variacion?: string | null; estilo?: string | null; max_videos?: number; cobro?: { creditos: number; reembolsado?: boolean } };
+  options: { handle?: string; variacion?: string | null; estilo?: string | null; pantalla?: string | null; max_videos?: number; cobro?: { creditos: number; reembolsado?: boolean } };
 }
 type Urls = Record<number, { video: string; srt: string | null }>;
 
@@ -197,7 +197,7 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
                 )}
                 <div className="space-y-1.5 p-3">
                   <p className="line-clamp-2 text-xs leading-snug">{c.titulo}</p>
-                  {plantilla && <p className="text-[11px] text-mute">{plantilla.startsWith("tv_") ? "TV" : "Laptop"} · {plantilla.replace(/^(tv|laptop)_/, "")}</p>}
+                  {plantilla && <p className="text-[11px] text-mute">{etiquetaPlantilla(plantilla)}</p>}
                   {estiloMarco && <p className="text-[11px] text-mute">Marco · {estiloMarco}</p>}
                   <div className="pt-1">
                     {u?.video && <a href={u.video} download className="btn-primary !px-2.5 !py-1 text-xs"><Download size={12} /> MP4</a>}
@@ -216,7 +216,7 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
       <ToolHeader
         icon={<UserRound size={20} />}
         title="Perfil de TikTok"
-        subtitle="Pega el @usuario de tu perfil y bajamos tus videos sin marca de agua. Opcional: cada video se mete dentro de una laptop o TV reales, o sobre un fondo o marco, para que se vea distinto. No publica nada: tú descargas y subes."
+        subtitle="Pega el @usuario de tu perfil y bajamos tus videos sin marca de agua. Opcional: cada video se mete dentro de una laptop, TV, celular, tablet o monitor reales, o sobre un fondo o marco, para que se vea distinto. No publica nada: tú descargas y subes."
       />
 
       {!activo && !loading && <div className="mb-4"><ErrorBox msg="Esta herramienta todavía no está activa. Vuelve pronto o escríbenos por WhatsApp." /></div>}
@@ -271,7 +271,7 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
                 <div key={j.id} className="rounded-xl border border-line bg-panel-2 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold">{j.nombre}{j.options.variacion ? ` · ${textoVariacion(j.options.variacion, j.options.estilo)}` : ""}</p>
+                      <p className="truncate text-sm font-semibold">{j.nombre}{j.options.variacion ? ` · ${textoVariacion(j.options.variacion, j.options.estilo, j.options.pantalla)}` : ""}</p>
                       <p className="text-xs text-mute">
                         {fmtDate(j.created_at)}
                         {j.status === "procesando" && j.progress ? ` · ${j.progress}` : ""}

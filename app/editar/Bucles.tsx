@@ -165,7 +165,7 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
                     <p className="truncate font-semibold">{b.name}</p>
                     <p className="text-xs text-mute">
                       {b.days.map((d) => DIAS[d]).join(" ")} {hh(b.hora, b.minuto)} · tope {b.daily_cap}/día{b.tool === "multiclip" ? ` · ${b.max_per_run} por vuelta` : ""}
-                      {b.variacion ? ` · ${textoVariacion(b.variacion, b.estilo)}` : ""}
+                      {b.variacion ? ` · ${textoVariacion(b.variacion, b.estilo, b.pantalla)}` : ""}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

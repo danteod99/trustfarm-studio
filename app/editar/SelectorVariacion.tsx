@@ -3,15 +3,15 @@
 // Selector de variación (Ninguna / Pantalla real / Marco o fondo) + su sub-opción, compartido por Perfil de TikTok y los bucles.
 
 import { Frame, MonitorPlay } from "lucide-react";
-import { ESTILOS_MARCO, ESTILOS_MARCO_TEXTO, type EstiloMarco, type Variacion } from "@/app/lib/variacion";
+import { ESTILOS_MARCO, ESTILOS_MARCO_TEXTO, type Dispositivo, type EstiloMarco, type Variacion } from "@/app/lib/variacion";
 
-export type PantallaSel = "mixto" | "laptop" | "tv";
+export type PantallaSel = "mixto" | Dispositivo;
 export interface SeleccionVariacion { variacion: Variacion | null; pantalla: PantallaSel; estilo: EstiloMarco }
 
 const TIPOS: { k: Variacion | null; t: string; d: string }[] = [
   { k: null, t: "Ninguna", d: "Solo se bajan los videos tal cual, sin marca de agua." },
-  { k: "pantalla_real", t: "Pantalla real laptop/TV", d: "Cada video se compone dentro de una laptop o TV reales, con luz suave de fondo, en vertical 1080×1920." },
-  { k: "marco", t: "Marco o fondo", d: "El video va centrado sobre un fondo desenfocado, de color o dentro de un marco. Sin laptop ni TV, 1080×1920." },
+  { k: "pantalla_real", t: "Pantalla real", d: "Cada video se compone dentro de un dispositivo real (laptop, TV, celular, tablet o monitor), con luz suave de fondo, en vertical 1080×1920." },
+  { k: "marco", t: "Marco o fondo", d: "El video va centrado sobre un fondo desenfocado, de color o dentro de un marco. Sin dispositivo, 1080×1920." },
 ];
 
 export default function SelectorVariacion({ value, onChange, disabled, compacto }: {
@@ -35,7 +35,7 @@ export default function SelectorVariacion({ value, onChange, disabled, compacto 
         <div>
           <span className="font-semibold">Dispositivo</span>
           <div className="mt-2 flex flex-wrap gap-2">
-            {([["mixto", "Variado (laptops y TVs)"], ["laptop", "Solo laptops"], ["tv", "Solo TVs"]] as [PantallaSel, string][]).map(([k, t]) => (
+            {([["mixto", "Cualquiera (variado)"], ["laptop", "Laptop"], ["tv", "TV"], ["movil", "Celular"], ["tablet", "Tablet"], ["monitor", "Monitor"]] as [PantallaSel, string][]).map(([k, t]) => (
               <button key={k} type="button" onClick={() => set({ pantalla: k })} disabled={disabled} className={`chip ${value.pantalla === k ? "chip-on" : ""}`}>{t}</button>
             ))}
           </div>

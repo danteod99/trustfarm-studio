@@ -1,9 +1,10 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  captionDe, costoTrabajo, ejecutarVuelta, limaDia, migracionMarcoPendiente, opcionesMarco, recogerRun, refCobro, runKeyPerfil, validarConfig,
+  captionDe, costoTrabajo, ejecutarVuelta, limaDia, migracionMarcoPendiente, opcionesMarco, recogerRun, requiereMigracion09, refCobro, runKeyPerfil, validarConfig,
   type Candidato, type DepsRecoger, type DepsVuelta, type EntregaNueva, type JobParaRecoger, type ToolLoop, type ToolRun,
 } from '../app/lib/bucles-core.ts'
+import { etiquetaPlantilla, textoVariacion } from '../app/lib/variacion.ts'
 
 const NOW = new Date('2026-11-17T14:05:00Z') // 09:05 en Lima, martes
 const PRECIOS = { clips: 5, clipsVariacion: 8, perfil: 3, perfilVariacion: 5 }
@@ -326,4 +327,22 @@ test('migracionMarcoPendiente: reconoce columna/CHECK ausentes y no otros errore
   assert.equal(migracionMarcoPendiente({ code: 'PGRST204', message: "Could not find the 'estilo' column of 'tool_loops' in the schema cache" }), true)
   assert.equal(migracionMarcoPendiente({ code: '23505', message: 'duplicate key' }), false)
   assert.equal(migracionMarcoPendiente(null), false)
+})
+
+test('dispositivos nuevos: validarConfig, requiereMigracion09 y textos', () => {
+  for (const d of ['movil', 'tablet', 'monitor', 'laptop', 'tv']) {
+    const r = validarConfig('perfil', { variacion: 'pantalla_real', pantalla: d })
+    assert.ok(r.ok); if (r.ok) assert.equal(r.value.pantalla, d)
+  }
+  const mal = validarConfig('perfil', { variacion: 'pantalla_real', pantalla: 'celular' })
+  if (mal.ok) assert.equal(mal.value.pantalla, null)
+  assert.equal(requiereMigracion09({ variacion: 'pantalla_real', pantalla: 'laptop' }), false)  // bucles existentes: sin migración
+  assert.equal(requiereMigracion09({ variacion: 'pantalla_real', pantalla: null }), false)
+  assert.equal(requiereMigracion09({ variacion: 'pantalla_real', pantalla: 'movil' }), true)
+  assert.equal(requiereMigracion09({ variacion: 'marco', pantalla: null }), true)
+  assert.equal(migracionMarcoPendiente({ code: '23514', message: 'violates check constraint "tool_loops_pantalla_check"' }), true)
+  assert.equal(textoVariacion('pantalla_real', null, 'movil'), 'pantalla real (celular)')
+  assert.equal(textoVariacion('pantalla_real', null, null), 'pantalla real')
+  assert.equal(etiquetaPlantilla('tv_sala'), 'TV · sala')
+  assert.equal(etiquetaPlantilla('movil_negro'), 'Celular · negro')
 })

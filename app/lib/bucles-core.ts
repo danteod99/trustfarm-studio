@@ -3,7 +3,7 @@
 // lo prueban con memoria y bucles.ts lo conecta a Supabase.
 
 import { nextRunAt } from "./automatizacion.ts";
-import { esEstiloMarco, normalizarVariacion, type EstiloMarco, type Variacion } from "./variacion.ts";
+import { DISPOSITIVOS_NUEVOS, esEstiloMarco, normalizarVariacion, type Dispositivo, type EstiloMarco, type Variacion } from "./variacion.ts";
 
 export type Tool = "multiclip" | "perfil";
 export type EstadoBucle = "active" | "paused" | "error" | "no_credits";
@@ -23,7 +23,7 @@ export interface ToolLoop {
   name: string;
   params: Record<string, unknown>;
   variacion: Variacion | null;
-  pantalla: "laptop" | "tv" | null;
+  pantalla: Dispositivo | null;
   /** Estilo de la variación «marco». Columna de supabase/09; si aún no existe llega undefined (se trata como «mixto»). */
   estilo?: EstiloMarco | null;
   days: number[];
@@ -69,7 +69,7 @@ export interface ConfigBucle {
   daily_cap: number;
   max_per_run: number;
   variacion: Variacion | null;
-  pantalla: "laptop" | "tv" | null;
+  pantalla: Dispositivo | null;
   estilo: EstiloMarco | null;
 }
 
@@ -96,12 +96,16 @@ export function validarConfig(tool: Tool, b: Record<string, unknown>, admin = fa
   };
 }
 
-/** El insert con variacion 'marco' falló porque supabase/09 aún no está aplicado (falta la columna `estilo` o el CHECK lo rechaza). */
+/** El insert falló porque supabase/09 aún no está aplicado (falta la columna `estilo` o un CHECK de variacion/pantalla lo rechaza). */
 export function migracionMarcoPendiente(error: { code?: string; message?: string } | null): boolean {
   if (!error) return false;
   const m = error.message ?? "";
-  return error.code === "23514" || error.code === "42703" || error.code === "PGRST204" || /estilo|tool_loops_variacion/i.test(m);
+  return error.code === "23514" || error.code === "42703" || error.code === "PGRST204" || /estilo|tool_loops_variacion|tool_loops_pantalla/i.test(m);
 }
+
+/** Crear este bucle necesita supabase/09 (marco, o un dispositivo que el CHECK de 08 no conoce). */
+export const requiereMigracion09 = (c: Pick<ConfigBucle, "variacion" | "pantalla">): boolean =>
+  c.variacion === "marco" || (c.pantalla !== null && (DISPOSITIVOS_NUEVOS as readonly string[]).includes(c.pantalla));
 
 export function opcionesMarco(loop: Pick<ToolLoop, "tool" | "estilo">): Record<string, string> {
   const estilo = esEstiloMarco(loop.estilo) ? loop.estilo : "mixto";
