@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Reproductor from "@/app/components/Reproductor";
 import { CheckCircle2, Download, FolderDown, Loader2, MonitorPlay, RefreshCw, Trash2, UserRound } from "lucide-react";
+import Bucles from "@/app/editar/Bucles";
 import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import type { JobResult } from "@/app/lib/clips";
 import { limpiarUsuario, PERFIL_MAX_VIDEOS, type PantallaTipo } from "@/app/lib/perfil";
@@ -318,6 +319,7 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
           Si un trabajo falla, te devolvemos los créditos.
         </p>
       </div>
+      <Bucles tool="perfil" precio={precio} precioVariacion={precioVariacion} />
     </div>
   );
 }
