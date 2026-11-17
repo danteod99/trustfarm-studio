@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Reproductor from "@/app/components/Reproductor";
 import { Captions, CheckCircle2, Clapperboard, Download, FolderDown, Loader2, RefreshCw, Trash2, Trophy, Upload, X } from "lucide-react";
+import Bucles from "@/app/editar/Bucles";
 import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import VideoPicker from "@/app/editar/VideoPicker";
 import { Link2 } from "lucide-react";
@@ -66,7 +67,7 @@ type DirHandle = {
 };
 const puedeElegirCarpeta = () => typeof window !== "undefined" && "showDirectoryPicker" in window;
 
-export default function Clips({ precio, limite }: { precio: number; limite: number }) {
+export default function Clips({ precio, precioVariacion, limite }: { precio: number; precioVariacion: number; limite: number }) {
   const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [activo, setActivo] = useState(true);
@@ -505,6 +506,7 @@ export default function Clips({ precio, limite }: { precio: number; limite: numb
           Si un video falla, te devolvemos los créditos.
         </p>
       </div>
+      <Bucles tool="multiclip" precio={precio} precioVariacion={precioVariacion} />
     </div>
   );
 }

@@ -12,6 +12,8 @@ export const EDITAR_PRECIOS = {
   detectarSubs: 1,
   /** Multiclipping: análisis del video largo y clips en la nube, por video. */
   clips: 5,
+  /** Multiclipping + variación «Pantalla real laptop/TV» en cada clip (solo bucles; la compone el servicio de clips). */
+  clipsVariacion: 8,
   /** Perfil de TikTok: bajar hasta 10 videos de tu perfil (sin marca de agua), por trabajo. */
   perfil: 3,
   /** Perfil de TikTok + variación «Pantalla real laptop/TV» en cada video, por trabajo. */
