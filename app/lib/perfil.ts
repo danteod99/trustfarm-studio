@@ -2,6 +2,8 @@
 // dentro de una laptop/TV real (variación «Pantalla real»). Corre en el servicio trustclip como un
 // trabajo de `clip_jobs` con options.tipo = "perfil" (ver trustclip/engine/perfil.py).
 
+import { normalizarVariacion, type EstiloMarco, type Variacion } from "./variacion.ts";
+
 export const PERFIL_MAX_VIDEOS = 10;
 const MAX_HANDLE = 48;
 
@@ -21,8 +23,10 @@ export interface OpcionesPerfil {
   tipo: "perfil";
   handle: string;
   max_videos: number;
-  variacion: "pantalla_real" | null;
+  variacion: Variacion | null;
   pantalla?: "laptop" | "tv";
+  /** Solo con variacion = "marco" (trustclip: options.estilo). */
+  estilo?: EstiloMarco;
 }
 
 /** Normaliza lo que manda el navegador. null si el usuario no es válido. */
@@ -30,7 +34,6 @@ export function opcionesPerfil(body: Record<string, unknown>): OpcionesPerfil | 
   const handle = limpiarUsuario(body.usuario);
   if (!handle) return null;
   const max = Math.min(PERFIL_MAX_VIDEOS, Math.max(1, Math.round(Number(body.max_videos) || PERFIL_MAX_VIDEOS)));
-  const variacion = body.variacion === "pantalla_real" ? "pantalla_real" : null;
-  const pantalla = body.pantalla === "laptop" || body.pantalla === "tv" ? body.pantalla : undefined;
-  return { tipo: "perfil", handle, max_videos: max, variacion, ...(variacion && pantalla ? { pantalla } : {}) };
+  const { variacion, pantalla, estilo } = normalizarVariacion(body);
+  return { tipo: "perfil", handle, max_videos: max, variacion, ...(pantalla ? { pantalla } : {}), ...(estilo ? { estilo } : {}) };
 }
