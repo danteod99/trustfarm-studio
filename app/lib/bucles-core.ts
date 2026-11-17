@@ -3,7 +3,7 @@
 // lo prueban con memoria y bucles.ts lo conecta a Supabase.
 
 import { nextRunAt } from "./automatizacion.ts";
-import { DISPOSITIVOS_NUEVOS, esEstiloMarco, normalizarVariacion, type Dispositivo, type EstiloMarco, type Variacion } from "./variacion.ts";
+import { DISPOSITIVOS_NUEVOS, esEstiloMarco, normalizarVariacion, normalizarVersiones, videosPermitidos, type Dispositivo, type EstiloMarco, type Variacion } from "./variacion.ts";
 
 export type Tool = "multiclip" | "perfil";
 export type EstadoBucle = "active" | "paused" | "error" | "no_credits";
@@ -106,6 +106,13 @@ export function migracionMarcoPendiente(error: { code?: string; message?: string
 /** Crear este bucle necesita supabase/09 (marco, o un dispositivo que el CHECK de 08 no conoce). */
 export const requiereMigracion09 = (c: Pick<ConfigBucle, "variacion" | "pantalla">): boolean =>
   c.variacion === "marco" || (c.pantalla !== null && (DISPOSITIVOS_NUEVOS as readonly string[]).includes(c.pantalla));
+
+/** max_videos y versiones que se mandan a trustclip en cada vuelta de un bucle de perfil (versiones solo si > 1). */
+export function opcionesVersiones(params: Record<string, unknown>): { max_videos: number; versiones?: number } {
+  const versiones = normalizarVersiones(params.versiones);
+  const max = videosPermitidos(Math.max(1, Math.floor(Number(params.max_videos) || 3)), versiones);
+  return { max_videos: max, ...(versiones > 1 ? { versiones } : {}) };
+}
 
 export function opcionesMarco(loop: Pick<ToolLoop, "tool" | "estilo">): Record<string, string> {
   const estilo = esEstiloMarco(loop.estilo) ? loop.estilo : "mixto";
@@ -257,7 +264,7 @@ export async function ejecutarVuelta(loop: ToolLoop, deps: DepsVuelta, now: Date
 // ───────── Recogida de resultados ─────────
 
 export interface ClipJobResult {
-  index: number; file: string; srt?: string | null; titulo?: string; hook?: string; caption?: string; tiktok_id?: string;
+  index: number; file: string; srt?: string | null; titulo?: string; hook?: string; caption?: string; tiktok_id?: string; version?: number;
 }
 export interface JobParaRecoger { id: string; status: string; error: string | null; result: { clips?: ClipJobResult[] } | null; expired?: boolean }
 
@@ -286,7 +293,10 @@ export function captionDe(c: ClipJobResult): string {
 
 /** Qué fuente (para no repetir) corresponde a cada clip del resultado. */
 export function sourceRefDeClip(tool: Tool, run: ToolRun, c: ClipJobResult): string {
-  return tool === "perfil" ? (c.tiktok_id || `${run.run_key}#${c.index}`) : `${run.source_ref}#${c.index}`;
+  if (tool !== "perfil") return `${run.source_ref}#${c.index}`;
+  // La versión 1 conserva el id de TikTok (entregas anteriores a las versiones); las demás: `<id>#v2`, único por versión.
+  const base = c.tiktok_id || `${run.run_key}#${c.index}`;
+  return c.version && c.version > 1 ? `${base}#v${c.version}` : base;
 }
 
 function agregarVistos(cursor: ToolLoop["cursor"], ids: string[]): ToolLoop["cursor"] {
@@ -329,7 +339,8 @@ export async function recogerRun(
   const existentes = await deps.refsExistentes(loop.id, items.map((i) => i.ref));
   const nuevos = items.filter((i) => !existentes.has(i.ref));
 
-  const vistos = loop.tool === "perfil" ? items.map((i) => i.ref) : [run.source_ref];
+  // Lo "visto" es el video de TikTok (exclude_ids), no cada versión: un video se procesa una sola vez con todas sus versiones.
+  const vistos = loop.tool === "perfil" ? [...new Set(items.map((i) => i.c.tiktok_id || i.ref))] : [run.source_ref];
   if (nuevos.length === 0) {
     await reembolso("bucle: sin videos nuevos");
     await deps.marcarRun(run.id, { status: "empty", error: null, finished_at: fin });

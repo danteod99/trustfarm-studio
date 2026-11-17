@@ -2,7 +2,7 @@
 // dentro de una laptop/TV real (variación «Pantalla real»). Corre en el servicio trustclip como un
 // trabajo de `clip_jobs` con options.tipo = "perfil" (ver trustclip/engine/perfil.py).
 
-import { normalizarVariacion, type Dispositivo, type EstiloMarco, type Variacion } from "./variacion.ts";
+import { normalizarVariacion, normalizarVersiones, videosPermitidos, type Dispositivo, type EstiloMarco, type Variacion } from "./variacion.ts";
 
 export const PERFIL_MAX_VIDEOS = 10;
 const MAX_HANDLE = 48;
@@ -27,13 +27,16 @@ export interface OpcionesPerfil {
   pantalla?: Dispositivo;
   /** Solo con variacion = "marco" (trustclip: options.estilo). */
   estilo?: EstiloMarco;
+  /** Versiones únicas por video (2–5; ausente = 1). trustclip: options.versiones. */
+  versiones?: number;
 }
 
 /** Normaliza lo que manda el navegador. null si el usuario no es válido. */
 export function opcionesPerfil(body: Record<string, unknown>): OpcionesPerfil | null {
   const handle = limpiarUsuario(body.usuario);
   if (!handle) return null;
-  const max = Math.min(PERFIL_MAX_VIDEOS, Math.max(1, Math.round(Number(body.max_videos) || PERFIL_MAX_VIDEOS)));
+  const versiones = normalizarVersiones(body.versiones);
+  const max = videosPermitidos(Math.min(PERFIL_MAX_VIDEOS, Math.max(1, Math.round(Number(body.max_videos) || PERFIL_MAX_VIDEOS))), versiones);
   const { variacion, pantalla, estilo } = normalizarVariacion(body);
-  return { tipo: "perfil", handle, max_videos: max, variacion, ...(pantalla ? { pantalla } : {}), ...(estilo ? { estilo } : {}) };
+  return { tipo: "perfil", handle, max_videos: max, variacion, ...(pantalla ? { pantalla } : {}), ...(estilo ? { estilo } : {}), ...(versiones > 1 ? { versiones } : {}) };
 }

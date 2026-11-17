@@ -35,9 +35,9 @@ const TOOLS = [
     href: "/editar/perfil",
     icon: <UserRound size={20} />,
     title: "Perfil de TikTok",
-    text: "Pega el @usuario de tu perfil de TikTok y bajamos tus videos sin marca de agua. Si quieres, cada video se mete dentro de una laptop, TV, celular, tablet o monitor reales con pantalla verde, o sobre un fondo desenfocado, de color o dentro de un marco, para que se vea distinto. Descargas todo en una carpeta o un ZIP. No publica nada.",
+    text: "Pega el @usuario de tu perfil de TikTok y bajamos tus videos sin marca de agua. Si quieres, cada video se mete dentro de una laptop, TV, celular, tablet o monitor reales con pantalla verde, o sobre un fondo desenfocado, de color o dentro de un marco, para que se vea distinto. Puedes pedir hasta 5 versiones únicas de cada video (color, brillo, tono y volumen), incluidas en el precio, y repetirlo por horario con un bucle. Descargas todo en una carpeta o un ZIP. No publica nada.",
     price: `${EDITAR_PRECIOS.perfil} créditos · ${EDITAR_PRECIOS.perfilVariacion} con pantalla real o marco`,
-    extra: "Hasta 10 videos por trabajo · solo perfiles públicos",
+    extra: "Hasta 10 videos por trabajo (máx. 50 salidas con versiones) · solo perfiles públicos",
   },
   {
     href: "/editar/en-vivo",

@@ -6,14 +6,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Pause, Play, Repeat, Trash2 } from "lucide-react";
 import { ErrorBox } from "@/app/editar/ToolHeader";
-import SelectorVariacion, { cuerpoVariacion, type SeleccionVariacion } from "@/app/editar/SelectorVariacion";
+import SelectorVariacion, { SelectorVersiones, cuerpoVariacion, type SeleccionVariacion } from "@/app/editar/SelectorVariacion";
 import { textoVariacion } from "@/app/lib/variacion";
 
 type Tool = "multiclip" | "perfil";
 interface Vuelta { status: string; source_ref: string; error: string | null; created_at: string }
 interface Bucle {
   id: string; tool: Tool; name: string; status: "active" | "paused" | "error" | "no_credits"; days: number[]; hora: number; minuto: number;
-  daily_cap: number; max_per_run: number; variacion: string | null; pantalla: string | null; estilo?: string | null; last_error: string | null;
+  daily_cap: number; max_per_run: number; params?: { versiones?: number }; variacion: string | null; pantalla: string | null; estilo?: string | null; last_error: string | null;
   next_run_at: string; last_run_at: string | null; entregas: Record<string, number>; ultimas_vueltas: Vuelta[];
 }
 
@@ -36,6 +36,7 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
   const [hora, setHora] = useState("09:00");
   const [tope, setTope] = useState(2);
   const [porVuelta, setPorVuelta] = useState(1);
+  const [versiones, setVersiones] = useState(1);
   const [sel, setSel] = useState<SeleccionVariacion>({ variacion: null, pantalla: "mixto", estilo: "mixto" });
   const [desdeAhora, setDesdeAhora] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -60,7 +61,7 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tool, days, hora: h, minuto: m, daily_cap: tope, max_per_run: tool === "perfil" ? 1 : porVuelta,
-          ...cuerpoVariacion(sel),
+          ...cuerpoVariacion(sel), ...(tool === "perfil" ? { versiones } : {}),
           ...(tool === "perfil" ? { usuario: fuente } : { url: fuente, desde_ahora: desdeAhora }),
         }),
       });
@@ -136,6 +137,7 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
             )}
           </div>
           <SelectorVariacion value={sel} onChange={setSel} disabled={busy} compacto />
+          {tool === "perfil" && <SelectorVersiones value={versiones} onChange={setVersiones} disabled={busy} />}
           {tool === "multiclip" && (
             <label className="flex cursor-pointer items-start gap-2 text-sm">
               <input type="checkbox" checked={desdeAhora} onChange={(e) => setDesdeAhora(e.target.checked)} className="mt-1 accent-cyan-400" disabled={busy} />
@@ -165,7 +167,7 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
                     <p className="truncate font-semibold">{b.name}</p>
                     <p className="text-xs text-mute">
                       {b.days.map((d) => DIAS[d]).join(" ")} {hh(b.hora, b.minuto)} · tope {b.daily_cap}/día{b.tool === "multiclip" ? ` · ${b.max_per_run} por vuelta` : ""}
-                      {b.variacion ? ` · ${textoVariacion(b.variacion, b.estilo, b.pantalla)}` : ""}
+                      {(b.params?.versiones || 1) > 1 ? ` · ${b.params?.versiones} versiones` : ""}{b.variacion ? ` · ${textoVariacion(b.variacion, b.estilo, b.pantalla)}` : ""}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

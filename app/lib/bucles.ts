@@ -5,9 +5,10 @@ import { addCredits, chargeCredits } from "@/app/lib/credits";
 import { CLIPS_BUCKET, trustclipOrigin, type CobroClip } from "@/app/lib/clips";
 import { EDITAR_PRECIOS } from "@/app/lib/editar";
 import { limpiarUsuario, PERFIL_MAX_VIDEOS } from "@/app/lib/perfil";
+import { normalizarVersiones, videosPermitidos } from "@/app/lib/variacion";
 import { nextRunAt } from "@/app/lib/automatizacion";
 import {
-  MAX_BUCLES_POR_CUENTA, costoTrabajo, ejecutarVuelta, migracionMarcoPendiente, opcionesMarco, recogerRun, requiereMigracion09, runColgada, runKeyPerfil, validarConfig,
+  MAX_BUCLES_POR_CUENTA, costoTrabajo, ejecutarVuelta, migracionMarcoPendiente, opcionesMarco, opcionesVersiones, recogerRun, requiereMigracion09, runColgada, runKeyPerfil, validarConfig,
   type Candidato, type DepsRecoger, type DepsVuelta, type JobParaRecoger, type Tool, type ToolLoop, type ToolRun,
 } from "@/app/lib/bucles-core";
 import { channelIdDeHtml, clasificarYouTube, parseFeed, urlFeed, urlVideo, type VideoFeed } from "@/app/lib/youtube-feed";
@@ -78,8 +79,10 @@ export async function crearBucle(userId: string, email: string, { tool, body }: 
   if (tool === "perfil") {
     const handle = limpiarUsuario(body.usuario);
     if (!handle) return { ok: false, error: "Escribe un usuario de TikTok válido (por ejemplo @tucuenta).", status: 400 };
-    const max = Math.min(PERFIL_MAX_VIDEOS, Math.max(1, Math.round(Number(body.max_videos) || 3)));
-    params = { handle, max_videos: max };
+    const versiones = normalizarVersiones(body.versiones);
+    const max = videosPermitidos(Math.min(PERFIL_MAX_VIDEOS, Math.max(1, Math.round(Number(body.max_videos) || 3))), versiones);
+    // `versiones` vive en params (jsonb): no hace falta migración. Solo se guarda si es > 1.
+    params = { handle, max_videos: max, ...(versiones > 1 ? { versiones } : {}) };
     nombre ||= `Perfil @${handle}`;
     // La primera vuelta baja los últimos `max_videos` del perfil; las siguientes solo los que no estén en cursor.seen.
   } else {
@@ -184,7 +187,7 @@ function depsVuelta(): DepsVuelta {
       if (loop.tool === "perfil") {
         const { data: job, error } = await db().from("clip_jobs").insert({
           user_email: email, user_id: loop.owner, nombre: `@${loop.params.handle}`, status: "pendiente", progress: "En cola",
-          options: { tipo: "perfil", handle: loop.params.handle, max_videos: loop.params.max_videos ?? 3, exclude_ids: (loop.cursor.seen ?? []).slice(-200), ...comun },
+          options: { tipo: "perfil", handle: loop.params.handle, ...opcionesVersiones(loop.params), exclude_ids: (loop.cursor.seen ?? []).slice(-200), ...comun },
         }).select("id").single();
         if (error || !job) throw new Error(`clip_jobs: ${error?.message}`);
         return { jobId: job.id };

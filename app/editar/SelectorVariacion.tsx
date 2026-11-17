@@ -3,7 +3,7 @@
 // Selector de variación (Ninguna / Pantalla real / Marco o fondo) + su sub-opción, compartido por Perfil de TikTok y los bucles.
 
 import { Frame, MonitorPlay } from "lucide-react";
-import { ESTILOS_MARCO, ESTILOS_MARCO_TEXTO, type Dispositivo, type EstiloMarco, type Variacion } from "@/app/lib/variacion";
+import { MAX_SALIDAS, MAX_VERSIONES, videosPermitidos, ESTILOS_MARCO, ESTILOS_MARCO_TEXTO, type Dispositivo, type EstiloMarco, type Variacion } from "@/app/lib/variacion";
 
 export type PantallaSel = "mixto" | Dispositivo;
 export interface SeleccionVariacion { variacion: Variacion | null; pantalla: PantallaSel; estilo: EstiloMarco }
@@ -62,3 +62,22 @@ export const cuerpoVariacion = (v: SeleccionVariacion) => ({
   pantalla: v.variacion === "pantalla_real" && v.pantalla !== "mixto" ? v.pantalla : undefined,
   estilo: v.variacion === "marco" ? v.estilo : undefined,
 });
+
+/** «Versiones por video»: incluidas en el precio. `videos` = videos del perfil que se bajarán (null en bucles). */
+export function SelectorVersiones({ value, onChange, videos, disabled }: { value: number; onChange: (n: number) => void; videos?: number; disabled?: boolean }) {
+  const reales = videos ? videosPermitidos(videos, value) : null;
+  return (
+    <label className="block text-sm">
+      <span className="font-semibold">Versiones por video: {value}</span>
+      <span className="ml-2 text-xs text-brand-2">incluidas en el precio</span>
+      <input type="range" min={1} max={MAX_VERSIONES} value={value} disabled={disabled} onChange={(e) => onChange(Number(e.target.value))} className="mt-2 block w-full accent-cyan-400" />
+      <span className="mt-1 block text-xs text-mute">
+        {value === 1
+          ? "Una sola salida por video."
+          : "Cada video sale en varias versiones distintas (color, brillo, contraste, tono y volumen), cada una con su propia plantilla o marco, para publicar sin repetir."}
+        {reales != null && ` Total: ${reales} ${reales === 1 ? "video" : "videos"} × ${value} = ${reales * value} listos para postear.`}
+        {reales != null && videos && reales < videos && ` (Máximo ${MAX_SALIDAS} salidas por trabajo: se bajarán ${reales} videos.)`}
+      </span>
+    </label>
+  );
+}
