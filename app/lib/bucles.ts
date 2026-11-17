@@ -7,7 +7,7 @@ import { EDITAR_PRECIOS } from "@/app/lib/editar";
 import { limpiarUsuario, PERFIL_MAX_VIDEOS } from "@/app/lib/perfil";
 import { nextRunAt } from "@/app/lib/automatizacion";
 import {
-  MAX_BUCLES_POR_CUENTA, costoTrabajo, ejecutarVuelta, recogerRun, runColgada, runKeyPerfil, validarConfig,
+  MAX_BUCLES_POR_CUENTA, costoTrabajo, ejecutarVuelta, migracionMarcoPendiente, opcionesMarco, recogerRun, requiereMigracion09, runColgada, runKeyPerfil, validarConfig,
   type Candidato, type DepsRecoger, type DepsVuelta, type JobParaRecoger, type Tool, type ToolLoop, type ToolRun,
 } from "@/app/lib/bucles-core";
 import { channelIdDeHtml, clasificarYouTube, parseFeed, urlFeed, urlVideo, type VideoFeed } from "@/app/lib/youtube-feed";
@@ -101,16 +101,24 @@ export async function crearBucle(userId: string, email: string, { tool, body }: 
     }
   }
   const v = cfg.value;
+  // `estilo` es columna de supabase/09: solo se manda con «marco», así los bucles sin marco no dependen de la migración.
   const { data, error } = await db()
     .from("tool_loops")
     .insert({
       owner: userId, site: "studio", tool, name: nombre, params, variacion: v.variacion, pantalla: v.pantalla,
+      ...(v.variacion === "marco" ? { estilo: v.estilo } : {}),
       days: v.days, hora: v.hora, minuto: v.minuto, daily_cap: v.daily_cap, max_per_run: v.max_per_run, cursor,
       next_run_at: nextRunAt(v.hora, v.days, new Date(), v.minuto).toISOString(),
     })
     .select("*")
     .single();
-  if (error || !data) return { ok: false, error: "No se pudo crear el bucle.", status: 500 };
+  if (error || !data) {
+    if (requiereMigracion09(v) && migracionMarcoPendiente(error)) {
+      const que = v.variacion === "marco" ? "La variación «Marco o fondo»" : "Ese dispositivo (celular, tablet o monitor)";
+      return { ok: false, error: `${que} todavía no está disponible en bucles. Usa laptop o TV, o vuelve pronto.`, status: 503 };
+    }
+    return { ok: false, error: "No se pudo crear el bucle.", status: 500 };
+  }
   return { ok: true, loop: data as ToolLoop };
 }
 
@@ -167,7 +175,12 @@ function depsVuelta(): DepsVuelta {
       const email = u.user?.email?.toLowerCase();
       if (!email) throw new Error("la cuenta del bucle ya no existe");
       const cobro: CobroClip = { creditos: credits, ref, user_id: loop.owner };
-      const comun = { origen: "trustfarm", cobro, loop_id: loop.id, variacion: loop.variacion, ...(loop.variacion && loop.pantalla ? { pantalla: loop.pantalla } : {}) };
+      const comun = {
+        origen: "trustfarm", cobro, loop_id: loop.id, variacion: loop.variacion,
+        ...(loop.variacion === "pantalla_real" && loop.pantalla ? { pantalla: loop.pantalla } : {}),
+        // Perfil: options.estilo (texto). Multiclip: options.estilo ya es el dict de subtítulos/logo, así que va en marco_estilo.
+        ...(loop.variacion === "marco" ? opcionesMarco(loop) : {}),
+      };
       if (loop.tool === "perfil") {
         const { data: job, error } = await db().from("clip_jobs").insert({
           user_email: email, user_id: loop.owner, nombre: `@${loop.params.handle}`, status: "pendiente", progress: "En cola",

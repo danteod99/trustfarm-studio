@@ -17,3 +17,20 @@ test("opciones: tope de videos, variación y pantalla solo con variación", () =
   assert.equal(opcionesPerfil({ usuario: "a", variacion: "pantalla_real", pantalla: "tv" })?.pantalla, "tv");
   assert.equal(opcionesPerfil({ usuario: "a", variacion: "pantalla_real", pantalla: "x" })?.pantalla, undefined);
 });
+
+test("opciones: variación marco con estilo en lista blanca; estilo/pantalla no se mezclan", () => {
+  const m = opcionesPerfil({ usuario: "a", variacion: "marco", estilo: "blur", pantalla: "tv" });
+  assert.deepEqual(m, { tipo: "perfil", handle: "a", max_videos: 10, variacion: "marco", estilo: "blur" });
+  assert.equal(opcionesPerfil({ usuario: "a", variacion: "marco", estilo: "../x" })?.estilo, "mixto");
+  assert.equal(opcionesPerfil({ usuario: "a", variacion: "marco" })?.estilo, "mixto");
+  assert.equal(opcionesPerfil({ usuario: "a", variacion: "pantalla_real", estilo: "blur" })?.estilo, undefined);
+  assert.equal(opcionesPerfil({ usuario: "a", variacion: "otra", estilo: "blur" })?.variacion, null);
+  assert.equal("estilo" in (opcionesPerfil({ usuario: "a", estilo: "blur" }) ?? {}), false);
+});
+
+test("opciones: dispositivos nuevos de pantalla real en lista blanca", () => {
+  for (const d of ["laptop", "tv", "movil", "tablet", "monitor"]) assert.equal(opcionesPerfil({ usuario: "a", variacion: "pantalla_real", pantalla: d })?.pantalla, d);
+  assert.equal(opcionesPerfil({ usuario: "a", variacion: "pantalla_real", pantalla: "mixto" })?.pantalla, undefined);
+  assert.equal(opcionesPerfil({ usuario: "a", variacion: "pantalla_real", pantalla: "celular" })?.pantalla, undefined);
+  assert.equal(opcionesPerfil({ usuario: "a", variacion: "marco", pantalla: "movil" })?.pantalla, undefined);
+});

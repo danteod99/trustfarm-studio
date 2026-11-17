@@ -6,12 +6,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Pause, Play, Repeat, Trash2 } from "lucide-react";
 import { ErrorBox } from "@/app/editar/ToolHeader";
+import SelectorVariacion, { cuerpoVariacion, type SeleccionVariacion } from "@/app/editar/SelectorVariacion";
+import { textoVariacion } from "@/app/lib/variacion";
 
 type Tool = "multiclip" | "perfil";
 interface Vuelta { status: string; source_ref: string; error: string | null; created_at: string }
 interface Bucle {
   id: string; tool: Tool; name: string; status: "active" | "paused" | "error" | "no_credits"; days: number[]; hora: number; minuto: number;
-  daily_cap: number; max_per_run: number; variacion: string | null; pantalla: string | null; last_error: string | null;
+  daily_cap: number; max_per_run: number; variacion: string | null; pantalla: string | null; estilo?: string | null; last_error: string | null;
   next_run_at: string; last_run_at: string | null; entregas: Record<string, number>; ultimas_vueltas: Vuelta[];
 }
 
@@ -34,8 +36,7 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
   const [hora, setHora] = useState("09:00");
   const [tope, setTope] = useState(2);
   const [porVuelta, setPorVuelta] = useState(1);
-  const [variacion, setVariacion] = useState(false);
-  const [pantalla, setPantalla] = useState<"" | "laptop" | "tv">("");
+  const [sel, setSel] = useState<SeleccionVariacion>({ variacion: null, pantalla: "mixto", estilo: "mixto" });
   const [desdeAhora, setDesdeAhora] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +50,7 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
   }, [tool]);
   useEffect(() => { cargar(); }, [cargar]);
 
-  const costo = variacion ? precioVariacion : precio;
+  const costo = sel.variacion ? precioVariacion : precio;
 
   const crear = async () => {
     setError(null); setBusy(true);
@@ -59,7 +60,7 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tool, days, hora: h, minuto: m, daily_cap: tope, max_per_run: tool === "perfil" ? 1 : porVuelta,
-          variacion: variacion ? "pantalla_real" : null, pantalla: variacion && pantalla ? pantalla : undefined,
+          ...cuerpoVariacion(sel),
           ...(tool === "perfil" ? { usuario: fuente } : { url: fuente, desde_ahora: desdeAhora }),
         }),
       });
@@ -134,18 +135,7 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
               </label>
             )}
           </div>
-          <label className="flex cursor-pointer items-start gap-2 text-sm">
-            <input type="checkbox" checked={variacion} onChange={(e) => setVariacion(e.target.checked)} className="mt-1 accent-cyan-400" disabled={busy} />
-            <span><span className="font-semibold">Variación «Pantalla real laptop/TV»</span>
-              <span className="block text-xs text-mute">Cada video sale dentro de una laptop o TV reales.</span></span>
-          </label>
-          {variacion && (
-            <div className="flex flex-wrap gap-2 text-sm">
-              {([["", "Variado"], ["laptop", "Solo laptops"], ["tv", "Solo TVs"]] as const).map(([k, t]) => (
-                <button key={k} type="button" onClick={() => setPantalla(k)} className={`chip ${pantalla === k ? "chip-on" : ""}`}>{t}</button>
-              ))}
-            </div>
-          )}
+          <SelectorVariacion value={sel} onChange={setSel} disabled={busy} compacto />
           {tool === "multiclip" && (
             <label className="flex cursor-pointer items-start gap-2 text-sm">
               <input type="checkbox" checked={desdeAhora} onChange={(e) => setDesdeAhora(e.target.checked)} className="mt-1 accent-cyan-400" disabled={busy} />
@@ -175,7 +165,7 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
                     <p className="truncate font-semibold">{b.name}</p>
                     <p className="text-xs text-mute">
                       {b.days.map((d) => DIAS[d]).join(" ")} {hh(b.hora, b.minuto)} · tope {b.daily_cap}/día{b.tool === "multiclip" ? ` · ${b.max_per_run} por vuelta` : ""}
-                      {b.variacion ? " · pantalla real" : ""}
+                      {b.variacion ? ` · ${textoVariacion(b.variacion, b.estilo, b.pantalla)}` : ""}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

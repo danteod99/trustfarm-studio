@@ -1,16 +1,17 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  captionDe, costoTrabajo, ejecutarVuelta, limaDia, recogerRun, refCobro, runKeyPerfil, validarConfig,
+  captionDe, costoTrabajo, ejecutarVuelta, limaDia, migracionMarcoPendiente, opcionesMarco, recogerRun, requiereMigracion09, refCobro, runKeyPerfil, validarConfig,
   type Candidato, type DepsRecoger, type DepsVuelta, type EntregaNueva, type JobParaRecoger, type ToolLoop, type ToolRun,
 } from '../app/lib/bucles-core.ts'
+import { etiquetaPlantilla, textoVariacion } from '../app/lib/variacion.ts'
 
 const NOW = new Date('2026-11-17T14:05:00Z') // 09:05 en Lima, martes
 const PRECIOS = { clips: 5, clipsVariacion: 8, perfil: 3, perfilVariacion: 5 }
 
 function loop(over: Partial<ToolLoop> = {}): ToolLoop {
   return {
-    id: 'L1', owner: 'U1', site: 'studio', tool: 'multiclip', name: 'x', params: { kind: 'channel' }, variacion: null, pantalla: null,
+    id: 'L1', owner: 'U1', site: 'studio', tool: 'multiclip', name: 'x', params: { kind: 'channel' }, variacion: null, pantalla: null, estilo: null,
     days: [0, 1, 2, 3, 4, 5, 6], hora: 9, minuto: 0, daily_cap: 2, max_per_run: 2, status: 'active', last_error: null,
     consecutive_failures: 0, next_run_at: NOW.toISOString(), last_run_at: null, cursor: {}, ...over,
   }
@@ -298,4 +299,50 @@ test('captionDe: caption propio > título + gancho', () => {
   assert.equal(captionDe({ index: 1, file: 'f', caption: ' hola ', titulo: 't' }), 'hola')
   assert.equal(captionDe({ index: 1, file: 'f', titulo: 't', hook: 'h' }), 't\nh')
   assert.equal(captionDe({ index: 1, file: 'f' }), '')
+})
+
+test('validarConfig: variación marco con estilo en lista blanca y sin pantalla', () => {
+  const r = validarConfig('perfil', { variacion: 'marco', estilo: 'color', pantalla: 'tv' })
+  assert.ok(r.ok)
+  if (r.ok) { assert.equal(r.value.variacion, 'marco'); assert.equal(r.value.estilo, 'color'); assert.equal(r.value.pantalla, null) }
+  const raro = validarConfig('perfil', { variacion: 'marco', estilo: 'zzz' })
+  if (raro.ok) assert.equal(raro.value.estilo, 'mixto')
+  const pr = validarConfig('perfil', { variacion: 'pantalla_real', pantalla: 'tv', estilo: 'blur' })
+  if (pr.ok) { assert.equal(pr.value.estilo, null); assert.equal(pr.value.pantalla, 'tv') } // pantalla_real intacto
+  const ninguna = validarConfig('multiclip', { estilo: 'blur' })
+  if (ninguna.ok) { assert.equal(ninguna.value.variacion, null); assert.equal(ninguna.value.estilo, null) }
+  assert.equal(costoTrabajo('perfil', 'marco', PRECIOS, false), 5)
+})
+
+test('opcionesMarco: perfil usa estilo, multiclip marco_estilo (su estilo ya es el de subtítulos)', () => {
+  assert.deepEqual(opcionesMarco({ tool: 'perfil', estilo: 'blur' }), { estilo: 'blur' })
+  assert.deepEqual(opcionesMarco({ tool: 'multiclip', estilo: 'marco' }), { marco_estilo: 'marco' })
+  assert.deepEqual(opcionesMarco({ tool: 'perfil' }), { estilo: 'mixto' }) // sin migración 09: columna ausente
+  assert.deepEqual(opcionesMarco({ tool: 'perfil', estilo: 'x' as never }), { estilo: 'mixto' })
+})
+
+test('migracionMarcoPendiente: reconoce columna/CHECK ausentes y no otros errores', () => {
+  assert.equal(migracionMarcoPendiente({ code: '23514', message: 'violates check constraint "tool_loops_variacion_check"' }), true)
+  assert.equal(migracionMarcoPendiente({ code: '42703', message: 'column "estilo" of relation "tool_loops" does not exist' }), true)
+  assert.equal(migracionMarcoPendiente({ code: 'PGRST204', message: "Could not find the 'estilo' column of 'tool_loops' in the schema cache" }), true)
+  assert.equal(migracionMarcoPendiente({ code: '23505', message: 'duplicate key' }), false)
+  assert.equal(migracionMarcoPendiente(null), false)
+})
+
+test('dispositivos nuevos: validarConfig, requiereMigracion09 y textos', () => {
+  for (const d of ['movil', 'tablet', 'monitor', 'laptop', 'tv']) {
+    const r = validarConfig('perfil', { variacion: 'pantalla_real', pantalla: d })
+    assert.ok(r.ok); if (r.ok) assert.equal(r.value.pantalla, d)
+  }
+  const mal = validarConfig('perfil', { variacion: 'pantalla_real', pantalla: 'celular' })
+  if (mal.ok) assert.equal(mal.value.pantalla, null)
+  assert.equal(requiereMigracion09({ variacion: 'pantalla_real', pantalla: 'laptop' }), false)  // bucles existentes: sin migración
+  assert.equal(requiereMigracion09({ variacion: 'pantalla_real', pantalla: null }), false)
+  assert.equal(requiereMigracion09({ variacion: 'pantalla_real', pantalla: 'movil' }), true)
+  assert.equal(requiereMigracion09({ variacion: 'marco', pantalla: null }), true)
+  assert.equal(migracionMarcoPendiente({ code: '23514', message: 'violates check constraint "tool_loops_pantalla_check"' }), true)
+  assert.equal(textoVariacion('pantalla_real', null, 'movil'), 'pantalla real (celular)')
+  assert.equal(textoVariacion('pantalla_real', null, null), 'pantalla real')
+  assert.equal(etiquetaPlantilla('tv_sala'), 'TV · sala')
+  assert.equal(etiquetaPlantilla('movil_negro'), 'Celular · negro')
 })

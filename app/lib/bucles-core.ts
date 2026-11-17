@@ -3,6 +3,7 @@
 // lo prueban con memoria y bucles.ts lo conecta a Supabase.
 
 import { nextRunAt } from "./automatizacion.ts";
+import { DISPOSITIVOS_NUEVOS, esEstiloMarco, normalizarVariacion, type Dispositivo, type EstiloMarco, type Variacion } from "./variacion.ts";
 
 export type Tool = "multiclip" | "perfil";
 export type EstadoBucle = "active" | "paused" | "error" | "no_credits";
@@ -21,8 +22,10 @@ export interface ToolLoop {
   tool: Tool;
   name: string;
   params: Record<string, unknown>;
-  variacion: "pantalla_real" | null;
-  pantalla: "laptop" | "tv" | null;
+  variacion: Variacion | null;
+  pantalla: Dispositivo | null;
+  /** Estilo de la variación «marco». Columna de supabase/09; si aún no existe llega undefined (se trata como «mixto»). */
+  estilo?: EstiloMarco | null;
   days: number[];
   hora: number;
   minuto: number;
@@ -65,8 +68,9 @@ export interface ConfigBucle {
   minuto: number;
   daily_cap: number;
   max_per_run: number;
-  variacion: "pantalla_real" | null;
-  pantalla: "laptop" | "tv" | null;
+  variacion: Variacion | null;
+  pantalla: Dispositivo | null;
+  estilo: EstiloMarco | null;
 }
 
 /** Normaliza lo que manda el navegador (horario, topes, variación). Perfil siempre corre 1 trabajo por vuelta. */
@@ -74,8 +78,7 @@ export function validarConfig(tool: Tool, b: Record<string, unknown>, admin = fa
   const days = [...new Set((Array.isArray(b.days) ? b.days : [0, 1, 2, 3, 4, 5, 6]).map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))].sort();
   if (days.length === 0) return { ok: false, error: "Elige al menos un día." };
   const capMax = admin ? 10 : 5;
-  const variacion = b.variacion === "pantalla_real" ? "pantalla_real" : null;
-  const pantalla = variacion && (b.pantalla === "laptop" || b.pantalla === "tv") ? b.pantalla : null;
+  const { variacion, pantalla, estilo } = normalizarVariacion(b);
   const name = String(b.name ?? "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 80);
   return {
     ok: true,
@@ -88,8 +91,25 @@ export function validarConfig(tool: Tool, b: Record<string, unknown>, admin = fa
       max_per_run: tool === "perfil" ? 1 : clamp(b.max_per_run, 1, 5, 1),
       variacion,
       pantalla,
+      estilo,
     },
   };
+}
+
+/** El insert falló porque supabase/09 aún no está aplicado (falta la columna `estilo` o un CHECK de variacion/pantalla lo rechaza). */
+export function migracionMarcoPendiente(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  const m = error.message ?? "";
+  return error.code === "23514" || error.code === "42703" || error.code === "PGRST204" || /estilo|tool_loops_variacion|tool_loops_pantalla/i.test(m);
+}
+
+/** Crear este bucle necesita supabase/09 (marco, o un dispositivo que el CHECK de 08 no conoce). */
+export const requiereMigracion09 = (c: Pick<ConfigBucle, "variacion" | "pantalla">): boolean =>
+  c.variacion === "marco" || (c.pantalla !== null && (DISPOSITIVOS_NUEVOS as readonly string[]).includes(c.pantalla));
+
+export function opcionesMarco(loop: Pick<ToolLoop, "tool" | "estilo">): Record<string, string> {
+  const estilo = esEstiloMarco(loop.estilo) ? loop.estilo : "mixto";
+  return loop.tool === "perfil" ? { estilo } : { marco_estilo: estilo };
 }
 
 export interface PreciosBucle { clips: number; clipsVariacion: number; perfil: number; perfilVariacion: number }

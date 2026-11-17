@@ -1,23 +1,25 @@
 "use client";
 
 // Perfil de TikTok: pegas tu @usuario, el servicio de clips (nube) baja tus videos sin marca de agua y,
-// si quieres, mete cada uno en una laptop o TV reales (variación «Pantalla real»). Tú descargas todo.
+// si quieres, mete cada uno en un dispositivo real (variación «Pantalla real»). Tú descargas todo.
 // No publica nada.
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Reproductor from "@/app/components/Reproductor";
-import { CheckCircle2, Download, FolderDown, Loader2, MonitorPlay, RefreshCw, Trash2, UserRound } from "lucide-react";
+import { CheckCircle2, Download, FolderDown, Loader2, RefreshCw, Trash2, UserRound } from "lucide-react";
 import Bucles from "@/app/editar/Bucles";
 import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import type { JobResult } from "@/app/lib/clips";
-import { limpiarUsuario, PERFIL_MAX_VIDEOS, type PantallaTipo } from "@/app/lib/perfil";
+import SelectorVariacion, { cuerpoVariacion, type SeleccionVariacion } from "@/app/editar/SelectorVariacion";
+import { limpiarUsuario, PERFIL_MAX_VIDEOS } from "@/app/lib/perfil";
+import { etiquetaPlantilla, textoVariacion } from "@/app/lib/variacion";
 import { buildZip } from "@/app/granja/zip";
 
 interface Job {
   id: string; created_at: string; finished_at: string | null; nombre: string; status: string;
   progress: string | null; error: string | null; result: JobResult | null; expired: boolean;
-  options: { handle?: string; variacion?: string | null; max_videos?: number; cobro?: { creditos: number; reembolsado?: boolean } };
+  options: { handle?: string; variacion?: string | null; estilo?: string | null; pantalla?: string | null; max_videos?: number; cobro?: { creditos: number; reembolsado?: boolean } };
 }
 type Urls = Record<number, { video: string; srt: string | null }>;
 
@@ -44,8 +46,7 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
   const [loading, setLoading] = useState(true);
   const [usuario, setUsuario] = useState("");
   const [cantidad, setCantidad] = useState(PERFIL_MAX_VIDEOS);
-  const [variacion, setVariacion] = useState(true);
-  const [pantalla, setPantalla] = useState<PantallaTipo>("mixto");
+  const [sel, setSel] = useState<SeleccionVariacion>({ variacion: "pantalla_real", pantalla: "mixto", estilo: "mixto" });
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
@@ -54,7 +55,7 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
   const [bajando, setBajando] = useState<{ job: string; hechos: number; total: number } | null>(null);
 
   const handle = limpiarUsuario(usuario);
-  const costo = variacion ? precioVariacion : precio;
+  const costo = sel.variacion ? precioVariacion : precio;
 
   const load = useCallback(async () => {
     try {
@@ -83,7 +84,7 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
       const r = await fetch("/api/editar/perfil", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuario: handle, max_videos: cantidad, variacion: variacion ? "pantalla_real" : null, pantalla: variacion && pantalla !== "mixto" ? pantalla : undefined }),
+        body: JSON.stringify({ usuario: handle, max_videos: cantidad, ...cuerpoVariacion(sel) }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "No se pudo crear el trabajo.");
@@ -127,7 +128,7 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
       .map((c) => ({ nombre: `${String(c.index).padStart(2, "0")}-${slug(c.titulo)}.mp4`, url: urls[c.index].video }));
     if (!archivos.length) { setError("No hay videos para descargar. Abre el trabajo de nuevo para renovar los enlaces."); return; }
     setError(null);
-    const carpeta = `tiktok-${slug(job.options.handle || job.nombre)}${job.options.variacion ? "-pantalla-real" : ""}`;
+    const carpeta = `tiktok-${slug(job.options.handle || job.nombre)}${job.options.variacion === "marco" ? "-marco" : job.options.variacion ? "-pantalla-real" : ""}`;
     try {
       setBajando({ job: job.id, hechos: 0, total: archivos.length });
       if (modo === "carpeta") {
@@ -188,6 +189,7 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
           {clips.map((c) => {
             const u = urls[c.index];
             const plantilla = (c as { plantilla?: string | null }).plantilla;
+            const estiloMarco = (c as { estilo_marco?: string | null }).estilo_marco;
             return (
               <div key={c.index} className="overflow-hidden rounded-xl border border-line bg-panel-2">
                 {u?.video ? <div className="aspect-[9/16] w-full"><Reproductor src={u.video} /></div> : (
@@ -195,7 +197,8 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
                 )}
                 <div className="space-y-1.5 p-3">
                   <p className="line-clamp-2 text-xs leading-snug">{c.titulo}</p>
-                  {plantilla && <p className="text-[11px] text-mute">{plantilla.startsWith("tv_") ? "TV" : "Laptop"} · {plantilla.replace(/^(tv|laptop)_/, "")}</p>}
+                  {plantilla && <p className="text-[11px] text-mute">{etiquetaPlantilla(plantilla)}</p>}
+                  {estiloMarco && <p className="text-[11px] text-mute">Marco · {estiloMarco}</p>}
                   <div className="pt-1">
                     {u?.video && <a href={u.video} download className="btn-primary !px-2.5 !py-1 text-xs"><Download size={12} /> MP4</a>}
                   </div>
@@ -213,7 +216,7 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
       <ToolHeader
         icon={<UserRound size={20} />}
         title="Perfil de TikTok"
-        subtitle="Pega el @usuario de tu perfil y bajamos tus videos sin marca de agua. Opcional: cada video se mete dentro de una laptop o TV reales para que se vea distinto. No publica nada: tú descargas y subes."
+        subtitle="Pega el @usuario de tu perfil y bajamos tus videos sin marca de agua. Opcional: cada video se mete dentro de una laptop, TV, celular, tablet o monitor reales, o sobre un fondo o marco, para que se vea distinto. No publica nada: tú descargas y subes."
       />
 
       {!activo && !loading && <div className="mb-4"><ErrorBox msg="Esta herramienta todavía no está activa. Vuelve pronto o escríbenos por WhatsApp." /></div>}
@@ -237,24 +240,8 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
             <span className="font-semibold">Videos a bajar: {cantidad}</span>
             <input type="range" min={1} max={PERFIL_MAX_VIDEOS} value={cantidad} disabled={enviando} onChange={(e) => setCantidad(Number(e.target.value))} className="mt-2 block w-full accent-cyan-400" />
           </label>
-          <label className="flex cursor-pointer items-start gap-2 text-sm">
-            <input type="checkbox" checked={variacion} disabled={enviando} onChange={(e) => setVariacion(e.target.checked)} className="mt-1 accent-cyan-400" />
-            <span>
-              <span className="font-semibold"><MonitorPlay size={14} className="mr-1 inline text-brand-2" />Variación «Pantalla real laptop/TV»</span>
-              <span className="block text-xs text-mute">Cada video se compone dentro de una laptop o TV reales (pantalla verde), con luz suave de fondo, en vertical 1080×1920.</span>
-            </span>
-          </label>
         </div>
-        {variacion && (
-          <div className="text-sm">
-            <span className="font-semibold">Dispositivo</span>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {([["mixto", "Variado (laptops y TVs)"], ["laptop", "Solo laptops"], ["tv", "Solo TVs"]] as [PantallaTipo, string][]).map(([k, t]) => (
-                <button key={k} type="button" onClick={() => setPantalla(k)} disabled={enviando} className={`chip ${pantalla === k ? "chip-on" : ""}`}>{t}</button>
-              ))}
-            </div>
-          </div>
-        )}
+        <SelectorVariacion value={sel} onChange={setSel} disabled={enviando} />
         <div className="flex flex-wrap items-center gap-4">
           <button onClick={enviar} disabled={!activo || !handle || enviando} className="btn-primary">
             {enviando ? <Loader2 size={16} className="animate-spin" /> : <UserRound size={16} />}
@@ -284,7 +271,7 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
                 <div key={j.id} className="rounded-xl border border-line bg-panel-2 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold">{j.nombre}{j.options.variacion ? " · pantalla real" : ""}</p>
+                      <p className="truncate text-sm font-semibold">{j.nombre}{j.options.variacion ? ` · ${textoVariacion(j.options.variacion, j.options.estilo, j.options.pantalla)}` : ""}</p>
                       <p className="text-xs text-mute">
                         {fmtDate(j.created_at)}
                         {j.status === "procesando" && j.progress ? ` · ${j.progress}` : ""}
@@ -315,7 +302,7 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
           </div>
         )}
         <p className="mt-4 text-xs text-mute">
-          Con pantalla real tarda unos 2 a 4 minutos por video; sin ella, unos segundos. Máximo {limite} trabajos por día. Los videos se guardan 48 horas: descárgalos antes.
+          Con pantalla real tarda unos 2 a 4 minutos por video; con marco o fondo, menos de un minuto; sin variación, unos segundos. Máximo {limite} trabajos por día. Los videos se guardan 48 horas: descárgalos antes.
           Si un trabajo falla, te devolvemos los créditos.
         </p>
       </div>
