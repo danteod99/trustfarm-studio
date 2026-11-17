@@ -11,7 +11,7 @@ const TOOLS = [
     href: "/editar/variaciones",
     icon: <Copy size={20} />,
     title: "Variaciones únicas",
-    text: "Convierte un video en 5, 20 o 50 versiones distintas (color, brillo, tono, volumen) para publicarlo en muchas cuentas sin que se vea repetido.",
+    text: "Convierte un video en 5, 20 o 50 versiones distintas (color, brillo, tono, volumen) para publicarlo en muchas cuentas sin que se vea repetido. Opcional: cada versión dentro de una laptop, PC, TV, celular o tablet reales.",
     price: "Gratis · corre en tu computadora",
     extra: `Subtítulos automáticos opcionales: ${EDITAR_PRECIOS.transcripcion + EDITAR_PRECIOS.detectarSubs} créditos por video`,
   },
