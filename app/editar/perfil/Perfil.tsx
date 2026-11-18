@@ -12,14 +12,15 @@ import Bucles from "@/app/editar/Bucles";
 import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import type { JobResult } from "@/app/lib/clips";
 import SelectorVariacion, { SelectorVersiones, cuerpoVariacion, type SeleccionVariacion } from "@/app/editar/SelectorVariacion";
-import { limpiarUsuario, PERFIL_MAX_VIDEOS } from "@/app/lib/perfil";
+import { limpiarUsuario, PERFIL_MAX_VIDEOS, textoPuesto, textoSeleccion } from "@/app/lib/perfil";
+import SelectorOrden, { cuerpoOrden, type SeleccionOrden } from "@/app/editar/SelectorOrden";
 import { etiquetaPlantilla, textoVariacion } from "@/app/lib/variacion";
 import { buildZip } from "@/app/granja/zip";
 
 interface Job {
   id: string; created_at: string; finished_at: string | null; nombre: string; status: string;
   progress: string | null; error: string | null; result: JobResult | null; expired: boolean;
-  options: { handle?: string; variacion?: string | null; estilo?: string | null; pantalla?: string | null; versiones?: number; max_videos?: number; cobro?: { creditos: number; reembolsado?: boolean } };
+  options: { handle?: string; variacion?: string | null; estilo?: string | null; pantalla?: string | null; versiones?: number; max_videos?: number; orden?: string; saltar?: number; cobro?: { creditos: number; reembolsado?: boolean } };
 }
 type Urls = Record<number, { video: string; srt: string | null }>;
 
@@ -45,7 +46,8 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
   const [activo, setActivo] = useState(true);
   const [loading, setLoading] = useState(true);
   const [usuario, setUsuario] = useState("");
-  const [cantidad, setCantidad] = useState(PERFIL_MAX_VIDEOS);
+  const [seleccion, setSeleccion] = useState<SeleccionOrden>({ orden: "recientes", saltar: 0, cantidad: PERFIL_MAX_VIDEOS });
+  const cantidad = seleccion.cantidad;
   const [versiones, setVersiones] = useState(1);
   const [sel, setSel] = useState<SeleccionVariacion>({ variacion: "pantalla_real", pantalla: "mixto", estilo: "mixto" });
   const [enviando, setEnviando] = useState(false);
@@ -85,7 +87,7 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
       const r = await fetch("/api/editar/perfil", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuario: handle, max_videos: cantidad, versiones, ...cuerpoVariacion(sel) }),
+        body: JSON.stringify({ usuario: handle, ...cuerpoOrden(seleccion), versiones, ...cuerpoVariacion(sel) }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "No se pudo crear el trabajo.");
@@ -198,6 +200,7 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
                 )}
                 <div className="space-y-1.5 p-3">
                   <p className="line-clamp-2 text-xs leading-snug">{c.titulo}</p>
+                  {textoPuesto(c as { views?: number | null; puesto?: number | null; orden?: string | null }) && <p className="text-[11px] font-semibold text-emerald-400">{textoPuesto(c as { views?: number | null; puesto?: number | null; orden?: string | null })}</p>}
                   {plantilla && <p className="text-[11px] text-mute">{etiquetaPlantilla(plantilla)}</p>}
                   {(c as { version?: number }).version && (c as { version?: number }).version! > 1 && <p className="text-[11px] font-semibold text-brand-2">v{(c as { version?: number }).version}</p>}
                   {estiloMarco && <p className="text-[11px] text-mute">Marco · {estiloMarco}</p>}
@@ -235,14 +238,9 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
             className="input mt-2"
           />
           {usuario && !handle && <span className="mt-1 block text-xs text-red-400">Solo letras, números, punto y guion bajo (por ejemplo @tucuenta).</span>}
-          <span className="mt-1 block text-xs text-mute">Úsalo con tu propio perfil, que sea público. Se bajan los videos más recientes.</span>
+          <span className="mt-1 block text-xs text-mute">Úsalo con tu propio perfil, que sea público. Elige si bajas los más recientes o los más virales.</span>
         </label>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="text-sm">
-            <span className="font-semibold">Videos a bajar: {cantidad}</span>
-            <input type="range" min={1} max={PERFIL_MAX_VIDEOS} value={cantidad} disabled={enviando} onChange={(e) => setCantidad(Number(e.target.value))} className="mt-2 block w-full accent-cyan-400" />
-          </label>
-        </div>
+        <SelectorOrden value={seleccion} onChange={setSeleccion} disabled={enviando} />
         <SelectorVariacion value={sel} onChange={setSel} disabled={enviando} />
         <SelectorVersiones value={versiones} onChange={setVersiones} videos={cantidad} disabled={enviando} />
         <div className="flex flex-wrap items-center gap-4">
@@ -274,7 +272,7 @@ export default function Perfil({ precio, precioVariacion, limite }: { precio: nu
                 <div key={j.id} className="rounded-xl border border-line bg-panel-2 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold">{j.nombre}{(j.options.versiones || 1) > 1 ? ` · ${j.options.versiones} versiones` : ""}{j.options.variacion ? ` · ${textoVariacion(j.options.variacion, j.options.estilo, j.options.pantalla)}` : ""}</p>
+                      <p className="truncate text-sm font-semibold">{j.nombre}{j.options.orden === "virales" || j.options.saltar ? ` · ${textoSeleccion(j.options.orden, j.options.saltar, j.options.max_videos || 1)}` : ""}{(j.options.versiones || 1) > 1 ? ` · ${j.options.versiones} versiones` : ""}{j.options.variacion ? ` · ${textoVariacion(j.options.variacion, j.options.estilo, j.options.pantalla)}` : ""}</p>
                       <p className="text-xs text-mute">
                         {fmtDate(j.created_at)}
                         {j.status === "procesando" && j.progress ? ` · ${j.progress}` : ""}
