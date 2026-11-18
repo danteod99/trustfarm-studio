@@ -4,7 +4,7 @@ import { isAdminEmail } from "@/app/lib/auth";
 import { addCredits, chargeCredits } from "@/app/lib/credits";
 import { CLIPS_BUCKET, trustclipOrigin, type CobroClip } from "@/app/lib/clips";
 import { EDITAR_PRECIOS } from "@/app/lib/editar";
-import { limpiarUsuario, PERFIL_MAX_VIDEOS } from "@/app/lib/perfil";
+import { limpiarUsuario, normalizarOrden, normalizarSaltar, PERFIL_MAX_VIDEOS } from "@/app/lib/perfil";
 import { normalizarVersiones, videosPermitidos } from "@/app/lib/variacion";
 import { nextRunAt } from "@/app/lib/automatizacion";
 import {
@@ -82,7 +82,9 @@ export async function crearBucle(userId: string, email: string, { tool, body }: 
     const versiones = normalizarVersiones(body.versiones);
     const max = videosPermitidos(Math.min(PERFIL_MAX_VIDEOS, Math.max(1, Math.round(Number(body.max_videos) || 3))), versiones);
     // `versiones` vive en params (jsonb): no hace falta migración. Solo se guarda si es > 1.
-    params = { handle, max_videos: max, ...(versiones > 1 ? { versiones } : {}) };
+    const orden = normalizarOrden(body.orden);
+    const saltar = normalizarSaltar(body.saltar);
+    params = { handle, max_videos: max, ...(orden === "virales" ? { orden } : {}), ...(saltar > 0 ? { saltar } : {}), ...(versiones > 1 ? { versiones } : {}) };
     nombre ||= `Perfil @${handle}`;
     // La primera vuelta baja los últimos `max_videos` del perfil; las siguientes solo los que no estén en cursor.seen.
   } else {

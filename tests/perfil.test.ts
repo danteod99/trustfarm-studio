@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { limpiarUsuario, opcionesPerfil } from "../app/lib/perfil.ts";
+import { limpiarUsuario, normalizarSaltar, opcionesPerfil, textoPuesto, textoSeleccion } from "../app/lib/perfil.ts";
 
 test("usuario: quita arroba, acepta link del perfil y rechaza todo lo que pueda ser una opción", () => {
   assert.equal(limpiarUsuario(" @mi.cuenta_1 "), "mi.cuenta_1");
@@ -44,3 +44,29 @@ test("opciones: versiones 1-5 y tope de 50 salidas por trabajo", () => {
   assert.equal(opcionesPerfil({ usuario: "a", versiones: 5, max_videos: 10 })?.max_videos, 10);   // 10 x 5 = 50
   assert.equal(opcionesPerfil({ usuario: "a", versiones: 5, max_videos: 99 })?.max_videos, 10);
 });
+
+test('orden y saltar: normalización y solo se guardan si no son los valores por defecto', () => {
+  assert.equal("orden" in (opcionesPerfil({ usuario: "a" }) ?? {}), false)
+  assert.equal("saltar" in (opcionesPerfil({ usuario: "a", orden: "recientes", saltar: 0 }) ?? {}), false)
+  assert.equal(opcionesPerfil({ usuario: "a", orden: "virales" })?.orden, "virales")
+  assert.equal("orden" in (opcionesPerfil({ usuario: "a", orden: "raro" }) ?? {}), false)
+  assert.equal(opcionesPerfil({ usuario: "a", saltar: 2 })?.saltar, 2)
+  assert.equal(opcionesPerfil({ usuario: "a", saltar: 99 })?.saltar, 30)
+  assert.equal("saltar" in (opcionesPerfil({ usuario: "a", saltar: -3 }) ?? {}), false)
+  assert.equal("saltar" in (opcionesPerfil({ usuario: "a", saltar: "x" }) ?? {}), false)
+  assert.equal(opcionesPerfil({ usuario: "a", orden: "virales", saltar: 1, max_videos: 3 })?.max_videos, 3)
+  assert.equal(normalizarSaltar(2.9), 2)
+})
+
+test('textoSeleccion y textoPuesto', () => {
+  assert.equal(textoSeleccion("virales", 0, 3), "Los 3 más virales")
+  assert.equal(textoSeleccion("virales", 0, 1), "El más viral")
+  assert.equal(textoSeleccion("virales", 1, 3), "Del 2.º al 4.º más viral")
+  assert.equal(textoSeleccion("virales", 2, 1), "El 3.º más viral")
+  assert.equal(textoSeleccion("recientes", 0, 5), "Los 5 más recientes")
+  assert.equal(textoSeleccion("recientes", 2, 3), "3 videos recientes, saltando los 2 primeros")
+  assert.equal(textoPuesto({ views: 1200000, puesto: 2, orden: "virales" }), "Puesto 2 más viral · 1,2 M vistas")
+  assert.equal(textoPuesto({ views: 5142, puesto: 1, orden: "recientes" }), "5,1 mil vistas")
+  assert.equal(textoPuesto({ views: 900 }), "900 vistas")
+  assert.equal(textoPuesto({}), null)
+})

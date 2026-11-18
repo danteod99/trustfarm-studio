@@ -9,12 +9,14 @@ import { ErrorBox } from "@/app/editar/ToolHeader";
 import SelectorVariacion, { SelectorVersiones, cuerpoVariacion, type SeleccionVariacion } from "@/app/editar/SelectorVariacion";
 import DescargaCarpeta from "@/app/editar/DescargaCarpeta";
 import { textoVariacion } from "@/app/lib/variacion";
+import { textoSeleccion } from "@/app/lib/perfil";
+import SelectorOrden, { cuerpoOrden, type SeleccionOrden } from "@/app/editar/SelectorOrden";
 
 type Tool = "multiclip" | "perfil";
 interface Vuelta { status: string; source_ref: string; error: string | null; created_at: string }
 interface Bucle {
   id: string; tool: Tool; name: string; status: "active" | "paused" | "error" | "no_credits"; days: number[]; hora: number; minuto: number;
-  daily_cap: number; max_per_run: number; params?: { versiones?: number }; variacion: string | null; pantalla: string | null; estilo?: string | null; last_error: string | null;
+  daily_cap: number; max_per_run: number; params?: { versiones?: number; orden?: string; saltar?: number; max_videos?: number }; variacion: string | null; pantalla: string | null; estilo?: string | null; last_error: string | null;
   next_run_at: string; last_run_at: string | null; entregas: Record<string, number>; ultimas_vueltas: Vuelta[];
 }
 
@@ -38,6 +40,7 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
   const [tope, setTope] = useState(2);
   const [porVuelta, setPorVuelta] = useState(1);
   const [versiones, setVersiones] = useState(1);
+  const [seleccion, setSeleccion] = useState<SeleccionOrden>({ orden: "recientes", saltar: 0, cantidad: 3 });
   const [sel, setSel] = useState<SeleccionVariacion>({ variacion: null, pantalla: "mixto", estilo: "mixto" });
   const [desdeAhora, setDesdeAhora] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -62,7 +65,7 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tool, days, hora: h, minuto: m, daily_cap: tope, max_per_run: tool === "perfil" ? 1 : porVuelta,
-          ...cuerpoVariacion(sel), ...(tool === "perfil" ? { versiones } : {}),
+          ...cuerpoVariacion(sel), ...(tool === "perfil" ? { versiones, ...cuerpoOrden(seleccion) } : {}),
           ...(tool === "perfil" ? { usuario: fuente } : { url: fuente, desde_ahora: desdeAhora }),
         }),
       });
@@ -139,6 +142,7 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
             )}
           </div>
           <SelectorVariacion value={sel} onChange={setSel} disabled={busy} compacto />
+          {tool === "perfil" && <SelectorOrden value={seleccion} onChange={setSeleccion} disabled={busy} bucle />}
           {tool === "perfil" && <SelectorVersiones value={versiones} onChange={setVersiones} disabled={busy} />}
           {tool === "multiclip" && (
             <label className="flex cursor-pointer items-start gap-2 text-sm">
@@ -169,6 +173,7 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
                     <p className="truncate font-semibold">{b.name}</p>
                     <p className="text-xs text-mute">
                       {b.days.map((d) => DIAS[d]).join(" ")} {hh(b.hora, b.minuto)} · tope {b.daily_cap}/día{b.tool === "multiclip" ? ` · ${b.max_per_run} por vuelta` : ""}
+                      {b.tool === "perfil" && (b.params?.orden === "virales" || b.params?.saltar) ? ` · ${textoSeleccion(b.params?.orden, b.params?.saltar, b.params?.max_videos || 3)}` : ""}
                       {(b.params?.versiones || 1) > 1 ? ` · ${b.params?.versiones} versiones` : ""}{b.variacion ? ` · ${textoVariacion(b.variacion, b.estilo, b.pantalla)}` : ""}
                     </p>
                   </div>

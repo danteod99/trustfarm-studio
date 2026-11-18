@@ -394,3 +394,9 @@ test('opcionesVersiones: exclude_ids va aparte; max_videos se ajusta al tope de 
   assert.deepEqual(opcionesVersiones({ max_videos: 3, versiones: 99 }), { max_videos: 3, versiones: 5 })
   assert.deepEqual(opcionesVersiones({ max_videos: 3, versiones: 'x' }), { max_videos: 3 })
 })
+
+test('opcionesVersiones: orden virales y saltar viajan a trustclip solo si no son los valores por defecto', () => {
+  assert.deepEqual(opcionesVersiones({ handle: 'x', max_videos: 3, orden: 'virales', saltar: 2 }), { max_videos: 3, orden: 'virales', saltar: 2 })
+  assert.deepEqual(opcionesVersiones({ handle: 'x', max_videos: 3, orden: 'recientes', saltar: 0 }), { max_videos: 3 })
+  assert.deepEqual(opcionesVersiones({ handle: 'x', max_videos: 3, orden: 'raro', saltar: 99 }), { max_videos: 3, saltar: 30 })
+})

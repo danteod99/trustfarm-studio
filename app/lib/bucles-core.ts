@@ -3,6 +3,7 @@
 // lo prueban con memoria y bucles.ts lo conecta a Supabase.
 
 import { nextRunAt } from "./automatizacion.ts";
+import { normalizarOrden, normalizarSaltar } from "./perfil.ts";
 import { DISPOSITIVOS_NUEVOS, esEstiloMarco, normalizarVariacion, normalizarVersiones, videosPermitidos, type Dispositivo, type EstiloMarco, type Variacion } from "./variacion.ts";
 
 export type Tool = "multiclip" | "perfil";
@@ -108,10 +109,13 @@ export const requiereMigracion09 = (c: Pick<ConfigBucle, "variacion" | "pantalla
   c.variacion === "marco" || (c.pantalla !== null && (DISPOSITIVOS_NUEVOS as readonly string[]).includes(c.pantalla));
 
 /** max_videos y versiones que se mandan a trustclip en cada vuelta de un bucle de perfil (versiones solo si > 1). */
-export function opcionesVersiones(params: Record<string, unknown>): { max_videos: number; versiones?: number } {
+export function opcionesVersiones(params: Record<string, unknown>): { max_videos: number; versiones?: number; orden?: "virales"; saltar?: number } {
   const versiones = normalizarVersiones(params.versiones);
   const max = videosPermitidos(Math.max(1, Math.floor(Number(params.max_videos) || 3)), versiones);
-  return { max_videos: max, ...(versiones > 1 ? { versiones } : {}) };
+  const saltar = normalizarSaltar(params.saltar);
+  // orden/saltar viven en params (jsonb), sin migración. Con virales, trustclip entrega en cada vuelta los siguientes más
+  // virales aún no entregados (exclude_ids) y `saltar` cuenta puestos absolutos: «desde el puesto N» en todas las vueltas.
+  return { max_videos: max, ...(versiones > 1 ? { versiones } : {}), ...(normalizarOrden(params.orden) === "virales" ? { orden: "virales" as const } : {}), ...(saltar > 0 ? { saltar } : {}) };
 }
 
 export function opcionesMarco(loop: Pick<ToolLoop, "tool" | "estilo">): Record<string, string> {
@@ -264,7 +268,7 @@ export async function ejecutarVuelta(loop: ToolLoop, deps: DepsVuelta, now: Date
 // ───────── Recogida de resultados ─────────
 
 export interface ClipJobResult {
-  index: number; file: string; srt?: string | null; titulo?: string; hook?: string; caption?: string; tiktok_id?: string; version?: number;
+  index: number; file: string; srt?: string | null; titulo?: string; hook?: string; caption?: string; tiktok_id?: string; version?: number; views?: number | null; puesto?: number | null; orden?: string | null;
 }
 export interface JobParaRecoger { id: string; status: string; error: string | null; result: { clips?: ClipJobResult[] } | null; expired?: boolean }
 
