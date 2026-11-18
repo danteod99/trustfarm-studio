@@ -9,12 +9,20 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, Copy, Download, FolderDown, ImagePlus, Loader2, Trash2, X } from "lucide-react";
 import ToolHeader, { ErrorBox } from "@/app/editar/ToolHeader";
 import VideoPicker from "@/app/editar/VideoPicker";
+import PantallaReal from "@/app/editar/variaciones/PantallaReal";
 import { MAX_AUDIO_BYTES } from "@/app/lib/editar";
 import {
   LOGO_POSITIONS, buildAss, downloadBlobUrl, execLogged, extractAudioMp3, fmtMB, getProfile, getVideoInfo,
   loadEngine, mountFont, onProgress, renderVariation, resetEngine, safeDelete, writeInput,
   type LogoPos, type SubSegment, type SubWord,
 } from "@/app/lib/video";
+import {
+  cargarPlantillas, componerEnPantalla,
+} from "@/app/lib/video";
+import {
+  nombreSalida, plantillaParaVersion, plantillasPermitidas, validarPantalla,
+  type FiltroDispositivo, type Plantilla,
+} from "@/app/lib/pantalla-real";
 import type { FFmpeg } from "@ffmpeg/ffmpeg";
 
 const MAX_FILE_MB = 200;
@@ -63,6 +71,9 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPos, setLogoPos] = useState<LogoPos>("tr");
   const [subsOn, setSubsOn] = useState(false);
+  const [pantallaOn, setPantallaOn] = useState(false);
+  const [pantalla, setPantalla] = useState<FiltroDispositivo>("cualquiera");
+  const [plantillas, setPlantillas] = useState<Plantilla[] | null>(null);
   const [running, setRunning] = useState(false);
   const [status, setStatus] = useState("");
   const [pct, setPct] = useState(0);
@@ -80,6 +91,10 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
     setFsOk("showDirectoryPicker" in window);
     return () => resultsRef.current.forEach((v) => v.items.forEach((i) => i.url && URL.revokeObjectURL(i.url)));
   }, []);
+
+  useEffect(() => {
+    if (pantallaOn && plantillas === null) cargarPlantillas().then(setPlantillas);
+  }, [pantallaOn, plantillas]);
 
   const addFiles = (incoming: File[]) => {
     setError(null);
@@ -101,6 +116,9 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
 
   const run = async () => {
     if (!files.length || running) return;
+    const permitidas = plantillas ? plantillasPermitidas(plantillas, pantalla) : [];
+    const val = validarPantalla(pantallaOn, plantillas ?? [], pantalla);
+    if (!val.ok) { setError(val.error); return; }
     setRunning(true); setError(null); setResults([]); setPct(0);
     cancelRef.current = false;
     let done = 0;
@@ -156,7 +174,7 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
         for (let vi = 0; vi < numVars && !cancelRef.current; vi++) {
           ratio = 0;
           setStatus(`Video ${fi + 1}/${files.length} · variación ${vi + 1}/${numVars}`);
-          const blob = await renderVariation(ffmpeg, {
+          let blob = await renderVariation(ffmpeg, {
             // El perfil 0 es el original sin cambios: se empieza en el 1, con zoom y velocidad leves.
             profile: getProfile(vi + 1),
             zoom: Number((1 + ((vi * 3 + 1) % 7) * 0.01).toFixed(2)),
@@ -164,8 +182,15 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
             assPath: ass ? "sub.ass" : undefined,
             logoPath: logo ? "logo.png" : undefined,
             logoPos,
+            ...(pantallaOn ? { crf: 18 } : {}), // se vuelve a codificar al ponerlo en la pantalla
           });
-          const name = `${base}_v${vi + 1}.mp4`;
+          const plantilla = pantallaOn ? plantillaParaVersion(permitidas, fi, vi) : null;
+          if (plantilla) {
+            ratio = 0;
+            setStatus(`Video ${fi + 1}/${files.length} · variación ${vi + 1}/${numVars} · poniéndolo en pantalla (${plantilla.id.replace(/_/g, " ")})`);
+            blob = await componerEnPantalla(ffmpeg, blob, plantilla);
+          }
+          const name = nombreSalida(base, vi + 1, plantilla);
           if (dir) {
             const fh = await dir.getFileHandle(name, { create: true });
             const w = await fh.createWritable();
@@ -213,7 +238,7 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
       <ToolHeader
         icon={<Copy size={20} />}
         title="Variaciones únicas"
-        subtitle="Haz varias versiones distintas de cada video (color, brillo, contraste, tono y volumen) para publicarlo en muchas cuentas sin que se vea repetido. Todo pasa en tu computadora: tus videos no se suben a ningún servidor."
+        subtitle="Haz varias versiones distintas de cada video (color, brillo, contraste, tono y volumen) para publicarlo en muchas cuentas sin que se vea repetido; si quieres, cada versión también puede ir dentro de una pantalla real (laptop, PC, TV, celular o tablet). Todo pasa en tu computadora: tus videos no se suben a ningún servidor."
       />
 
       <VideoPicker
@@ -281,6 +306,9 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
             <span className="text-xs text-mute">PNG transparente recomendado</span>
           </div>
 
+          <PantallaReal on={pantallaOn} filtro={pantalla} plantillas={plantillas} disabled={running}
+            onOn={setPantallaOn} onFiltro={setPantalla} />
+
           <label className="flex cursor-pointer items-start gap-3 border-t border-line pt-4">
             <input type="checkbox" checked={subsOn} disabled={running} onChange={(e) => setSubsOn(e.target.checked)} className="mt-1 h-4 w-4 accent-cyan-400" />
             <span>
@@ -324,8 +352,8 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
             )}
           </div>
           <p className="text-xs text-mute">
-            Se procesa en tu computadora (≈ 1–3 min por variación según tu equipo). Deja esta pestaña abierta.
-            {numVars > 15 && <span className="text-amber-300"> Con {numVars} variaciones puede tardar bastante.</span>}
+            Se procesa en tu computadora (≈ 1–3 min por variación según tu equipo{pantallaOn ? "; con pantalla real, más" : ""}). Deja esta pestaña abierta.
+            {numVars > (pantallaOn ? 5 : 15) && <span className="text-amber-300"> Con {numVars} variaciones{pantallaOn ? " en pantalla real" : ""} puede tardar bastante.</span>}
           </p>
         </div>
       )}
@@ -364,7 +392,7 @@ export default function Variaciones({ subsCost }: { subsCost: number }) {
               <p className="mb-2 text-xs font-semibold text-mute">{v.source}</p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-5">
                 {v.items.map((it) => {
-                  const label = it.name.match(/_v(\d+)\.mp4$/)?.[1];
+                  const label = it.name.match(/_v(\d+)(?:_[^.]*)?\.mp4$/)?.[1];
                   const inner = (
                     <>
                       <span className="text-xs font-semibold">Versión {label ?? ""}</span>
