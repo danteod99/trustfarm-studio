@@ -241,7 +241,7 @@ export default function Clips({ precio, precioVariacion, limite }: { precio: num
       setBajando({ job: job.id, hechos: 0, total: archivos.length });
       if (modo === "carpeta") {
         const raiz = await (window as unknown as { showDirectoryPicker(o: { mode: string }): Promise<DirHandle> }).showDirectoryPicker({ mode: "readwrite" });
-        const dir = await raiz.getDirectoryHandle(carpeta, { create: true });
+        const dir = raiz; // directo en la carpeta elegida, sin subcarpeta nueva
         let n = 0;
         for (const a of archivos) {
           const r = await fetch(a.url);
