@@ -1,6 +1,6 @@
 import { getUser, UNAUTHORIZED } from "@/app/lib/auth";
 import { crearBucle } from "@/app/lib/bucles";
-import type { Tool } from "@/app/lib/bucles-core";
+import { estadoDesktop, type Tool } from "@/app/lib/bucles-core";
 import { supabaseAdmin } from "@/app/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -32,8 +32,11 @@ export async function GET(req: Request) {
       if (arr.length < 3) arr.push(r);
     }
   }
+  // Última señal de cualquier desktop del usuario; sin la migración 10 la consulta falla y queda «sin datos».
+  const { data: pulso } = await db.from("desktop_pulse").select("last_seen").eq("owner", user.id).order("last_seen", { ascending: false }).limit(1);
   return Response.json({
     disponible: true,
+    desktop: estadoDesktop(pulso?.[0]?.last_seen ?? null),
     loops: (loops ?? []).map((l) => ({ ...l, entregas: conteo[l.id] ?? {}, ultimas_vueltas: ultimas[l.id] ?? [] })),
   });
 }
