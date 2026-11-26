@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  captionDe, costoTrabajo, ejecutarVuelta, limaDia, migracionMarcoPendiente, opcionesMarco, opcionesVersiones, recogerRun, requiereMigracion09, refCobro, runKeyPerfil, validarConfig,
+  captionDe, costoTrabajo, estadoDesktop, DESKTOP_VIVO_MS, ejecutarVuelta, limaDia, migracionMarcoPendiente, opcionesMarco, opcionesVersiones, recogerRun, requiereMigracion09, refCobro, runKeyPerfil, validarConfig,
   type Candidato, type DepsRecoger, type DepsVuelta, type EntregaNueva, type JobParaRecoger, type ToolLoop, type ToolRun,
 } from '../app/lib/bucles-core.ts'
 import { etiquetaPlantilla, textoVariacion } from '../app/lib/variacion.ts'
@@ -399,4 +399,13 @@ test('opcionesVersiones: orden virales y saltar viajan a trustclip solo si no so
   assert.deepEqual(opcionesVersiones({ handle: 'x', max_videos: 3, orden: 'virales', saltar: 2 }), { max_videos: 3, orden: 'virales', saltar: 2 })
   assert.deepEqual(opcionesVersiones({ handle: 'x', max_videos: 3, orden: 'recientes', saltar: 0 }), { max_videos: 3 })
   assert.deepEqual(opcionesVersiones({ handle: 'x', max_videos: 3, orden: 'raro', saltar: 99 }), { max_videos: 3, saltar: 30 })
+})
+
+test('estadoDesktop: sin señal, vivo y caído', () => {
+  const ahora = Date.parse('2026-11-25T12:00:00Z')
+  assert.deepEqual(estadoDesktop(null, ahora), { estado: 'sin_datos', visto: null })
+  assert.equal(estadoDesktop('basura', ahora).estado, 'sin_datos')
+  assert.equal(estadoDesktop(new Date(ahora - 60_000).toISOString(), ahora).estado, 'conectado')
+  assert.equal(estadoDesktop(new Date(ahora - DESKTOP_VIVO_MS).toISOString(), ahora).estado, 'conectado')
+  assert.equal(estadoDesktop(new Date(ahora - DESKTOP_VIVO_MS - 1000).toISOString(), ahora).estado, 'desconectado')
 })

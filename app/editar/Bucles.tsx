@@ -3,6 +3,7 @@
 // «Repetir»: el bucle de una herramienta (Multiclipping / Perfil de TikTok). Se repite solo según días y hora de Lima
 // y cada resultado queda como «entrega» que TrustFarm Desktop recoge a la carpeta de su bucle de publicación.
 
+import type { EstadoDesktop } from "@/app/lib/bucles-core";
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Pause, Play, Repeat, Trash2 } from "lucide-react";
 import { ErrorBox } from "@/app/editar/ToolHeader";
@@ -33,6 +34,7 @@ const hh = (h: number, m: number) => `${String(h).padStart(2, "0")}:${String(m).
 export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; precio: number; precioVariacion: number }) {
   const [bucles, setBucles] = useState<Bucle[]>([]);
   const [disponible, setDisponible] = useState(true);
+  const [desktop, setDesktop] = useState<EstadoDesktop | null>(null);
   const [abierto, setAbierto] = useState(false);
   const [fuente, setFuente] = useState("");
   const [days, setDays] = useState<number[]>([1, 2, 3, 4, 5]);
@@ -52,6 +54,7 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
     const d = await r.json();
     setBucles(d.loops || []);
     setDisponible(d.disponible !== false);
+    setDesktop(d.desktop ?? null);
   }, [tool]);
   useEffect(() => { cargar(); }, [cargar]);
 
@@ -107,7 +110,14 @@ export default function Bucles({ tool, precio, precioVariacion }: { tool: Tool; 
           ? "Baja solo los videos nuevos de un perfil de TikTok a la hora que elijas."
           : "Procesa solo los videos nuevos de un canal de YouTube a la hora que elijas."}{" "}
         Cada resultado queda como entrega para TrustFarm Desktop. <b className="text-ink">Necesita el desktop encendido</b> para recogerlas
-        (esperan 7 días en la nube).
+        (esperan 7 días en la nube). El desktop las deja en su <b className="text-ink">carpeta de recogida</b> (por defecto Documentos/TrustFarm/Recogida,
+        la misma que usan tus bucles de publicación; la cambias en el desktop, en Bucle de publicación).
+      </p>
+      <p className="mt-2 flex items-center gap-2 text-xs" data-desktop={desktop?.estado ?? "sin_datos"}>
+        <span className={`inline-block h-2 w-2 rounded-full ${desktop?.estado === "conectado" ? "bg-emerald-400" : desktop?.estado === "desconectado" ? "bg-amber-300" : "bg-mute"}`} />
+        {desktop?.estado === "conectado" && <span className="text-emerald-400">Desktop conectado · última señal {fmt(desktop.visto!)}</span>}
+        {desktop?.estado === "desconectado" && <span className="text-amber-300">Desktop sin conexión desde {fmt(desktop.visto!)}: ábrelo con la misma cuenta para que recoja las entregas.</span>}
+        {(!desktop || desktop.estado === "sin_datos") && <span className="text-mute">Sin señal del desktop todavía: ábrelo con esta misma cuenta (versión nueva) para vincularlo.</span>}
       </p>
       <DescargaCarpeta />
       {error && <div className="mt-3"><ErrorBox msg={error} onClose={() => setError(null)} /></div>}

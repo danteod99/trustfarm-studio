@@ -381,3 +381,16 @@ export async function recogerRun(
 /** Cuánto esperar antes de dar por colgada una vuelta (trabajo que nunca terminó). */
 export const RUN_COLGADA_HORAS = 8;
 export const runColgada = (run: { created_at: string }, now: Date) => now.getTime() - new Date(run.created_at).getTime() > RUN_COLGADA_HORAS * 3600_000;
+
+// ───────── Pulso del desktop ─────────
+// El desktop recoge cada ~7 min; con 2 vueltas perdidas (15 min) ya lo damos por desconectado.
+export const DESKTOP_VIVO_MS = 15 * 60 * 1000;
+export type EstadoDesktop = { estado: "conectado" | "desconectado" | "sin_datos"; visto: string | null };
+
+/** `visto` = la última señal más reciente de cualquier desktop del usuario (null: nunca o migración sin aplicar). */
+export function estadoDesktop(visto: string | null, ahora: number = Date.now()): EstadoDesktop {
+  if (!visto) return { estado: "sin_datos", visto: null };
+  const t = Date.parse(visto);
+  if (Number.isNaN(t)) return { estado: "sin_datos", visto: null };
+  return { estado: ahora - t <= DESKTOP_VIVO_MS ? "conectado" : "desconectado", visto };
+}
