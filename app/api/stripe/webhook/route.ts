@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import { stripe } from "@/app/lib/stripe";
 import { PLAN, getPack } from "@/app/lib/catalog";
+import { tarjetaYaUsoPrueba, yaUsoPrueba } from "@/app/lib/pack-prueba";
 import { addCredits } from "@/app/lib/credits";
 import { enviarEventoStudio, navegadorDeMetadata } from "@/app/lib/pixel-server";
 import { SITE_URL } from "@/app/lib/brand";
@@ -82,11 +83,34 @@ export async function POST(req: Request) {
       console.error(`[stripe] monto inesperado en ${session.id}: ${session.amount_total}`);
       return Response.json({ received: true, ignored: true });
     }
+    // Oferta de $1: una por usuario y por tarjeta. Si ya la usó (compras en paralelo, otra cuenta con la
+    // misma tarjeta), se devuelve el dinero y no se acreditan créditos.
+    let huellaTarjeta: string | undefined;
+    if (pack.id === "prueba") {
+      try {
+        const piId = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
+        if (piId) {
+          const pi = await stripe().paymentIntents.retrieve(piId, { expand: ["latest_charge"] });
+          const ch = typeof pi.latest_charge === "object" ? pi.latest_charge : null;
+          huellaTarjeta = ch?.payment_method_details?.card?.fingerprint ?? undefined;
+          const duplicada = (await yaUsoPrueba(userId, `stripe:${session.id}`)) || (huellaTarjeta ? await tarjetaYaUsoPrueba(huellaTarjeta, `stripe:${session.id}`) : false);
+          if (duplicada) {
+            await stripe().refunds.create({ payment_intent: piId }, { idempotencyKey: `prueba-dup:${session.id}` });
+            console.error(`[stripe] oferta $1 repetida (${session.id}): reembolsada`);
+            return Response.json({ received: true, refunded: true });
+          }
+        }
+      } catch (e) {
+        console.error("[stripe] no se pudo validar la oferta de $1:", e);
+        return new Response("prueba check failed", { status: 500 }); // Stripe reintenta
+      }
+    }
     try {
       await addCredits(userId, pack.credits, "stripe", `stripe:${session.id}`, {
         pack: pack.id,
         amount_usd: pack.priceUsd,
         payment_intent: session.payment_intent,
+        ...(huellaTarjeta ? { card_fp: huellaTarjeta } : {}),
       });
     } catch (e) {
       console.error("[stripe] no se pudo acreditar:", e);

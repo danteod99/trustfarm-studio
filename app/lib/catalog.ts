@@ -277,11 +277,17 @@ export const PACKS: Pack[] = [
   { id: "agencia", name: "Agencia", credits: 1300, priceUsd: 100, bonus: "+30 %" },
 ];
 
+/**
+ * Oferta de entrada de anuncios: $1 por 10 créditos. NO va en PACKS (no se muestra en las páginas ni
+ * baja el "desde"): se compra solo desde /creditos?oferta=1. Una por usuario y por tarjeta (ver pack-prueba.ts).
+ */
+export const PACK_PRUEBA: Pack = { id: "prueba", name: "Prueba", credits: 10, priceUsd: 1 };
+
 /** Plan mensual (Stripe Billing, precio STRIPE_SUB_PRICE_ID). Los créditos se acumulan como los de los paquetes. */
 export const PLAN = { id: "mensual", name: "Plan mensual", priceUsd: 20, credits: 260, bonus: "+30 %" } as const;
 
 export function getPack(id: string): Pack | undefined {
-  return PACKS.find((p) => p.id === id);
+  return id === PACK_PRUEBA.id ? PACK_PRUEBA : PACKS.find((p) => p.id === id);
 }
 
 export const MAX_PROMPT = 2000;
