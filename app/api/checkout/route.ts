@@ -3,6 +3,7 @@ import { getPack } from "@/app/lib/catalog";
 import { BRAND, SITE_URL } from "@/app/lib/brand";
 import { clienteStripe } from "@/app/lib/cliente-stripe";
 import { stripe } from "@/app/lib/stripe";
+import { yaUsoPrueba } from "@/app/lib/pack-prueba";
 import { navegadorAMetadata } from "@/app/lib/pixel-server";
 
 // Crea una sesión de Stripe Checkout para un paquete de créditos (pago único).
@@ -13,6 +14,10 @@ export async function POST(req: Request) {
   const { pack: packId } = await req.json().catch(() => ({}));
   const pack = getPack(String(packId || ""));
   if (!pack) return Response.json({ error: "Paquete no válido." }, { status: 400 });
+
+  if (pack.id === "prueba" && (await yaUsoPrueba(user.id))) {
+    return Response.json({ error: "La oferta de $1 es de una sola compra por cuenta. Elige un paquete." }, { status: 409 });
+  }
 
   try {
     const session = await stripe().checkout.sessions.create({

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CalendarClock, CheckCircle2, Loader2, Repeat, ShieldCheck } from "lucide-react";
-import { PACKS, PLAN, getPack } from "@/app/lib/catalog";
+import { PACKS, PACK_PRUEBA, PLAN, getPack } from "@/app/lib/catalog";
 import { eventoStudio } from "@/app/lib/pixel";
 
 interface Me {
@@ -27,6 +27,7 @@ function reasonLabel(r: string) {
 export default function Credits() {
   const params = useSearchParams();
   const planOk = params.get("plan") === "ok";
+  const oferta = params.get("oferta") === "1";
   const paid = params.get("pago") === "ok" || planOk;
   const [me, setMe] = useState<Me | null>(null);
   const [buying, setBuying] = useState<string | null>(null);
@@ -103,6 +104,19 @@ export default function Credits() {
           <p className="text-2xl font-extrabold">{me ? me.balance : "—"} créditos</p>
         </div>
       </div>
+
+      {oferta && !paid && (
+        <div className="card mt-6 flex flex-wrap items-center justify-between gap-4 border-brand p-6">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-brand-2">Oferta de bienvenida · una por cuenta</p>
+            <p className="mt-1 text-3xl font-extrabold">${PACK_PRUEBA.priceUsd} <span className="text-base font-medium text-mute">por {PACK_PRUEBA.credits} créditos</span></p>
+            <p className="mt-1 text-sm text-mute">Alcanzan para unas 10 imágenes o 2 videos largos cortados en clips (multiclipping).</p>
+          </div>
+          <button onClick={() => buy(PACK_PRUEBA.id)} disabled={!!buying} className="btn-primary !px-6 !py-3">
+            {buying === PACK_PRUEBA.id ? <Loader2 size={15} className="animate-spin" /> : null} Probar por $1
+          </button>
+        </div>
+      )}
 
       {paid && (
         <p className="mt-6 flex items-center gap-2 rounded-xl bg-emerald-500/10 p-3 text-sm text-emerald-300">
